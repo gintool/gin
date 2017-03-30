@@ -22,7 +22,7 @@ import java.util.LinkedList;
 public class Tester {
 
     private static final String TMP_DIR = "tmp" + File.separator;
-    private static final int REPS = 1;
+    private static final int REPS = 5;
 
     private Program program;
     private String programName;
@@ -76,7 +76,8 @@ public class Tester {
         programFiles.add(new File (sourceFilename));
         programFiles.add(new File (testFilename));
         CompilerListener diagnosticListener = new CompilerListener();
-        boolean success = compiler.getTask(null, fileManager, diagnosticListener, null, null, fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
+        boolean success = compiler.getTask(null, fileManager,  null, null, null, fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
+        //diagnosticListener, null, null, fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
 
         try {
             fileManager.close();

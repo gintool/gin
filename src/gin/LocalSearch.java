@@ -6,7 +6,7 @@ public class LocalSearch {
 
     private int seed = 5678;
     private int maxEvals = 100;
-    private int maxInitialPatchLength = 10;
+    private int maxInitialPatchLength = 3;
 
     private Program program;
     private Tester tester;

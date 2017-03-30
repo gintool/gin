@@ -76,8 +76,8 @@ public class Tester {
         programFiles.add(new File (sourceFilename));
         programFiles.add(new File (testFilename));
         CompilerListener diagnosticListener = new CompilerListener();
-        boolean success = compiler.getTask(null, fileManager,  null, null, null, fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
-        //diagnosticListener, null, null, fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
+        boolean success = compiler.getTask(null, fileManager,  diagnosticListener, null, null,
+                fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
 
         try {
             fileManager.close();

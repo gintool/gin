@@ -1,17 +1,17 @@
-public class Triangle {
+public class Example {
 
-    public int methodOne() {
+    public int exampleMethod() {
         int x = 7;
-        x ++;
-
+        x++;
         if (x == 1) {
             x += 5;
         }
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            System.err.println("Triangle was interrupted when sleeping");
+            System.err.println("Example was interrupted when sleeping");
         }
         return x;
     }
+
 }

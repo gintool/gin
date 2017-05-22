@@ -89,13 +89,13 @@ public class Patch {
                     break;
                 case (1):
                     int statementToCopy = random.nextInt(program.getStatementCount());
-                    int insertBlock = random.nextInt(program.getBlockCount());
+                    int insertBlock = random.nextInt(program.getNumberOfBlocks());
                     int insertStatement = random.nextInt(program.getBlockSize(insertBlock));
                     edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
                     break;
                 case (2):
                     int statementToMove = random.nextInt(program.getStatementCount());
-                    int moveBlock = random.nextInt(program.getBlockCount());
+                    int moveBlock = random.nextInt(program.getNumberOfBlocks());
                     int moveStatement = random.nextInt(program.getBlockSize(moveBlock));
                     edit = new MoveStatement(statementToMove, moveBlock, moveStatement);
                     break;

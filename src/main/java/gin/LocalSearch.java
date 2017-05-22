@@ -12,17 +12,44 @@ public class LocalSearch {
     private Tester tester;
     private Random random;
 
+    /**
+     * Main method. Take a source code filename, instantiate a search instance and execute the search.
+     * @param args A single source code filename, .java
+     */
+    public static void main(String[] args) {
+
+        if (args.length == 0) {
+            System.out.println("Please specify a class file to optimise.");
+        } else {
+            LocalSearch localSearch = new LocalSearch(args[0]);
+            Patch result = localSearch.search();
+            System.out.println("Best patch found: " + result);
+        }
+
+    }
+
+    /**
+     * Constructor: Create a program and a tester object based on the input filename.
+     *              Initialise the RNG.
+     * @param programName
+     */
     public LocalSearch(String programName) {
-        this.program = new Program(programName);
+        System.out.println("Optimising program: " + programName);
+        this.program = new Program(programName); // just parses the code and counts statements etc.
         this.tester = new Tester(programName, this.program);
         this.random = new Random(seed);
     }
 
+    /**
+     * Actual LocalSearch.
+     * @return
+     */
     private Patch search() {
 
         // start with the empty patch
         Patch bestPatch = new Patch(program);
         Tester.TestResult bestResult = tester.test(bestPatch);
+
         System.out.println("Initial execution time:" + bestResult.averageTime);
 
         for (int i = 0; i < maxEvals; i++) {
@@ -54,20 +81,6 @@ public class LocalSearch {
         return Patch.randomPatch(program, random, maxInitialPatchLength);
     }
 
-    public static void main(String[] args) {
 
-        if (args.length == 0) {
-
-            System.out.println("Please specify a class file to optimise.");
-
-        } else {
-
-            LocalSearch localSearch = new LocalSearch(args[0]);
-            Patch result = localSearch.search();
-            System.out.println("Best patch found: " + result);
-
-        }
-
-    }
 
 }

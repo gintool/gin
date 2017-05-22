@@ -11,11 +11,18 @@ import java.util.List;
 
 public class Program {
 
+    public String getFilename() {
+        return filename;
+    }
+
     private String filename;
+
     private CompilationUnit compilationUnit;
     private int statementCount;
     private int numberOfBlocks;
     private int[] blockSizes;
+
+    private static final boolean DEBUG = false;
 
     public Program(String filename) {
         this.filename = filename;
@@ -35,17 +42,23 @@ public class Program {
     }
 
     public int getStatementCount() {
-        return this.statementCount;
+        return statementCount;
     }
 
-    public int getBlockCount() { return this.numberOfBlocks; }
+    public int getNumberOfBlocks() {
+        return numberOfBlocks;
+    }
 
-    public int getBlockSize(int block) { return this.blockSizes[block]; }
+    public int getBlockSize(int block) {
+        return blockSizes[block];
+    }
 
     private void countStatements() {
         List<Statement> list = compilationUnit.getNodesByType(Statement.class);
         statementCount = list.size();
-        list.stream().forEach(f -> System.out.println("[" + list.indexOf(f) + "] " + f.toString()));
+        if (DEBUG) {
+            list.stream().forEach(f -> System.out.println("[" + list.indexOf(f) + "] " + f.toString()));
+        }
     }
 
     private void countBlocks() {
@@ -57,6 +70,8 @@ public class Program {
             blockSizes[counter] = b.getStatements().size();
             counter++;
         }
-        list.stream().forEach(f -> System.out.println("[B" + list.indexOf(f) + "] " + f.toString()));
+        if (DEBUG) {
+            list.stream().forEach(f -> System.out.println("[B" + list.indexOf(f) + "] " + f.toString()));
+        }
     }
 }

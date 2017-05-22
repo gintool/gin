@@ -136,14 +136,17 @@ public class Tester {
                 FileUtils.cleanDirectory(new File(TMP_DIR));
             } catch (Exception e) {
                 System.err.println("Exception cleaning temporary directory: " + e);
+                System.exit(-1);
             }
         } else {
             new File(TMP_DIR).mkdirs();
         }
+        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
         String testFilename = FilenameUtils.removeExtension(programName) + "Test.java";
-        String tmpTestFilename = TMP_DIR + FilenameUtils.getBaseName(testFilename) + ".java";
+        File testFile = new File(testFilename);
+        File tmpTestFile = new File(TMP_DIR, testFilename);
         try {
-            FileUtils.copyFile(new File(testFilename), new File (tmpTestFilename));
+            FileUtils.copyFile(testFile, tmpTestFile);
         } catch (IOException e) {
             e.printStackTrace();
         }

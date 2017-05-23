@@ -13,9 +13,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -25,20 +22,26 @@ public class Tester {
     private static final int REPS = 5;
 
     private Program program;
-    private String programName;
     private URLClassLoader classLoader = null;
 
-    public Tester(String programName, Program program) {
-        this.programName = programName;
+    public Tester(Program program) {
         this.program = program;
     }
 
     public TestResult test(Patch patch) {
-        prepareTempDirectory();
+
+        // Apply the patch
         CompilationUnit compilationUnit = program.getCompilationUnit();
         CompilationUnit patched = compilationUnit.clone();
         patch.apply(patched);
-        boolean success = compile(patched);
+
+        // Create temp dir
+        ensureDirectory(new File(TMP_DIR));
+
+        // Copy patched program and test source to temp directory
+        copySource(patched);
+
+        boolean success = compile();
         if (success) {
             return loadClassandRunTests();
         } else {
@@ -47,34 +50,78 @@ public class Tester {
         }
     }
 
-    private boolean compile(CompilationUnit compilationUnit)  {
+    private void ensureDirectory(File f) {
+        FileUtils.deleteQuietly(f);
+        f.mkdirs();
+    }
 
-        Path p = Paths.get(programName);
-        String sourceFilename = TMP_DIR + File.separator + p.getFileName().toString();
-        String testFilename = FilenameUtils.removeExtension(programName) + "Test.java";
+    private void copySource(CompilationUnit compilationUnit) {
 
+        // Create temp package subdirectory as per package name
+        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
+        String packageDirName = packageName.replace(".", File.separator);
+        File tmpPackageDir = new File(TMP_DIR, packageDirName);
+        tmpPackageDir.mkdirs();
+
+        // Copy test source to tmp directory
+        String programWithoutExtension = FilenameUtils.removeExtension(program.getFilename());
+        String origTestFilename = programWithoutExtension + "Test.java";
+        File originalTestFile = new File(origTestFilename);
+
+        File tmpTestFile = calcTempTestFile();
         try {
-            File sourceFile   = new File(sourceFilename);
-            FileWriter writer = new FileWriter(sourceFile);
+            FileUtils.copyFile(originalTestFile, tmpTestFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Write patched program to temp dir
+        try {
+            FileWriter writer = new FileWriter(calcTempSourceFile());
             writer.write(compilationUnit.toString());
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private File calcTempSourceFile() {
+        String originalSourceFilename = new File(program.getFilename()).getName();
+        File tmpSourceFilename = new File(calcTempPackageDir(), originalSourceFilename);
+        return tmpSourceFilename;
+    }
+
+    private File calcTempPackageDir() {
+        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
+        String packageDirName = packageName.replace(".", File.separator);
+        return new File(TMP_DIR, packageDirName);
+    }
+
+    private File calcTempTestFile() {
+        String programBaseName = FilenameUtils.getBaseName(program.getFilename());
+        String testFilename = programBaseName + "Test.java";
+        File tmpTestFile = new File(calcTempPackageDir(), testFilename);
+        return tmpTestFile;
+    }
+
+    private boolean compile()  {
+
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 
         try {
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(new File("tmp")));
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(new File(TMP_DIR)));
         } catch (IOException e) {
             System.err.println("Error configuring compiler: " + e);
         }
 
         // Compile the file
         LinkedList<File> programFiles = new LinkedList<>();
-        programFiles.add(new File (sourceFilename));
-        programFiles.add(new File (testFilename));
+        File sourceFile = calcTempSourceFile();
+        File testFile = calcTempTestFile();
+        programFiles.add(sourceFile);
+        programFiles.add(testFile);
         CompilerListener diagnosticListener = new CompilerListener();
         boolean success = compiler.getTask(null, fileManager,  diagnosticListener, null, null,
                 fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
@@ -130,28 +177,7 @@ public class Tester {
         }
     }
 
-    private void prepareTempDirectory() {
-        if (Files.exists(Paths.get(TMP_DIR))) {
-            try {
-                FileUtils.cleanDirectory(new File(TMP_DIR));
-            } catch (Exception e) {
-                System.err.println("Exception cleaning temporary directory: " + e);
-                System.exit(-1);
-            }
-        } else {
-            new File(TMP_DIR).mkdirs();
-        }
-        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
-        String testFilename = FilenameUtils.removeExtension(programName) + "Test.java";
-        File testFile = new File(testFilename);
-        File tmpTestFile = new File(TMP_DIR, testFilename);
-        try {
-            FileUtils.copyFile(testFile, tmpTestFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-    }
 
     public class TestResult {
         Result result;

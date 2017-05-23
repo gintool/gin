@@ -36,7 +36,7 @@ public class LocalSearch {
     public LocalSearch(String programName) {
         System.out.println("Optimising program: " + programName);
         this.program = new Program(programName); // just parses the code and counts statements etc.
-        this.tester = new Tester(programName, this.program);
+        this.tester = new Tester(this.program);
         this.random = new Random(seed);
     }
 

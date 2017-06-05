@@ -16,15 +16,14 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class Tester {
+public class TestRunner {
 
     private static final String TMP_DIR = "tmp" + File.separator;
     private static final int REPS = 5;
 
     private Program program;
-    private URLClassLoader classLoader = null;
 
-    public Tester(Program program) {
+    public TestRunner(Program program) {
         this.program = program;
     }
 
@@ -41,20 +40,24 @@ public class Tester {
         // Copy patched program and test source to temp directory
         copySource(patched);
 
-        boolean success = compile();
-        if (success) {
+        // Compile the patched program and test classes
+        boolean compiledOK = compile();
+
+        // Run test cases if compiledOK, otherwise return failure.
+        if (compiledOK) {
             return loadClassandRunTests();
         } else {
             System.out.println("Failed to compile");
             return new TestResult(null, Double.MAX_VALUE, false);
         }
+
     }
 
-    private void ensureDirectory(File f) {
-        FileUtils.deleteQuietly(f);
-        f.mkdirs();
-    }
-
+    /**
+     * Write the patched source and test class to a temporary directory.
+     *
+     * @param compilationUnit
+     */
     private void copySource(CompilationUnit compilationUnit) {
 
         // Create temp package subdirectory as per package name
@@ -63,50 +66,41 @@ public class Tester {
         File tmpPackageDir = new File(TMP_DIR, packageDirName);
         tmpPackageDir.mkdirs();
 
-        // Copy test source to tmp directory
-        String programWithoutExtension = FilenameUtils.removeExtension(program.getFilename());
-        String origTestFilename = programWithoutExtension + "Test.java";
-        File originalTestFile = new File(origTestFilename);
-
-        File tmpTestFile = calcTempTestFile();
-        try {
-            FileUtils.copyFile(originalTestFile, tmpTestFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         // Write patched program to temp dir
+        File tmpSourceFile = new File(tmpPackageDir, program.getFilename());
         try {
-            FileWriter writer = new FileWriter(calcTempSourceFile());
+            FileWriter writer = new FileWriter(tmpSourceFile);
             writer.write(compilationUnit.toString());
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        // Copy test source to tmp directory
+        String originalTestFilename = FilenameUtils.removeExtension(program.getFilename()) + "Test.java";
+        File originalTestFile = new File(originalTestFilename);
+
+        File tmpTestFile = new File(tmpPackageDir, originalTestFile.getName());
+
+        try {
+            FileUtils.copyFile(originalTestFile, tmpTestFile);
+        } catch (IOException e) {
+            System.err.println("Error copying test class to temporary directory.");
+            System.err.println(originalTestFile + " -> " + tmpTestFile);
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
     }
 
-    private File calcTempSourceFile() {
-        String originalSourceFilename = new File(program.getFilename()).getName();
-        File tmpSourceFilename = new File(calcTempPackageDir(), originalSourceFilename);
-        return tmpSourceFilename;
-    }
-
-    private File calcTempPackageDir() {
-        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
-        String packageDirName = packageName.replace(".", File.separator);
-        return new File(TMP_DIR, packageDirName);
-    }
-
-    private File calcTempTestFile() {
-        String programBaseName = FilenameUtils.getBaseName(program.getFilename());
-        String testFilename = programBaseName + "Test.java";
-        File tmpTestFile = new File(calcTempPackageDir(), testFilename);
-        return tmpTestFile;
-    }
-
+    /**
+     * Compile the temporary (patched) source file and a copy of the test class.
+     *
+     * @return
+     */
     private boolean compile()  {
 
+        // Configure the compiler
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 
@@ -116,30 +110,48 @@ public class Tester {
             System.err.println("Error configuring compiler: " + e);
         }
 
-        // Compile the file
+        // Add the source files to a list
         LinkedList<File> programFiles = new LinkedList<>();
-        File sourceFile = calcTempSourceFile();
-        File testFile = calcTempTestFile();
+
+        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
+        String packageDirName = packageName.replace(".", File.separator);
+        File tmpPackageDir = new File(TMP_DIR, packageDirName);
+        File sourceFile = new File(tmpPackageDir, program.getFilename());
+
+        String originalTestFilename = FilenameUtils.removeExtension(program.getFilename()) + "Test.java";
+        File originalTestFile = new File(originalTestFilename);
+        File testFile = new File(tmpPackageDir, originalTestFile.getName());
+
         programFiles.add(sourceFile);
         programFiles.add(testFile);
+
+        // Compile the files
         CompilerListener diagnosticListener = new CompilerListener();
         boolean success = compiler.getTask(null, fileManager,  diagnosticListener, null, null,
                 fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
 
         try {
             fileManager.close();
-        } catch (IOException ioexception) {
-            System.err.println("Error closing file manager when compiling: " + ioexception);
+        } catch (IOException ioException) {
+            System.err.println("Error closing file manager when compiling: " + ioException);
+            ioException.printStackTrace();
+            System.exit(-1);
         }
 
         return success;
 
     }
 
+    /**
+     * Run the tests against the patched class.
+     * @return
+     */
     private TestResult loadClassandRunTests() {
 
+        URLClassLoader classLoader = null;
+
         try {
-            this.classLoader = new URLClassLoader(new URL[]{new File(TMP_DIR).toURI().toURL()});
+            classLoader = new URLClassLoader(new URL[]{new File(TMP_DIR).toURI().toURL()});
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -178,6 +190,10 @@ public class Tester {
     }
 
 
+    private void ensureDirectory(File f) {
+        FileUtils.deleteQuietly(f);
+        f.mkdirs();
+    }
 
     public class TestResult {
         Result result;

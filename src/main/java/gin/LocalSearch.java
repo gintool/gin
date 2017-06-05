@@ -9,7 +9,7 @@ public class LocalSearch {
     private int maxInitialPatchLength = 3;
 
     private Program program;
-    private Tester tester;
+    private TestRunner tester;
     private Random random;
 
     /**
@@ -36,7 +36,7 @@ public class LocalSearch {
     public LocalSearch(String programName) {
         System.out.println("Optimising program: " + programName);
         this.program = new Program(programName); // just parses the code and counts statements etc.
-        this.tester = new Tester(this.program);
+        this.tester = new TestRunner(this.program);
         this.random = new Random(seed);
     }
 
@@ -48,14 +48,14 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(program);
-        Tester.TestResult bestResult = tester.test(bestPatch);
+        TestRunner.TestResult bestResult = tester.test(bestPatch);
 
         System.out.println("Initial execution time:" + bestResult.averageTime);
 
         for (int i = 0; i < maxEvals; i++) {
 
             Patch neighbour = neighbour(bestPatch);
-            Tester.TestResult neighbourResult = tester.test(neighbour);
+            TestRunner.TestResult neighbourResult = tester.test(neighbour);
 
             System.out.println("Neighbour patch: " + neighbour);
             System.out.println("Neighbour execution time: " + neighbourResult.averageTime);

@@ -9,6 +9,8 @@ import gin.edit.DeleteStatement;
 import gin.edit.Edit;
 import gin.edit.MoveStatement;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -22,8 +24,12 @@ public class Patch {
         this.program = program;
     }
 
+    public void add(Edit edit) {
+        this.edits.add(edit);
+    }
+
     // We deliberately don't try to separate concerns here, keep it simple.
-    public void apply(CompilationUnit compilationUnit) {
+    public boolean apply(CompilationUnit compilationUnit) {
 
         List<Statement> allStatements = compilationUnit.getNodesByType(Statement.class);
         List<BlockStmt> blocks = compilationUnit.getNodesByType(BlockStmt.class);
@@ -66,9 +72,12 @@ public class Patch {
             parentBlock.addStatement(indexInParent, source);
         }
 
+        boolean removedOK = true;
         for (Statement statement: toDelete) {
-            statement.remove(); // Not guaranteed to work if violate some constraints.
+            removedOK &= statement.remove(); // Not guaranteed to work if violate some constraints.
         }
+
+        return removedOK;
 
     }
 
@@ -106,6 +115,24 @@ public class Patch {
         }
 
         return patch;
+
+    }
+
+    public void writeToFile(String filename) {
+
+        // Apply this patch
+        CompilationUnit compilationUnit = program.getCompilationUnit();
+        CompilationUnit patched = compilationUnit.clone();
+        this.apply(patched);
+
+        // Write to file
+        try {
+            FileWriter writer = new FileWriter(filename);
+            writer.write(compilationUnit.toString());
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

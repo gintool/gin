@@ -19,7 +19,7 @@ import java.util.LinkedList;
 public class TestRunner {
 
     private static final String TMP_DIR = "tmp" + File.separator;
-    private static final int REPS = 5;
+    private static final int REPS = 100000;
 
     private Program program;
 
@@ -32,22 +32,30 @@ public class TestRunner {
         // Apply the patch
         CompilationUnit compilationUnit = program.getCompilationUnit();
         CompilationUnit patched = compilationUnit.clone();
-        patch.apply(patched);
+        boolean patchSuccess = patch.apply(patched);
 
-        // Create temp dir
-        ensureDirectory(new File(TMP_DIR));
+        if (patchSuccess) {
 
-        // Copy patched program and test source to temp directory
-        copySource(patched);
+            // Create temp dir
+            ensureDirectory(new File(TMP_DIR));
 
-        // Compile the patched program and test classes
-        boolean compiledOK = compile();
+            // Copy patched program and test source to temp directory
+            copySource(patched);
 
-        // Run test cases if compiledOK, otherwise return failure.
-        if (compiledOK) {
-            return loadClassAndRunTests();
+            // Compile the patched program and test classes
+            boolean compiledOK = compile();
+
+            // Run test cases if compiledOK, otherwise return failure.
+            if (compiledOK) {
+                return loadClassAndRunTests();
+            } else {
+                return new TestResult(null, Double.MAX_VALUE, false, true, patched.toString());
+            }
+
         } else {
-            return new TestResult(null, Double.MAX_VALUE, false);
+
+            return new TestResult(null, Double.MAX_VALUE, false, false, "");
+
         }
 
     }
@@ -174,21 +182,20 @@ public class TestRunner {
         JUnitCore jUnitCore = new JUnitCore();
 
         // Run the tests REPS times and calculate the mean via a running average
-        double meanElapsed = 0;
+        double[] elapsed = new double[REPS];
         Result result = null;
         for (int rep=0; rep < REPS; rep++) {
             try {
                 long start = System.nanoTime();
                 result = jUnitCore.run(loadedTestClass);
-                long elapsed = System.nanoTime() - start;
-                meanElapsed += (elapsed - meanElapsed) / (rep+1); // running average
+                elapsed[rep] = System.nanoTime() - start;
             } catch (Exception e) {
                 System.err.println("Error running junit: " + e);
                 System.exit(-1);
             }
         }
 
-        return new TestResult(result, meanElapsed, true);
+        return new TestResult(result, thirdQuartile(elapsed), true, true, "");
 
     }
 
@@ -214,14 +221,37 @@ public class TestRunner {
      * Class to hold the result of running jUnit.
      */
     public class TestResult {
+        String patchedProgram;
         Result result;
-        double averageTime;
+        double executionTime;
         boolean compiled;
-        public TestResult(Result result, double averageTime, boolean compiled) {
+        boolean patchSuccess;
+        public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
+                          String patchedProgram) {
             this.result = result;
-            this.averageTime = averageTime;
+            this.executionTime = executionTime;
             this.compiled = compiled;
+            this.patchSuccess = patchedOK;
+            this.patchedProgram = patchedProgram;
         }
+    }
+
+    public static double median(double[] values) {
+        Arrays.sort(values);
+        int mid = (values.length) / 2;
+        if (values.length % 2 == 0){
+            double left = values[mid];
+            double right = values[mid-1];
+            return (left + right) / 2;
+        } else{
+            return values[mid + 1];
+        }
+    }
+
+    public static double thirdQuartile(double[] values) {
+        Arrays.sort(values);
+        int n = (int) Math.round(values.length * 0.75);
+        return values[n];
     }
 
 }

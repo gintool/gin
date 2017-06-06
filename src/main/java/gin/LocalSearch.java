@@ -34,7 +34,7 @@ public class LocalSearch {
      * @param programName
      */
     public LocalSearch(String programName) {
-        System.out.println("Optimising program: " + programName);
+        System.out.println("Optimising program: " + programName + "\n");
         this.program = new Program(programName); // just parses the code and counts statements etc.
         this.tester = new TestRunner(this.program);
         this.random = new Random(seed);
@@ -50,15 +50,26 @@ public class LocalSearch {
         Patch bestPatch = new Patch(program);
         TestRunner.TestResult bestResult = tester.test(bestPatch);
 
-        System.out.println("Initial execution time:" + bestResult.averageTime);
+        System.out.println("Initial execution time: " + bestResult.averageTime + "\n");
 
         for (int i = 0; i < maxEvals; i++) {
 
             Patch neighbour = neighbour(bestPatch);
+
+            System.out.println("Generated Neighbour: " + neighbour);
+
             TestRunner.TestResult neighbourResult = tester.test(neighbour);
 
-            System.out.println("Neighbour patch: " + neighbour);
-            System.out.println("Neighbour execution time: " + neighbourResult.averageTime);
+            if (neighbourResult.compiled) {
+                System.out.println("Neighbour Execution Time: " + neighbourResult.averageTime);
+                if (neighbourResult.result.wasSuccessful()) {
+                    System.out.println("Passed all tests.");
+                } else {
+                    System.out.println("Did not pass all tests.");
+                }
+            } else {
+                System.out.println("Failed to compile");
+            }
 
             // only accept functionally validated solutions
             if (neighbourResult.compiled &&
@@ -70,17 +81,21 @@ public class LocalSearch {
 
             }
 
-            System.out.println("Step " + i + " fitness " + bestResult.averageTime);
+            System.out.println("Step " + i + " fitness " + bestResult.averageTime + "\n");
 
         }
 
         return bestPatch;
     }
 
+    /**
+     * Generate a neighbouring patch. Currently random choice.
+     * @param patch Generate a neighbour of this patch.
+     * @return A neighbouring patch.
+     */
     public Patch neighbour(Patch patch) {
         return Patch.randomPatch(program, random, maxInitialPatchLength);
     }
-
 
 
 }

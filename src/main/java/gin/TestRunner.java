@@ -45,9 +45,8 @@ public class TestRunner {
 
         // Run test cases if compiledOK, otherwise return failure.
         if (compiledOK) {
-            return loadClassandRunTests();
+            return loadClassAndRunTests();
         } else {
-            System.out.println("Failed to compile");
             return new TestResult(null, Double.MAX_VALUE, false);
         }
 
@@ -67,7 +66,8 @@ public class TestRunner {
         tmpPackageDir.mkdirs();
 
         // Write patched program to temp dir
-        File tmpSourceFile = new File(tmpPackageDir, program.getFilename());
+        String programFilename = new File(program.getFilename()).getName();
+        File tmpSourceFile = new File(tmpPackageDir, programFilename);
         try {
             FileWriter writer = new FileWriter(tmpSourceFile);
             writer.write(compilationUnit.toString());
@@ -96,7 +96,7 @@ public class TestRunner {
     /**
      * Compile the temporary (patched) source file and a copy of the test class.
      *
-     * @return
+     * @return Boolean indicating whether the compilation was successful.
      */
     private boolean compile()  {
 
@@ -116,7 +116,9 @@ public class TestRunner {
         String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
         String packageDirName = packageName.replace(".", File.separator);
         File tmpPackageDir = new File(TMP_DIR, packageDirName);
-        File sourceFile = new File(tmpPackageDir, program.getFilename());
+
+        String programFilename = new File(program.getFilename()).getName();
+        File sourceFile = new File(tmpPackageDir, programFilename);
 
         String originalTestFilename = FilenameUtils.removeExtension(program.getFilename()) + "Test.java";
         File originalTestFile = new File(originalTestFilename);
@@ -144,10 +146,12 @@ public class TestRunner {
 
     /**
      * Run the tests against the patched class.
-     * @return
+     *
+     * @return TestResult giving the outcome of running jUnit.
      */
-    private TestResult loadClassandRunTests() {
+    private TestResult loadClassAndRunTests() {
 
+        // Create a class loader initialised for the temp directory.
         URLClassLoader classLoader = null;
 
         try {
@@ -156,16 +160,20 @@ public class TestRunner {
             e.printStackTrace();
         }
 
+        // Load the Test class. The required class under test will be loaded from the same directory by jUnit.
         Class<?> loadedTestClass = null;
         try {
-            String classname = program.getCompilationUnit().getType(0).getNameAsString();
+            String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
+            String classname = packageName + "." + program.getCompilationUnit().getType(0).getNameAsString();
             loadedTestClass = classLoader.loadClass(classname + "Test");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
+        // Instantiate jUnit
         JUnitCore jUnitCore = new JUnitCore();
 
+        // Run the tests REPS times and calculate the mean via a running average
         double meanElapsed = 0;
         Result result = null;
         for (int rep=0; rep < REPS; rep++) {
@@ -179,22 +187,32 @@ public class TestRunner {
                 System.exit(-1);
             }
         }
+
         return new TestResult(result, meanElapsed, true);
+
     }
 
-    // Used to silence the compiler
+    /**
+     * Callback for the compilation. Used to silence the compiler.
+      */
     private static final class CompilerListener implements DiagnosticListener {
         @Override
         public void report(Diagnostic diagnostic) {
         }
     }
 
-
+    /**
+     * Helped function to clean a directory.
+     * @param f
+     */
     private void ensureDirectory(File f) {
         FileUtils.deleteQuietly(f);
         f.mkdirs();
     }
 
+    /**
+     * Class to hold the result of running jUnit.
+     */
     public class TestResult {
         Result result;
         double averageTime;

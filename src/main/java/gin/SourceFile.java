@@ -9,32 +9,38 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class Program {
-
-    public String getFilename() {
-        return filename;
-    }
-
-    private String filename;
+public class SourceFile {
 
     private CompilationUnit compilationUnit;
     private int statementCount;
     private int numberOfBlocks;
-    private int[] blockSizes;
+    private int[] numberOfInsertionPointsInBlock;
+    private String filename;
 
-    private static final boolean DEBUG = false;
-
-    public Program(String filename) {
+    public SourceFile(String filename) {
         this.filename = filename;
-        File programFile = new File(filename);
         try {
-            compilationUnit = JavaParser.parse(programFile);
+            this.compilationUnit = JavaParser.parse(new File(filename));
         } catch (IOException e) {
             System.err.println("Exception reading program source: " + e);
             System.exit(-1);
         }
         countStatements();
         countBlocks();
+    }
+
+    public SourceFile(CompilationUnit compilationUnit) {
+        this.compilationUnit = compilationUnit;
+        countStatements();
+        countBlocks();
+    }
+
+    public String getSource() {
+        return this.compilationUnit.toString();
+    }
+
+    public String getFilename() {
+        return this.filename;
     }
 
     public CompilationUnit getCompilationUnit() {
@@ -49,29 +55,37 @@ public class Program {
         return numberOfBlocks;
     }
 
-    public int getBlockSize(int block) {
-        return blockSizes[block];
+    public int getNumberOfInsertionPointsInBlock(int block) {
+        return numberOfInsertionPointsInBlock[block];
     }
 
     private void countStatements() {
         List<Statement> list = compilationUnit.getNodesByType(Statement.class);
         statementCount = list.size();
-        if (DEBUG) {
-            list.stream().forEach(f -> System.out.println("[" + list.indexOf(f) + "] " + f.toString()));
-        }
     }
 
     private void countBlocks() {
         List<BlockStmt> list = compilationUnit.getNodesByType(BlockStmt.class);
         numberOfBlocks = list.size();
-        blockSizes = new int[numberOfBlocks];
+        numberOfInsertionPointsInBlock = new int[numberOfBlocks];
         int counter = 0;
         for (BlockStmt b: list) {
-            blockSizes[counter] = b.getStatements().size();
+            // Insertion point 0 is before the first statement (or at start of block if block is empty)
+            numberOfInsertionPointsInBlock[counter] = b.getStatements().size() + 1;
             counter++;
         }
-        if (DEBUG) {
-            list.stream().forEach(f -> System.out.println("[B" + list.indexOf(f) + "] " + f.toString()));
-        }
     }
+
+    public String statementList() {
+        List<Statement> list = compilationUnit.getNodesByType(Statement.class);
+        statementCount = list.size();
+        int counter = 0;
+        String output = "";
+        for (Statement statement: list) {
+            output +=  "[" + counter + "] " + statement.toString() + "\n"; // can't use indexof
+            counter++;
+        }
+        return output;
+    }
+
 }

@@ -1,5 +1,3 @@
-package gin.examples;
-
 public class Triangle {
 
     public enum TriangleType {
@@ -7,6 +5,8 @@ public class Triangle {
     }
 
     public static TriangleType classifyTriangle(int a, int b, int c) {
+
+        delay();
 
         // Sort the sides so that a <= b <= c
         if (a > b) {
@@ -37,6 +37,14 @@ public class Triangle {
             return TriangleType.SCALENE;
         }
 
+    }
+
+    private static void delay() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // do nothing
+        }
     }
 
 }

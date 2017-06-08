@@ -4,40 +4,48 @@ import java.util.Random;
 
 public class LocalSearch {
 
-    private int seed = 5678;
-    private int maxEvals = 100;
-    private int maxInitialPatchLength = 3;
-    private int WARMUP_REPS = 10;
+    private static final int seed = 5678;
+    private static final int NUM_STEPS = 100;
+    private static final int maxInitialPatchLength = 5;
+    private static final int WARMUP_REPS = 10;
 
-    private Program program;
+    private SourceFile sourceFile;
     private TestRunner testRunner;
-    private Random random;
+    private Random rng;
 
     /**
      * Main method. Take a source code filename, instantiate a search instance and execute the search.
      * @param args A single source code filename, .java
      */
     public static void main(String[] args) {
+
         if (args.length == 0) {
-            System.out.println("Please specify a class file to optimise.");
+
+            System.out.println("Please specify a source file to optimise.");
+
         } else {
-            LocalSearch localSearch = new LocalSearch(args[0]);
-            Patch result = localSearch.search();
-            System.out.println("Best patch found: " + result);
+
+            String sourceFilename = args[0];
+            System.out.println("Optimising source file: " + sourceFilename + "\n");
+
+            LocalSearch localSearch = new LocalSearch(sourceFilename);
+            localSearch.search();
+
         }
 
     }
 
     /**
-     * Constructor: Create a program and a testRunner object based on the input filename.
+     * Constructor: Create a sourceFile and a testRunner object based on the input filename.
      *              Initialise the RNG.
-     * @param programName
+     * @param sourceFilename
      */
-    public LocalSearch(String programName) {
-        System.out.println("Optimising program: " + programName + "\n");
-        this.program = new Program(programName); // just parses the code and counts statements etc.
-        this.testRunner = new TestRunner(this.program);
-        this.random = new Random(seed);
+    public LocalSearch(String sourceFilename) {
+
+        this.sourceFile = new SourceFile(sourceFilename);  // just parses the code and counts statements etc.
+        this.testRunner = new TestRunner(this.sourceFile); // Utility class for running junits
+        this.rng = new Random(seed);
+
     }
 
     /**
@@ -47,70 +55,73 @@ public class LocalSearch {
     private Patch search() {
 
         // start with the empty patch
-        Patch bestPatch = new Patch(program);
-        double bestExecutionTime = calcInitialExecutionTime(bestPatch); // do extra reps
+        Patch bestPatch = new Patch(sourceFile);
+        double bestTime = testRunner.test(bestPatch, WARMUP_REPS).executionTime;
+        double origTime = bestTime;
+        int bestStep = 0;
 
-        System.out.println("Initial execution time: " + bestExecutionTime + "\n");
+        System.out.println("Initial execution time: " + bestTime + " (ns) \n");
 
-        for (int i = 0; i < maxEvals; i++) {
+        for (int step = 1; step <= NUM_STEPS; step++) {
 
-            Patch neighbour = neighbour(bestPatch);
+            System.out.print("Step " + step + " ");
 
-            System.out.println("Generated Neighbour: " + neighbour);
+            Patch neighbour = neighbour(bestPatch, rng);
 
-            TestRunner.TestResult neighbourResult = testRunner.test(neighbour);
+            System.out.print(neighbour);
 
-            if (!neighbourResult.patchSuccess) {
+            TestRunner.TestResult testResult = testRunner.test(neighbour);
+
+            if (!testResult.patchSuccess) {
                 System.out.println("Patch invalid");
-            } else {
-                if (neighbourResult.compiled) {
-                    System.out.println("Neighbour Execution Time: " + neighbourResult.executionTime);
-                    if (neighbourResult.result.wasSuccessful()) {
-                        System.out.println("Passed all tests.");
-                    } else {
-                        System.out.println("Did not pass all tests.");
-                    }
-                } else {
-                    System.out.println("Failed to compile");
-                }
-
-                // only accept functionally validated solutions
-                if (neighbourResult.compiled &&
-                        neighbourResult.result.getFailureCount() == 0 &&
-                        neighbourResult.executionTime < bestExecutionTime) {
-
-                    bestPatch = neighbour;
-                    bestExecutionTime = neighbourResult.executionTime;
-
-                }
-
+                continue;
             }
 
-            System.out.println("Step " + i + " fitness " + bestExecutionTime + "\n");
+            if (testResult.patchSuccess && !testResult.compiled) {
+                System.out.println("Failed to compile");
+                continue;
+            }
 
-            bestPatch.writeToFile(program.getFilename() + ".result");
+            if (!testResult.junitResult.wasSuccessful()) {
+                System.out.println("Failed to pass all tests");
+                continue;
+            }
 
+            // only accept functionally validated solutions
+            if (testResult.executionTime < bestTime) {
+                bestPatch = neighbour;
+                bestTime = testResult.executionTime;
+                bestStep = step;
+                System.out.println("*** New best *** Time: " + bestTime + "(ns)");
+            } else {
+                System.out.println("Time: " + testResult.executionTime);
+            }
 
         }
+
+        System.out.println("\nBest patch found: " + bestPatch);
+        System.out.println("Found at step: " + bestStep);
+        System.out.println("Best execution time: " + bestTime + " (ns) ");
+        System.out.println("Speedup (%): " + ((origTime - bestTime)/origTime));
+        bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
         return bestPatch;
     }
 
-    private double calcInitialExecutionTime(Patch patch) {
-        double[] times = new double[WARMUP_REPS];
-        for (int i=0; i < WARMUP_REPS; i++) {
-            times[i] = testRunner.test(patch).executionTime;
-        }
-        return TestRunner.median(times);
-    }
 
     /**
-     * Generate a neighbouring patch. Currently random choice.
+     * Generate a neighbouring patch. Currently rng choice.
      * @param patch Generate a neighbour of this patch.
      * @return A neighbouring patch.
      */
-    public Patch neighbour(Patch patch) {
-        return Patch.randomPatch(program, random, maxInitialPatchLength);
+    public Patch neighbour(Patch patch, Random rng) {
+        Patch neighbour = patch.clone();
+        if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
+            neighbour.remove(rng.nextInt(neighbour.size()));
+        } else {
+            neighbour.addRandomEdit(rng);
+        }
+        return neighbour;
     }
 
 

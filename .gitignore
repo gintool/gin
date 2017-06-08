@@ -5,3 +5,7 @@ out/
 build/
 .DS_Store
 lib/
+examples/Triangle.java.junitResult
+examples/Triangle.java.optimised
+examples/Triangle.java.patched
+examples/Triangle.java.statements

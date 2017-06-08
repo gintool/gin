@@ -1,6 +1,5 @@
 package gin;
 
-import com.github.javaparser.ast.CompilationUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.runner.JUnitCore;
@@ -19,73 +18,72 @@ import java.util.LinkedList;
 public class TestRunner {
 
     private static final String TMP_DIR = "tmp" + File.separator;
-    private static final int REPS = 100000;
+    private static final int DEFAULT_REPS = 1;
 
-    private Program program;
+    private SourceFile sourceFile;
 
-    public TestRunner(Program program) {
-        this.program = program;
+    public TestRunner(SourceFile classSource) {
+        this.sourceFile = classSource;
     }
 
     public TestResult test(Patch patch) {
+        return test(patch, DEFAULT_REPS);
+    }
+
+    public TestResult test(Patch patch, int reps) {
 
         // Apply the patch
-        CompilationUnit compilationUnit = program.getCompilationUnit();
-        CompilationUnit patched = compilationUnit.clone();
-        boolean patchSuccess = patch.apply(patched);
+        SourceFile patchedSource = patch.apply();
 
-        if (patchSuccess) {
-
-            // Create temp dir
-            ensureDirectory(new File(TMP_DIR));
-
-            // Copy patched program and test source to temp directory
-            copySource(patched);
-
-            // Compile the patched program and test classes
-            boolean compiledOK = compile();
-
-            // Run test cases if compiledOK, otherwise return failure.
-            if (compiledOK) {
-                return loadClassAndRunTests();
-            } else {
-                return new TestResult(null, Double.MAX_VALUE, false, true, patched.toString());
-            }
-
-        } else {
-
+        // If unable to apply patch, report as invalid
+        if (patchedSource == null) {
             return new TestResult(null, Double.MAX_VALUE, false, false, "");
-
         }
+
+        // Create temp dir
+        ensureDirectory(new File(TMP_DIR));
+
+        // Copy patched sourceFile and test source to temp directory
+        copySource(patchedSource);
+
+        // Compile the patched sourceFile and test classes
+        boolean compiledOK = compile();
+
+        // If failed to compile, return with partial result
+        if (!compiledOK) {
+            return new TestResult(null, Double.MAX_VALUE, false, true, patchedSource.getSource());
+        }
+
+        // Otherwise, run tests and return
+        TestResult result = loadClassAndRunTests(reps);
+        result.patchedProgram = patchedSource.getSource();
+        return result;
 
     }
 
     /**
      * Write the patched source and test class to a temporary directory.
      *
-     * @param compilationUnit
+     * @param patchedProgram The original sourceFile with a patch applied, to be written to the temp directory.
      */
-    private void copySource(CompilationUnit compilationUnit) {
+    private void copySource(SourceFile patchedProgram) {
 
-        // Create temp package subdirectory as per package name
-        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
-        String packageDirName = packageName.replace(".", File.separator);
-        File tmpPackageDir = new File(TMP_DIR, packageDirName);
+        File tmpPackageDir = new File(TMP_DIR);
         tmpPackageDir.mkdirs();
 
-        // Write patched program to temp dir
-        String programFilename = new File(program.getFilename()).getName();
+        // Write patched sourceFile to temp dir
+        String programFilename = new File(sourceFile.getFilename()).getName();
         File tmpSourceFile = new File(tmpPackageDir, programFilename);
         try {
             FileWriter writer = new FileWriter(tmpSourceFile);
-            writer.write(compilationUnit.toString());
+            writer.write(patchedProgram.getSource());
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         // Copy test source to tmp directory
-        String originalTestFilename = FilenameUtils.removeExtension(program.getFilename()) + "Test.java";
+        String originalTestFilename = FilenameUtils.removeExtension(sourceFile.getFilename()) + "Test.java";
         File originalTestFile = new File(originalTestFilename);
 
         File tmpTestFile = new File(tmpPackageDir, originalTestFile.getName());
@@ -121,16 +119,14 @@ public class TestRunner {
         // Add the source files to a list
         LinkedList<File> programFiles = new LinkedList<>();
 
-        String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
-        String packageDirName = packageName.replace(".", File.separator);
-        File tmpPackageDir = new File(TMP_DIR, packageDirName);
+        File tmpDir = new File(TMP_DIR);
 
-        String programFilename = new File(program.getFilename()).getName();
-        File sourceFile = new File(tmpPackageDir, programFilename);
+        String programFilename = new File(sourceFile.getFilename()).getName();
+        File sourceFile = new File(tmpDir, programFilename);
 
-        String originalTestFilename = FilenameUtils.removeExtension(program.getFilename()) + "Test.java";
+        String originalTestFilename = FilenameUtils.removeExtension(this.sourceFile.getFilename()) + "Test.java";
         File originalTestFile = new File(originalTestFilename);
-        File testFile = new File(tmpPackageDir, originalTestFile.getName());
+        File testFile = new File(tmpDir, originalTestFile.getName());
 
         programFiles.add(sourceFile);
         programFiles.add(testFile);
@@ -157,7 +153,7 @@ public class TestRunner {
      *
      * @return TestResult giving the outcome of running jUnit.
      */
-    private TestResult loadClassAndRunTests() {
+    private TestResult loadClassAndRunTests(int reps) {
 
         // Create a class loader initialised for the temp directory.
         URLClassLoader classLoader = null;
@@ -171,8 +167,7 @@ public class TestRunner {
         // Load the Test class. The required class under test will be loaded from the same directory by jUnit.
         Class<?> loadedTestClass = null;
         try {
-            String packageName = program.getCompilationUnit().getPackageDeclaration().get().getName().toString();
-            String classname = packageName + "." + program.getCompilationUnit().getType(0).getNameAsString();
+            String classname = FilenameUtils.removeExtension(new File(sourceFile.getFilename()).getName());
             loadedTestClass = classLoader.loadClass(classname + "Test");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -182,9 +177,9 @@ public class TestRunner {
         JUnitCore jUnitCore = new JUnitCore();
 
         // Run the tests REPS times and calculate the mean via a running average
-        double[] elapsed = new double[REPS];
+        double[] elapsed = new double[reps];
         Result result = null;
-        for (int rep=0; rep < REPS; rep++) {
+        for (int rep=0; rep < reps; rep++) {
             try {
                 long start = System.nanoTime();
                 result = jUnitCore.run(loadedTestClass);
@@ -218,37 +213,32 @@ public class TestRunner {
     }
 
     /**
-     * Class to hold the result of running jUnit.
+     * Class to hold the junitResult of running jUnit.
      */
     public class TestResult {
         String patchedProgram;
-        Result result;
+        Result junitResult;
         double executionTime;
         boolean compiled;
         boolean patchSuccess;
         public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
                           String patchedProgram) {
-            this.result = result;
+            this.junitResult = result;
             this.executionTime = executionTime;
             this.compiled = compiled;
             this.patchSuccess = patchedOK;
             this.patchedProgram = patchedProgram;
         }
-    }
-
-    public static double median(double[] values) {
-        Arrays.sort(values);
-        int mid = (values.length) / 2;
-        if (values.length % 2 == 0){
-            double left = values[mid];
-            double right = values[mid-1];
-            return (left + right) / 2;
-        } else{
-            return values[mid + 1];
+        public String toString() {
+            return String.format("Patch Valid: %b; Compiled: %b; Time: %f; Passed: %b", this.patchSuccess,
+                    this.compiled, this.executionTime, this.junitResult.wasSuccessful());
         }
     }
 
     public static double thirdQuartile(double[] values) {
+        if (values.length == 1) {
+            return values[0];
+        }
         Arrays.sort(values);
         int n = (int) Math.round(values.length * 0.75);
         return values[n];

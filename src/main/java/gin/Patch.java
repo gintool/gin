@@ -1,16 +1,17 @@
 package gin;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.Edit;
 import gin.edit.MoveStatement;
+import org.apache.commons.io.FileUtils;
 
-import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -18,24 +19,44 @@ import java.util.Random;
 public class Patch {
 
     private LinkedList<Edit> edits = new LinkedList<>();
-    private Program program;
+    private SourceFile sourceFilename;
 
-    public Patch(Program program) {
-        this.program = program;
+    public Patch(SourceFile sourceFilename) {
+        this.sourceFilename = sourceFilename;
+    }
+
+    public Patch clone() {
+        Patch clonePatch = new Patch(this.sourceFilename);
+        clonePatch.edits = (LinkedList<Edit>)(this.edits.clone());
+        return clonePatch;
     }
 
     public void add(Edit edit) {
         this.edits.add(edit);
     }
 
-    // We deliberately don't try to separate concerns here, keep it simple.
-    public boolean apply(CompilationUnit compilationUnit) {
+    public int size() {
+        return this.edits.size();
+    }
 
-        List<Statement> allStatements = compilationUnit.getNodesByType(Statement.class);
-        List<BlockStmt> blocks = compilationUnit.getNodesByType(BlockStmt.class);
+    public void remove(int index) {
+        this.edits.remove(index);
+    }
+
+    /**
+     * Apply this patch to the source file.
+     * @return a new SourceFile object representing the patched source code.
+     */
+    public SourceFile apply() {
+
+        CompilationUnit patchedCompilationUnit = sourceFilename.getCompilationUnit().clone();
+
+        List<Statement> allStatements = patchedCompilationUnit.getNodesByType(Statement.class);
+        List<BlockStmt> blocks = patchedCompilationUnit.getNodesByType(BlockStmt.class);
 
         List<Statement> toDelete = new LinkedList<>();
-        List<InsertionPair> insertions = new LinkedList<InsertionPair>();
+        List<Insertion> insertions = new LinkedList<Insertion>();
+
 
         for (Edit edit: edits) {
 
@@ -47,8 +68,12 @@ public class Patch {
 
                 MoveStatement move = (MoveStatement)edit;
                 Statement source = allStatements.get(move.sourceStatement);
-                Statement target = blocks.get(move.destinationBlock).getStatement(move.destinationChildInBlock);
-                InsertionPair insertion = new InsertionPair(source, target);
+                Statement target = null;
+                BlockStmt parent = blocks.get(move.destinationBlock);
+                if (move.destinationChildInBlock != 0) {
+                    target = parent.getStatement(move.destinationChildInBlock-1);
+                }
+                Insertion insertion = new Insertion(source, target, parent);
                 insertions.add(insertion);
                 toDelete.add(allStatements.get(((MoveStatement)edit).sourceStatement));
 
@@ -56,20 +81,27 @@ public class Patch {
 
                 CopyStatement copy = (CopyStatement)edit;
                 Statement source = allStatements.get(copy.sourceStatement);
-                Statement target = blocks.get(copy.destinationBlock).getStatement(copy.destinationChildInBlock);
-                InsertionPair insertion = new InsertionPair(source, target);
+                Statement target = null;
+                BlockStmt parent = blocks.get(copy.destinationBlock);
+                if (copy.destinationChildInBlock != 0) {
+                    target = parent.getStatement(copy.destinationChildInBlock-1);
+                }
+                Insertion insertion = new Insertion(source, target, parent);
                 insertions.add(insertion);
 
             }
 
         }
 
-        for (InsertionPair pair: insertions) {
-            Statement source = pair.statementToInsert.clone();
-            Node parent = pair.insertionPoint.getParentNode().get();
-            BlockStmt parentBlock = (BlockStmt) parent;
-            int indexInParent = parentBlock.getChildNodes().indexOf(pair.insertionPoint);
-            parentBlock.addStatement(indexInParent, source);
+        for (Insertion insertion: insertions) {
+            Statement source = insertion.statementToInsert.clone();
+            int indexInParent;
+            if (insertion.insertionPoint == null) {
+                indexInParent = 0;
+            } else {
+                indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
+            }
+            insertion.insertionPointParent.addStatement(indexInParent, source);
         }
 
         boolean removedOK = true;
@@ -77,61 +109,71 @@ public class Patch {
             removedOK &= statement.remove(); // Not guaranteed to work if violate some constraints.
         }
 
-        return removedOK;
+        if (removedOK) {
+            return new SourceFile(patchedCompilationUnit);
+        } else {
+            return null;
+        }
 
     }
 
-    public static Patch randomPatch(Program program, Random random, int maxLength) {
+    public static Patch randomPatch(SourceFile sourceFile, Random rng, int maxLength) {
 
-        int length = random.nextInt(maxLength-1) + 1; // range from 1..maxLength
-        Patch patch = new Patch(program);
+        int length = rng.nextInt(maxLength-1) + 1; // range from 1..maxLength
+        Patch patch = new Patch(sourceFile);
 
         for (int i=0; i < length; i++) {
-
-            int editType = random.nextInt(3);
-            Edit edit = null;
-
-            switch (editType) {
-                case (0):
-                    int statementToDelete = random.nextInt(program.getStatementCount());
-                    edit = new DeleteStatement(statementToDelete);
-                    break;
-                case (1):
-                    int statementToCopy = random.nextInt(program.getStatementCount());
-                    int insertBlock = random.nextInt(program.getNumberOfBlocks());
-                    int insertStatement = random.nextInt(program.getBlockSize(insertBlock));
-                    edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
-                    break;
-                case (2):
-                    int statementToMove = random.nextInt(program.getStatementCount());
-                    int moveBlock = random.nextInt(program.getNumberOfBlocks());
-                    int moveStatement = random.nextInt(program.getBlockSize(moveBlock));
-                    edit = new MoveStatement(statementToMove, moveBlock, moveStatement);
-                    break;
-            }
-
-            patch.edits.add(edit);
-
+            patch.addRandomEdit(rng);
         }
 
         return patch;
 
     }
 
-    public void writeToFile(String filename) {
+    private Edit randomEdit(Random rng) {
+
+        Edit edit = null;
+
+        int editType = rng.nextInt(3);
+
+        switch (editType) {
+            case (0):
+                int statementToDelete = rng.nextInt(sourceFilename.getStatementCount());
+                edit = new DeleteStatement(statementToDelete);
+                break;
+            case (1):
+                int statementToCopy = rng.nextInt(sourceFilename.getStatementCount());
+                int insertBlock = rng.nextInt(sourceFilename.getNumberOfBlocks());
+                int insertStatement = rng.nextInt(sourceFilename.getNumberOfInsertionPointsInBlock(insertBlock));
+                edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
+                break;
+            case (2):
+                int statementToMove = rng.nextInt(sourceFilename.getStatementCount());
+                int moveBlock = rng.nextInt(sourceFilename.getNumberOfBlocks());
+                int moveStatement = rng.nextInt(sourceFilename.getNumberOfInsertionPointsInBlock(moveBlock));
+                edit = new MoveStatement(statementToMove, moveBlock, moveStatement);
+                break;
+        }
+
+        return edit;
+
+    }
+
+    public void addRandomEdit(Random rng) {
+        this.edits.add(randomEdit(rng));
+    }
+
+    public void writePatchedSourceToFile(String filename) {
 
         // Apply this patch
-        CompilationUnit compilationUnit = program.getCompilationUnit();
-        CompilationUnit patched = compilationUnit.clone();
-        this.apply(patched);
+        SourceFile patchedSourceFile = this.apply();
 
-        // Write to file
         try {
-            FileWriter writer = new FileWriter(filename);
-            writer.write(compilationUnit.toString());
-            writer.close();
+            FileUtils.writeStringToFile(new File(filename), patchedSourceFile.getSource(), Charset.defaultCharset());
         } catch (IOException e) {
+            System.err.println("Exception writing source code of patched program to: " + filename);
             e.printStackTrace();
+            System.exit(-1);
         }
 
     }
@@ -145,14 +187,16 @@ public class Patch {
         return description;
     }
 
-    private class InsertionPair {
+    private class Insertion {
 
         public Statement statementToInsert;
         public Statement insertionPoint;
+        public BlockStmt insertionPointParent;
 
-        public InsertionPair(Statement statementToInsert, Statement insertionPoint) {
+        public Insertion(Statement statementToInsert, Statement insertionPoint, BlockStmt insertionPointParent) {
             this.statementToInsert = statementToInsert;
             this.insertionPoint = insertionPoint;
+            this.insertionPointParent = insertionPointParent;
         }
 
     }

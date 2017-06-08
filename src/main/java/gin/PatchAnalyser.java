@@ -1,60 +1,86 @@
 package gin;
 
-import com.github.javaparser.ast.CompilationUnit;
 import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.MoveStatement;
+import org.apache.commons.io.FileUtils;
 
-/**
- * Created by ucacdrw on 06/06/2017.
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+
+/*
+    A handy utility for analysing patches. Not part of the main gin system.
  */
 public class PatchAnalyser {
 
+    private static final int REPS = 10;
 
     public static void main(String[] args) {
 
+        // Check and parse arguments
         if (args.length != 2) {
-            System.out.println("Arguments should be as follows: ");
-            System.out.println("<program> \"<patch>\"");
-            System.out.println("Where patch is | bar-separated edits");
+            System.out.println("Arguments: <SourceFilename.java> \"<patch>\"");
+            System.out.println("Where patch is a sequence of | bar-separated edits");
             System.exit(0);
         }
 
-        String programFilename = args[0];
+        String sourceFilename = args[0];
         String patchText = args[1];
 
-        Program program = new Program(programFilename);
-        TestRunner testRunner = new TestRunner(program);
+        // Create SourceFile and tester classes, parse the patch and generate patched source.
+        SourceFile sourceFile = new SourceFile(sourceFilename);
+        TestRunner testRunner = new TestRunner(sourceFile);
+        Patch patch = parsePatch(patchText, sourceFile);
+        String patchedSource = patch.apply().getSource();
 
-        System.out.println("\nEvaluating patch for program: " + programFilename);
+        System.out.println("Evaluating patch for Class Source: " + sourceFilename);
 
-        Patch patch = parsePatch(patchText, program);
+        System.out.println("Patch is: " + patchText);
 
-        System.out.println("Parsed patch is: " + patch);
-
-        TestRunner.TestResult result = testRunner.test(patch);
-
-        if (!result.patchSuccess) {
-            System.out.println("Patch application failed");
-            System.exit(0);
+        String statementNumbering = sourceFile.statementList();
+        String statementFilename = sourceFilename + ".statements";
+        try {
+            FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
+        } catch (IOException e) {
+            System.err.println("Could not write patched source to " + sourceFilename);
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
         }
+        System.out.println("Statement numbering written to: " + statementFilename);
 
-        System.out.println("Source code of patched program:\n\n" + result.patchedProgram);
 
-        if (!result.compiled) {
-            System.out.println("Patch compilation failed");
-            System.exit(0);
+        // Write the patched source to file, for reference
+        String patchedFilename = sourceFilename + ".patched";
+        try {
+            FileUtils.writeStringToFile(new File(patchedFilename), patchedSource, Charset.defaultCharset());
+        } catch (IOException e) {
+            System.err.println("Could not write patched source to " + sourceFilename);
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
         }
+        System.out.println("Parsed patch written to: " + patchedFilename);
 
-        System.out.println("Execution time: " + result.executionTime);
+        // Evaluate original class
+        System.out.println("Timing original class execution...");
+        Patch emptyPatch = new Patch(sourceFile);
+        double originalExecutionTime = testRunner.test(emptyPatch, REPS).executionTime;
+        System.out.println("Original execution time: " + originalExecutionTime);
+
+        // Evaluate patch
+        System.out.println("Timing patched sourceFile execution...");
+        TestRunner.TestResult result = testRunner.test(patch, REPS);
+        System.out.println("Test result: " + result);
+        System.out.println("Execution time of patched sourceFile: " + result.executionTime);
 
     }
 
-    private static Patch parsePatch(String patchText, Program program) {
-        Patch patch = new Patch(program);
+    private static Patch parsePatch(String patchText, SourceFile sourceFile) {
+        Patch patch = new Patch(sourceFile);
         String[] edits = patchText.trim().split("\\|");
         for (String edit: edits) {
-            System.out.println(edit);
             String[] tokens = edit.trim().split("\\s+");
             switch (tokens[0]) {
                 case "DEL": // DEL <sourcestatement>

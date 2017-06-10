@@ -97,4 +97,4 @@ As Gin is still very much in an early stage of development, no process is yet in
 
 ## License
 
-This project is licensed under the MIT License. Please see the[LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License. Please see the [LICENSE.md](LICENSE.md) file for details

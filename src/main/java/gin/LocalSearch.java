@@ -2,11 +2,13 @@ package gin;
 
 import java.util.Random;
 
+/**
+ * Simple local search.
+ */
 public class LocalSearch {
 
     private static final int seed = 5678;
     private static final int NUM_STEPS = 100;
-    private static final int maxInitialPatchLength = 5;
     private static final int WARMUP_REPS = 10;
 
     private SourceFile sourceFile;
@@ -77,7 +79,7 @@ public class LocalSearch {
                 continue;
             }
 
-            if (testResult.patchSuccess && !testResult.compiled) {
+            if (!testResult.compiled) {
                 System.out.println("Failed to compile");
                 continue;
             }
@@ -87,7 +89,6 @@ public class LocalSearch {
                 continue;
             }
 
-            // only accept functionally validated solutions
             if (testResult.executionTime < bestTime) {
                 bestPatch = neighbour;
                 bestTime = testResult.executionTime;
@@ -102,26 +103,31 @@ public class LocalSearch {
         System.out.println("\nBest patch found: " + bestPatch);
         System.out.println("Found at step: " + bestStep);
         System.out.println("Best execution time: " + bestTime + " (ns) ");
-        System.out.println("Speedup (%): " + ((origTime - bestTime)/origTime));
+        System.out.println("Speedup (%): " + (origTime - bestTime)/origTime);
         bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
         return bestPatch;
+
     }
 
 
     /**
-     * Generate a neighbouring patch. Currently rng choice.
+     * Generate a neighbouring patch, by either deleting a randomly chosen edit, or adding a new random edit
      * @param patch Generate a neighbour of this patch.
      * @return A neighbouring patch.
      */
     public Patch neighbour(Patch patch, Random rng) {
+
         Patch neighbour = patch.clone();
+
         if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
             neighbour.remove(rng.nextInt(neighbour.size()));
         } else {
             neighbour.addRandomEdit(rng);
         }
+
         return neighbour;
+
     }
 
 

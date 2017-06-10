@@ -16,6 +16,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Represents a patch, a potential set of changes to a sourcefile.
+ */
 public class Patch {
 
     private LinkedList<Edit> edits = new LinkedList<>();
@@ -31,12 +34,12 @@ public class Patch {
         return clonePatch;
     }
 
-    public void add(Edit edit) {
-        this.edits.add(edit);
-    }
-
     public int size() {
         return this.edits.size();
+    }
+
+    public void add(Edit edit) {
+        this.edits.add(edit);
     }
 
     public void remove(int index) {
@@ -48,6 +51,23 @@ public class Patch {
      * @return a new SourceFile object representing the patched source code.
      */
     public SourceFile apply() {
+
+        /**
+         * Helper class used in applying a patch.
+         */
+        class Insertion {
+
+            Statement statementToInsert;
+            Statement insertionPoint;
+            BlockStmt insertionPointParent;
+
+            Insertion(Statement statementToInsert, Statement insertionPoint, BlockStmt insertionPointParent) {
+                this.statementToInsert = statementToInsert;
+                this.insertionPoint = insertionPoint;
+                this.insertionPointParent = insertionPointParent;
+            }
+
+        }
 
         CompilationUnit patchedCompilationUnit = sourceFilename.getCompilationUnit().clone();
 
@@ -117,17 +137,8 @@ public class Patch {
 
     }
 
-    public static Patch randomPatch(SourceFile sourceFile, Random rng, int maxLength) {
-
-        int length = rng.nextInt(maxLength-1) + 1; // range from 1..maxLength
-        Patch patch = new Patch(sourceFile);
-
-        for (int i=0; i < length; i++) {
-            patch.addRandomEdit(rng);
-        }
-
-        return patch;
-
+    public void addRandomEdit(Random rng) {
+        this.edits.add(randomEdit(rng));
     }
 
     private Edit randomEdit(Random rng) {
@@ -159,10 +170,6 @@ public class Patch {
 
     }
 
-    public void addRandomEdit(Random rng) {
-        this.edits.add(randomEdit(rng));
-    }
-
     public void writePatchedSourceToFile(String filename) {
 
         // Apply this patch
@@ -187,19 +194,6 @@ public class Patch {
         return description;
     }
 
-    private class Insertion {
-
-        public Statement statementToInsert;
-        public Statement insertionPoint;
-        public BlockStmt insertionPointParent;
-
-        public Insertion(Statement statementToInsert, Statement insertionPoint, BlockStmt insertionPointParent) {
-            this.statementToInsert = statementToInsert;
-            this.insertionPoint = insertionPoint;
-            this.insertionPointParent = insertionPointParent;
-        }
-
-    }
 
 }
 

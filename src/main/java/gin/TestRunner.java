@@ -204,7 +204,7 @@ public class TestRunner {
     }
 
     /**
-     * Helped function to clean a directory.
+     * Helper function to clean a directory.
      * @param f
      */
     private void ensureDirectory(File f) {

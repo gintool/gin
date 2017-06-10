@@ -1,6 +1,6 @@
 # Gin: Genetic Improvement in No Time
 
-This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. A preprint of the paper will be added to the repository if accepted. [Please see this preprint of the paper](doc/gin.pdf)
+This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. A preprint of the paper will be added to the repository if accepted. [Please see this preprint of the paper](doc/gin.pdf).
 
 Gin is a Genetic Improvement (GI) tool. Specifically, it is designed to reduce the execution time of Java code by modifying source files whilst preserving functionality as embodied by a set of JUnit tests.
 
@@ -38,7 +38,7 @@ The library dependencies can be found in the build.gradle file. Here's a list co
 * [JUnit 4.12 and Hamcrest 1.3](https://github.com/junit-team/junit4/wiki/Download-and-Install)
 * [JavaParser 3.1.4](https://github.com/javaparser)
 
-### Installing
+### Installing and Building gin
 
 These instructions were tested on OS X.
 
@@ -55,7 +55,35 @@ cd gin
 gradle build
 ```
 
-## Running the tests
+If you want to run gin from the commandline, you may want to build a fat jar to avoid having to explicitly include all the depencies in your classpath:
+
+```
+gradle shadowJar
+```
+
+This will create a fat jar at `build/gin.jar`.
+
+If you want to use gin with an IDE, it can be useful to have all the depencies in a top-level directory:
+
+```
+gradle copyToLib
+```
+
+This will place all dependencies in the top-level `lib` directory.
+
+## Running a Simple Example
+
+If you build the far jar as above, you can run gin on a simple example with:
+
+```
+java -jar build/gin.jar examples/Triangle.java
+```
+
+## Analysing Patches
+
+Gin provides a simple tool called PatchAnalyser, which will run a patch specified as a commandline argument and report execution time improvement, as well as dumping out annotated source files indicating statement numbering etc.
+
+## Running Unit Tests
 
 JUnit tests for gin are to be added to the repo.
 

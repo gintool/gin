@@ -1,6 +1,6 @@
 # Gin: Genetic Improvement in No Time
 
-This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. A preprint of the paper will be added to the repository if accepted. [Please see this preprint of the paper](doc/gin.pdf).
+This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. [Please see this preprint of the paper](doc/gin.pdf).
 
 Gin is a Genetic Improvement (GI) tool. Specifically, it is designed to reduce the execution time of Java code by modifying source files whilst preserving functionality as embodied by a set of JUnit tests.
 

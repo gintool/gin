@@ -1,3 +1,9 @@
+// To create fat (uber) jar
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.0'
+    id 'java'
+}
+
 apply plugin: 'java'
 apply plugin: 'application'
 sourceCompatibility = 1.8
@@ -17,7 +23,20 @@ dependencies {
     compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.1.4'
 }
 
+// This is handy to copy dependencies into a folder, for use in an IDE etc.
 task copyToLib(type: Copy) {
     into "lib/"
     from configurations.runtime
+}
+
+apply plugin: 'application'
+
+mainClassName = 'gin.LocalSearch'
+
+
+shadowJar {
+    destinationDir = buildDir
+    baseName = 'gin'
+    classifier = null
+    version = null
 }

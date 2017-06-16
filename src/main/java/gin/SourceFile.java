@@ -82,10 +82,14 @@ public class SourceFile {
         int counter = 0;
         String output = "";
         for (Statement statement: list) {
-            output +=  "[" + counter + "] " + statement.toString() + "\n"; // can't use indexof
+            output +=  "[" + counter + "] " + statement.toString() + "\n"; // can't use indexof as may appear > once
             counter++;
         }
         return output;
+    }
+
+    public String toString() {
+        return this.getSource();
     }
 
 }

@@ -9,3 +9,4 @@ examples/Triangle.java.junitResult
 examples/Triangle.java.optimised
 examples/Triangle.java.patched
 examples/Triangle.java.statements
+src/test/java/gin/Triangle.java.patched

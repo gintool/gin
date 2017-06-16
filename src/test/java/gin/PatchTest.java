@@ -116,17 +116,6 @@ public class PatchTest {
     }
 
     @Test
-    public void randomPatch() throws Exception {
-        int maxLength = 5;
-        Random rng = new Random(1234);
-        for (int i=0; i <= 10; i++) {
-            Patch randomPatch = Patch.randomPatch(sourceFile, rng, maxLength);
-            assertTrue(randomPatch.size() <= maxLength);
-            assertEquals(sourceFile, randomPatch.sourceFile);
-        }
-    }
-
-    @Test
     public void addRandomEdit() throws Exception {
         patch.addRandomEdit(new Random(1234));
         assertEquals(1, patch.size());

@@ -21,15 +21,15 @@ import java.util.Random;
  */
 public class Patch {
 
-    private LinkedList<Edit> edits = new LinkedList<>();
-    private SourceFile sourceFilename;
+    protected LinkedList<Edit> edits = new LinkedList<>();
+    protected SourceFile sourceFile;
 
-    public Patch(SourceFile sourceFilename) {
-        this.sourceFilename = sourceFilename;
+    public Patch(SourceFile sourceFile) {
+        this.sourceFile = sourceFile;
     }
 
     public Patch clone() {
-        Patch clonePatch = new Patch(this.sourceFilename);
+        Patch clonePatch = new Patch(this.sourceFile);
         clonePatch.edits = (LinkedList<Edit>)(this.edits.clone());
         return clonePatch;
     }
@@ -69,13 +69,13 @@ public class Patch {
 
         }
 
-        CompilationUnit patchedCompilationUnit = sourceFilename.getCompilationUnit().clone();
+        CompilationUnit patchedCompilationUnit = sourceFile.getCompilationUnit().clone();
 
         List<Statement> allStatements = patchedCompilationUnit.getNodesByType(Statement.class);
         List<BlockStmt> blocks = patchedCompilationUnit.getNodesByType(BlockStmt.class);
 
         List<Statement> toDelete = new LinkedList<>();
-        List<Insertion> insertions = new LinkedList<Insertion>();
+        List<Insertion> insertions = new LinkedList<>();
 
 
         for (Edit edit: edits) {
@@ -121,6 +121,7 @@ public class Patch {
             } else {
                 indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
             }
+
             insertion.insertionPointParent.addStatement(indexInParent, source);
         }
 
@@ -149,19 +150,19 @@ public class Patch {
 
         switch (editType) {
             case (0):
-                int statementToDelete = rng.nextInt(sourceFilename.getStatementCount());
+                int statementToDelete = rng.nextInt(sourceFile.getStatementCount());
                 edit = new DeleteStatement(statementToDelete);
                 break;
             case (1):
-                int statementToCopy = rng.nextInt(sourceFilename.getStatementCount());
-                int insertBlock = rng.nextInt(sourceFilename.getNumberOfBlocks());
-                int insertStatement = rng.nextInt(sourceFilename.getNumberOfInsertionPointsInBlock(insertBlock));
+                int statementToCopy = rng.nextInt(sourceFile.getStatementCount());
+                int insertBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
+                int insertStatement = rng.nextInt(sourceFile.getNumberOfInsertionPointsInBlock(insertBlock));
                 edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
                 break;
             case (2):
-                int statementToMove = rng.nextInt(sourceFilename.getStatementCount());
-                int moveBlock = rng.nextInt(sourceFilename.getNumberOfBlocks());
-                int moveStatement = rng.nextInt(sourceFilename.getNumberOfInsertionPointsInBlock(moveBlock));
+                int statementToMove = rng.nextInt(sourceFile.getStatementCount());
+                int moveBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
+                int moveStatement = rng.nextInt(sourceFile.getNumberOfInsertionPointsInBlock(moveBlock));
                 edit = new MoveStatement(statementToMove, moveBlock, moveStatement);
                 break;
         }
@@ -191,7 +192,7 @@ public class Patch {
         for (Edit edit: edits) {
             description += edit.toString() + " | ";
         }
-        return description;
+        return description.trim();
     }
 
 

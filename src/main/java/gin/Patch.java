@@ -1,6 +1,7 @@
 package gin;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import gin.edit.CopyStatement;
@@ -118,11 +119,19 @@ public class Patch {
             int indexInParent;
             if (insertion.insertionPoint == null) {
                 indexInParent = 0;
+                insertion.insertionPointParent.addStatement(indexInParent, source);
             } else {
-                indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
+                // insert after this point
+                List<Node> children = insertion.insertionPointParent.getChildNodes();
+                // this is a list, NOT a sequence, can't use index of
+                insertion.insertionPoint.
+                int indexOfInsertionPoint = children.indexOf(insertion.insertionPoint);
+                indexOfInsertionPoint += 1; // want to insert _after_ the node
+                insertion.insertionPointParent.addStatement(indexOfInsertionPoint, source);
+
             }
 
-            insertion.insertionPointParent.addStatement(indexInParent, source);
+
         }
 
         boolean removedOK = true;

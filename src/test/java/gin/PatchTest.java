@@ -92,6 +92,22 @@ public class PatchTest {
         SourceFile deletedLineProgram = deletePatch.apply();
         assertEqualsWithoutWhitespace(deletedExpected, deletedLineProgram.toString());
 
+        // Move a single line
+        MoveStatement moveLine = new MoveStatement(1, 0, 2);
+        Patch movePatch = new Patch(sourceFile);
+        movePatch.add(moveLine);
+        String moveExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int b = 2;\n" +
+                "        int a = 1;\n" +
+                "        int c = a + b;\n" +
+                "    }\n" +
+                "}";
+        SourceFile movedFile = movePatch.apply();
+        assertEqualsWithoutWhitespace(moveExpected, movedFile.getSource());
+
+
         // Move one line, copy another
         MoveStatement move = new MoveStatement(2, 0, 0);
         Patch moveCopyPatch = new Patch(sourceFile);

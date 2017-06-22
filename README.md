@@ -85,7 +85,9 @@ Gin provides a simple tool called PatchAnalyser, which will run a patch specifie
 
 ## Running Unit Tests
 
-JUnit tests for gin are to be added to the repo.
+```
+gradle test
+```
 
 ## Contributing
 

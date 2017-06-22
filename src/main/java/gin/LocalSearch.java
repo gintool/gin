@@ -11,9 +11,9 @@ public class LocalSearch {
     private static final int NUM_STEPS = 100;
     private static final int WARMUP_REPS = 10;
 
-    private SourceFile sourceFile;
-    private TestRunner testRunner;
-    private Random rng;
+    protected SourceFile sourceFile;
+    protected TestRunner testRunner;
+    protected Random rng;
 
     /**
      * Main method. Take a source code filename, instantiate a search instance and execute the search.

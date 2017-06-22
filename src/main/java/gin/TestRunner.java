@@ -2,6 +2,7 @@ package gin;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 
@@ -20,7 +21,7 @@ public class TestRunner {
     private static final String TMP_DIR = "tmp" + File.separator;
     private static final int DEFAULT_REPS = 1;
 
-    private SourceFile sourceFile;
+    protected SourceFile sourceFile;
 
     public TestRunner(SourceFile classSource) {
         this.sourceFile = classSource;
@@ -28,6 +29,10 @@ public class TestRunner {
 
     public TestResult test(Patch patch) {
         return test(patch, DEFAULT_REPS);
+    }
+
+    public File getTmpDir() {
+        return new File (TMP_DIR);
     }
 
     public TestResult test(Patch patch, int reps) {
@@ -66,7 +71,7 @@ public class TestRunner {
      *
      * @param patchedProgram The original sourceFile with a patch applied, to be written to the temp directory.
      */
-    private void copySource(SourceFile patchedProgram) {
+    protected void copySource(SourceFile patchedProgram) {
 
         File tmpPackageDir = new File(TMP_DIR);
         tmpPackageDir.mkdirs();
@@ -104,7 +109,7 @@ public class TestRunner {
      *
      * @return Boolean indicating whether the compilation was successful.
      */
-    private boolean compile()  {
+    protected boolean compile()  {
 
         // Configure the compiler
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -190,7 +195,8 @@ public class TestRunner {
             }
         }
 
-        return new TestResult(result, thirdQuartile(elapsed), true, true, "");
+        double thirdQuartile = new DescriptiveStatistics(elapsed).getPercentile(75);
+        return new TestResult(result, thirdQuartile, true, true, "");
 
     }
 
@@ -207,7 +213,7 @@ public class TestRunner {
      * Helper function to clean a directory.
      * @param f
      */
-    private void ensureDirectory(File f) {
+    protected void ensureDirectory(File f) {
         FileUtils.deleteQuietly(f);
         f.mkdirs();
     }
@@ -233,15 +239,6 @@ public class TestRunner {
             return String.format("Patch Valid: %b; Compiled: %b; Time: %f; Passed: %b", this.patchSuccess,
                     this.compiled, this.executionTime, this.junitResult.wasSuccessful());
         }
-    }
-
-    public static double thirdQuartile(double[] values) {
-        if (values.length == 1) {
-            return values[0];
-        }
-        Arrays.sort(values);
-        int n = (int) Math.round(values.length * 0.75);
-        return values[n];
     }
 
 }

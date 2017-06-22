@@ -21,6 +21,8 @@ dependencies {
     compile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.1.4'
+    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
+
 }
 
 // This is handy to copy dependencies into a folder, for use in an IDE etc.

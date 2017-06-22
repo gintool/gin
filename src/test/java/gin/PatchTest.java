@@ -17,9 +17,9 @@ import static org.junit.Assert.*;
 
 public class PatchTest {
 
-    private final static String exampleSourceFilename = "src/test/java/gin/Triangle.java";
+    private final static String exampleSourceFilename = "src/test/resources/ExampleTriangleProgram.java";
     private final static String tmpPatchedFilename = exampleSourceFilename + ".patched";
-    private final static String verySmallExampleSourceFilename = "src/test/java/gin/Small.java";
+    private final static String verySmallExampleSourceFilename = "src/test/resources/Small.java";
     private final static Charset charSet = Charset.forName("UTF-8");
 
     private SourceFile sourceFile;
@@ -96,7 +96,7 @@ public class PatchTest {
         MoveStatement move = new MoveStatement(2, 0, 0);
         Patch moveCopyPatch = new Patch(sourceFile);
         moveCopyPatch.add(move);
-        CopyStatement copy = new CopyStatement(2, 0, 3);
+        CopyStatement copy = new CopyStatement(2, 0, 2);
         moveCopyPatch.add(copy);
 
         String copyMoveExpected = "package gin;\n" +
@@ -104,14 +104,32 @@ public class PatchTest {
                 "    public static void Dummy() {\n" +
                 "        int b = 2;\n" +
                 "        int a = 1;\n" +
-                "        int c = a + b;\n" +
                 "        int b = 2;\n" +
+                "        int c = a + b;\n" +
                 "    }\n" +
                 "}";
         SourceFile copyMovedFile = moveCopyPatch.apply();
         assertEqualsWithoutWhitespace(copyMoveExpected, copyMovedFile.getSource());
 
         // Move copy delete
+        String moveCopyDeleteExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int b = 2;\n" +
+                "        int b = 2;\n" +
+                "        int a = 1;\n" +
+                "    }\n" +
+                "}";
+        MoveStatement move2 = new MoveStatement(1, 0, 2); // move a=1 to before c=a+b
+        CopyStatement copy2 = new CopyStatement(2, 0, 0); // duplicate b=2 at start
+        DeleteStatement delete2 = new DeleteStatement(3); // delete c=a+b
+        Patch moveCopyDeletePatch = new Patch(sourceFile);
+        moveCopyDeletePatch.add(move2);
+        moveCopyDeletePatch.add(copy2);
+        moveCopyDeletePatch.add(delete2);
+        SourceFile moveCopyDeleteProgram = moveCopyDeletePatch.apply();
+        assertEqualsWithoutWhitespace(moveCopyDeleteExpected, moveCopyDeleteProgram.toString());
+
 
     }
 

@@ -92,7 +92,8 @@ public class Patch {
                 Statement target = null;
                 BlockStmt parent = blocks.get(move.destinationBlock);
 
-                if (!parent.isEmpty()) {
+                if (!parent.isEmpty() &&  // TODO why are we going out-of-bounds here?
+                		parent.getChildNodes().size() > move.destinationChildInBlock ) {
                     target = parent.getStatement(move.destinationChildInBlock);
                 }
 
@@ -107,7 +108,8 @@ public class Patch {
                 Statement target = null;
                 BlockStmt parent = blocks.get(copy.destinationBlock);
 
-                if (!parent.isEmpty()) {
+                if (!parent.isEmpty() &&  // TODO why are we going out-of-bounds here?
+                		parent.getChildNodes().size() > copy.destinationChildInBlock ) {
                     target = parent.getStatement(copy.destinationChildInBlock);
                 }
 
@@ -126,6 +128,8 @@ public class Patch {
             } else {
                 indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
             }
+            if(indexInParent < 1) // TODO: why are we getting out of bounds here?
+            	indexInParent = 0;
             insertion.insertionPointParent.addStatement(indexInParent, source);
         }
 

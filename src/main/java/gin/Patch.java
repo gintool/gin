@@ -91,9 +91,11 @@ public class Patch {
                 Statement source = allStatements.get(move.sourceStatement);
                 Statement target = null;
                 BlockStmt parent = blocks.get(move.destinationBlock);
-                if (move.destinationChildInBlock != 0) {
-                    target = parent.getStatement(move.destinationChildInBlock-1);
+
+                if (!parent.isEmpty()) {
+                    target = parent.getStatement(move.destinationChildInBlock);
                 }
+
                 Insertion insertion = new Insertion(source, target, parent);
                 insertions.add(insertion);
                 toDelete.add(allStatements.get(((MoveStatement)edit).sourceStatement));
@@ -104,9 +106,11 @@ public class Patch {
                 Statement source = allStatements.get(copy.sourceStatement);
                 Statement target = null;
                 BlockStmt parent = blocks.get(copy.destinationBlock);
-                if (copy.destinationChildInBlock != 0) {
-                    target = parent.getStatement(copy.destinationChildInBlock-1);
+
+                if (!parent.isEmpty()) {
+                    target = parent.getStatement(copy.destinationChildInBlock);
                 }
+
                 Insertion insertion = new Insertion(source, target, parent);
                 insertions.add(insertion);
 
@@ -117,21 +121,12 @@ public class Patch {
         for (Insertion insertion: insertions) {
             Statement source = insertion.statementToInsert.clone();
             int indexInParent;
-            if (insertion.insertionPoint == null) {
+            if (insertion.insertionPointParent.isEmpty()) {
                 indexInParent = 0;
-                insertion.insertionPointParent.addStatement(indexInParent, source);
             } else {
-                // insert after this point
-                List<Node> children = insertion.insertionPointParent.getChildNodes();
-                // this is a list, NOT a sequence, can't use index of
-                insertion.insertionPoint.
-                int indexOfInsertionPoint = children.indexOf(insertion.insertionPoint);
-                indexOfInsertionPoint += 1; // want to insert _after_ the node
-                insertion.insertionPointParent.addStatement(indexOfInsertionPoint, source);
-
+                indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
             }
-
-
+            insertion.insertionPointParent.addStatement(indexInParent, source);
         }
 
         boolean removedOK = true;

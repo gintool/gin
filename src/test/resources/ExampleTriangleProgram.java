@@ -1,6 +1,4 @@
-package gin;
-
-public class Triangle {
+public class ExampleTriangleProgram {
 
     public enum TriangleType {
         INVALID, SCALENE, EQUALATERAL, ISOCELES

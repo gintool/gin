@@ -1,4 +1,4 @@
-package huffmanCodeTable;
+
 public class BasicHuffman {
   public static String[] getCodeBook(  Byte[] bytes){
     BubbleSort.sort(bytes,bytes.length);
@@ -79,8 +79,8 @@ public class BasicHuffman {
   }
 }
 
-package huffmanCodeTable;
-public class BubbleSort {
+
+private class BubbleSort {
   public static <T extends Comparable<? super T>>void sort(  T[] a,  Integer length){
     for (int i=0; i < length; i++) {
       for (int j=0; j < length - 1; j++) {
@@ -94,8 +94,8 @@ public class BubbleSort {
   }
 }
 
-package huffmanCodeTable;
-public class huffmanNode implements Comparable {
+
+private class huffmanNode implements Comparable {
   Byte uniqueChar=null;
   int freq=0;
   huffmanNode left, right;

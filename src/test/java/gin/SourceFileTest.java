@@ -57,7 +57,7 @@ public class SourceFileTest {
     @Test
     public void getNumberOfInsertionPointsInBlock() throws Exception {
         int actualNumberOfInsertionPoints = sourceFile.getNumberOfInsertionPointsInBlock(1);
-        int expectedNUmberOfInsertionPoints = 4;
+        int expectedNUmberOfInsertionPoints = 3;
         assertEquals(expectedNUmberOfInsertionPoints, actualNumberOfInsertionPoints);
     }
 

@@ -162,14 +162,26 @@ public class Patch {
             case (1):
                 int statementToCopy = rng.nextInt(sourceFile.getStatementCount());
                 int insertBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
-                int insertStatement = rng.nextInt(sourceFile.getNumberOfInsertionPointsInBlock(insertBlock));
+                int numberOfInsertionPoints = sourceFile.getNumberOfInsertionPointsInBlock(insertBlock);
+                int insertStatement;
+                if (numberOfInsertionPoints == 0) {
+                    insertStatement = 0; // insert at start of empty block
+                } else {
+                    insertStatement = rng.nextInt(numberOfInsertionPoints);
+                }
                 edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
                 break;
             case (2):
                 int statementToMove = rng.nextInt(sourceFile.getStatementCount());
                 int moveBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
-                int moveStatement = rng.nextInt(sourceFile.getNumberOfInsertionPointsInBlock(moveBlock));
-                edit = new MoveStatement(statementToMove, moveBlock, moveStatement);
+                int numberOfDestinationPoints = sourceFile.getNumberOfInsertionPointsInBlock(moveBlock);
+                int movePoint;
+                if (numberOfDestinationPoints == 0) {
+                    movePoint = 0; // insert at start of empty block
+                } else {
+                    movePoint = rng.nextInt(numberOfDestinationPoints);
+                }
+                edit = new MoveStatement(statementToMove, moveBlock, movePoint);
                 break;
         }
 

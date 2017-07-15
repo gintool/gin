@@ -61,10 +61,10 @@ public class Patch {
         class Insertion {
 
             Statement statementToInsert;
-            Statement insertionPoint;
+            int insertionPoint;
             BlockStmt insertionPointParent;
 
-            Insertion(Statement statementToInsert, Statement insertionPoint, BlockStmt insertionPointParent) {
+            Insertion(Statement statementToInsert, int insertionPoint, BlockStmt insertionPointParent) {
                 this.statementToInsert = statementToInsert;
                 this.insertionPoint = insertionPoint;
                 this.insertionPointParent = insertionPointParent;
@@ -91,14 +91,16 @@ public class Patch {
 
                 MoveStatement move = (MoveStatement)edit;
                 Statement source = allStatements.get(move.sourceStatement);
-                Statement target = null;
+                int targetStatementIndex;
                 BlockStmt parent = blocks.get(move.destinationBlock);
 
-                if (!parent.isEmpty()) {
-                    target = parent.getStatement(move.destinationChildInBlock);
+                if (parent.isEmpty()) {
+                    targetStatementIndex = 0;
+                } else {
+                    targetStatementIndex = move.destinationChildInBlock;
                 }
 
-                Insertion insertion = new Insertion(source, target, parent);
+                Insertion insertion = new Insertion(source, targetStatementIndex, parent);
                 insertions.add(insertion);
                 toDelete.add(allStatements.get(((MoveStatement)edit).sourceStatement));
 
@@ -106,14 +108,16 @@ public class Patch {
 
                 CopyStatement copy = (CopyStatement)edit;
                 Statement source = allStatements.get(copy.sourceStatement);
-                Statement target = null;
+                int targetStatementIndex;
                 BlockStmt parent = blocks.get(copy.destinationBlock);
 
-                if (!parent.isEmpty()) {
-                    target = parent.getStatement(copy.destinationChildInBlock);
+                if (parent.isEmpty()) {
+                    targetStatementIndex = 0;
+                } else {
+                    targetStatementIndex = copy.destinationChildInBlock;
                 }
 
-                Insertion insertion = new Insertion(source, target, parent);
+                Insertion insertion = new Insertion(source, targetStatementIndex, parent);
                 insertions.add(insertion);
 
             }
@@ -122,13 +126,7 @@ public class Patch {
 
         for (Insertion insertion: insertions) {
             Statement source = insertion.statementToInsert.clone();
-            int indexInParent;
-            if (insertion.insertionPointParent.isEmpty()) {
-                indexInParent = 0;
-            } else {
-                indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
-            }
-            insertion.insertionPointParent.addStatement(indexInParent, source);
+            insertion.insertionPointParent.addStatement(insertion.insertionPoint, source);
         }
 
         boolean removedOK = true;

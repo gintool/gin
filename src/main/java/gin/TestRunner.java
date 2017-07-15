@@ -42,7 +42,7 @@ public class TestRunner {
 
         // If unable to apply patch, report as invalid
         if (patchedSource == null) {
-            return new TestResult(null, Double.MAX_VALUE, false, false, "");
+            return new TestResult(null, -1, false, false, "");
         }
 
         // Create temp dir
@@ -56,7 +56,7 @@ public class TestRunner {
 
         // If failed to compile, return with partial result
         if (!compiledOK) {
-            return new TestResult(null, Double.MAX_VALUE, false, true, patchedSource.getSource());
+            return new TestResult(null, -1, false, true, patchedSource.getSource());
         }
 
         // Otherwise, run tests and return
@@ -222,11 +222,11 @@ public class TestRunner {
      * Class to hold the junitResult of running jUnit.
      */
     public class TestResult {
-        String patchedProgram;
-        Result junitResult;
-        double executionTime;
-        boolean compiled;
-        boolean patchSuccess;
+        String patchedProgram = "";
+        Result junitResult = null;
+        double executionTime = -1;
+        boolean compiled = false;
+        boolean patchSuccess = false;
         public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
                           String patchedProgram) {
             this.junitResult = result;
@@ -236,8 +236,12 @@ public class TestRunner {
             this.patchedProgram = patchedProgram;
         }
         public String toString() {
+            boolean junitOK = false;
+            if (this.junitResult != null) {
+                junitOK = this.junitResult.wasSuccessful();;
+            }
             return String.format("Patch Valid: %b; Compiled: %b; Time: %f; Passed: %b", this.patchSuccess,
-                    this.compiled, this.executionTime, this.junitResult.wasSuccessful());
+                    this.compiled, this.executionTime, junitOK);
         }
     }
 

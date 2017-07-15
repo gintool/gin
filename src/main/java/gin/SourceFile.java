@@ -60,29 +60,40 @@ public class SourceFile {
     }
 
     private void countStatements() {
-        List<Statement> list = compilationUnit.getNodesByType(Statement.class);
+        List<Statement> list = compilationUnit.getChildNodesByType(Statement.class);
         statementCount = list.size();
     }
 
     private void countBlocks() {
-        List<BlockStmt> list = compilationUnit.getNodesByType(BlockStmt.class);
+        List<BlockStmt> list = compilationUnit.getChildNodesByType(BlockStmt.class);
         numberOfBlocks = list.size();
         numberOfInsertionPointsInBlock = new int[numberOfBlocks];
         int counter = 0;
         for (BlockStmt b: list) {
-            // Insertion point 0 is before the first statement (or at start of block if block is empty)
-            numberOfInsertionPointsInBlock[counter] = b.getStatements().size() + 1;
+            numberOfInsertionPointsInBlock[counter] = b.getStatements().size();
             counter++;
         }
     }
 
     public String statementList() {
-        List<Statement> list = compilationUnit.getNodesByType(Statement.class);
+        List<Statement> list = compilationUnit.getChildNodesByType(Statement.class);
         statementCount = list.size();
         int counter = 0;
         String output = "";
         for (Statement statement: list) {
             output +=  "[" + counter + "] " + statement.toString() + "\n"; // can't use indexof as may appear > once
+            counter++;
+        }
+        return output;
+    }
+
+    public String blockList() {
+        List<BlockStmt> list = compilationUnit.getChildNodesByType(BlockStmt.class);
+        numberOfBlocks = list.size();
+        int counter = 0;
+        String output = "";
+        for (BlockStmt block: list) {
+            output +=  "[" + counter + "] " + block.toString() + "\n"; // can't use indexof as may appear > once
             counter++;
         }
         return output;

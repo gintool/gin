@@ -31,25 +31,39 @@ public class PatchAnalyser {
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFile sourceFile = new SourceFile(sourceFilename);
         TestRunner testRunner = new TestRunner(sourceFile);
-        Patch patch = parsePatch(patchText, sourceFile);
-        String patchedSource = patch.apply().getSource();
 
-        System.out.println("Evaluating patch for Class Source: " + sourceFilename);
-
-        System.out.println("Patch is: " + patchText);
-
+        // Dump statement numbering to a file
         String statementNumbering = sourceFile.statementList();
         String statementFilename = sourceFilename + ".statements";
         try {
             FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
         } catch (IOException e) {
-            System.err.println("Could not write patched source to " + sourceFilename);
+            System.err.println("Could not write statements to " + statementFilename);
             System.err.println(e);
             e.printStackTrace();
             System.exit(-1);
         }
         System.out.println("Statement numbering written to: " + statementFilename);
 
+        // Dump block numbering to a file
+        String blockNumbering = sourceFile.blockList();
+        String blockFilename = sourceFilename + ".blocks";
+        try {
+            FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());
+        } catch (IOException e) {
+            System.err.println("Could not write blocks to " + blockFilename);
+            System.err.println(e);
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        System.out.println("Block numbering written to: " + blockFilename);
+
+        Patch patch = parsePatch(patchText, sourceFile);
+        String patchedSource = patch.apply().getSource();
+
+        System.out.println("Evaluating patch for Class Source: " + sourceFilename);
+
+        System.out.println("Patch is: " + patchText);
 
         // Write the patched source to file, for reference
         String patchedFilename = sourceFilename + ".patched";

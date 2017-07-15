@@ -88,7 +88,7 @@ public class PatchAnalyser {
         TestRunner.TestResult result = testRunner.test(patch, REPS);
         System.out.println("Test result: " + result);
         System.out.println("Execution time of patched sourceFile: " + result.executionTime);
-        System.out.println("Speedup (%): " + (originalExecutionTime - result.executionTime)/originalExecutionTime);
+        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.executionTime)/originalExecutionTime)));
 
     }
 

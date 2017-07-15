@@ -88,6 +88,18 @@ public class SourceFile {
         return output;
     }
 
+    public String blockList() {
+        List<BlockStmt> list = compilationUnit.getNodesByType(BlockStmt.class);
+        numberOfBlocks = list.size();
+        int counter = 0;
+        String output = "";
+        for (BlockStmt block: list) {
+            output +=  "[" + counter + "] " + block.toString() + "\n"; // can't use indexof as may appear > once
+            counter++;
+        }
+        return output;
+    }
+
     public String toString() {
         return this.getSource();
     }

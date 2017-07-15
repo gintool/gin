@@ -2,8 +2,10 @@ package gin;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.visitor.ModifierVisitor;
 import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.Edit;
@@ -92,8 +94,7 @@ public class Patch {
                 Statement target = null;
                 BlockStmt parent = blocks.get(move.destinationBlock);
 
-                if (!parent.isEmpty() &&  // TODO why are we going out-of-bounds here?
-                		parent.getChildNodes().size() > move.destinationChildInBlock ) {
+                if (!parent.isEmpty()) {
                     target = parent.getStatement(move.destinationChildInBlock);
                 }
 
@@ -108,8 +109,7 @@ public class Patch {
                 Statement target = null;
                 BlockStmt parent = blocks.get(copy.destinationBlock);
 
-                if (!parent.isEmpty() &&  // TODO why are we going out-of-bounds here?
-                		parent.getChildNodes().size() > copy.destinationChildInBlock ) {
+                if (!parent.isEmpty()) {
                     target = parent.getStatement(copy.destinationChildInBlock);
                 }
 
@@ -128,8 +128,6 @@ public class Patch {
             } else {
                 indexInParent = insertion.insertionPointParent.getChildNodes().indexOf(insertion.insertionPoint);
             }
-            if(indexInParent < 1) // TODO: why are we getting out of bounds here?
-            	indexInParent = 0;
             insertion.insertionPointParent.addStatement(indexInParent, source);
         }
 

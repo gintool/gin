@@ -96,6 +96,7 @@ As Gin is still very much in an early stage of development, no process is yet in
 ## Authors
 
 * **[David R. White](http://www.davidrwhite.co.uk)** - Initial work
+* **[Brendan Cody-Kenny](https://codykenb.github.io/)** - Contributed extensive examples
 
 ## License
 

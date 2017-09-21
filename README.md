@@ -93,11 +93,6 @@ gradle test
 
 As Gin is still very much in an early stage of development, no process is yet in place for contribution. Please feel free to open issues and submit pull requests. If you'd like to aid in the development of Gin more generally, please get in touch.
 
-## Authors
-
-* **[David R. White](http://www.davidrwhite.co.uk)** - Initial work
-* **[Brendan Cody-Kenny](https://codykenb.github.io/)** - Contributed extensive examples
-
 ## License
 
 This project is licensed under the MIT License. Please see the [LICENSE.md](LICENSE.md) file for details

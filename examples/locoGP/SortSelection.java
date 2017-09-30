@@ -1,4 +1,4 @@
-public class Sort1SelectionProblem {
+public class SortSelection {
   public static Integer[] sort(  Integer[] a,  Integer length){
     for (int currentPlace=0; currentPlace < length - 1; currentPlace++) {
       int smallest=Integer.MAX_VALUE;

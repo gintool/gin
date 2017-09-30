@@ -1,4 +1,4 @@
-public class Sort1Selection2Problem {
+public class SortSelection2 {
   public static Integer[] sort(  Integer[] a,  Integer length){
     double p=0;
     int k=0;

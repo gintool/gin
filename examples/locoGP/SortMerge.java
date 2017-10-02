@@ -1,4 +1,4 @@
-public class Sort1Merge {
+public class SortMerge {
   public static Integer[] sort(  Integer[] a,  Integer length){
     mergesort_r(0,length,a);
     return a;

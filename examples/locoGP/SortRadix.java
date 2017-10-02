@@ -1,4 +1,4 @@
-public class Sort1Radix {
+public class SortRadix {
   public static Integer[] sort(  Integer[] a,  Integer length){
     for (int shift=Integer.SIZE - 1; shift > -1; shift--) {
       Integer[] tmp=new Integer[a.length];

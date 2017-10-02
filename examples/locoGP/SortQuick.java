@@ -1,4 +1,4 @@
-public class Sort1Quick {
+public class SortQuick {
   public static Integer[] sort(  Integer[] a,  Integer length){
     return sort(a,0,length - 1);
   }

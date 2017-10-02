@@ -1,4 +1,4 @@
-public class Sort1HeapProblem {
+public class SortHeap {
   public static Integer[] sort(  Integer[] a,  Integer array_size){
     int i;
     for (i=(array_size / 2 - 1); i >= 0; --i) {

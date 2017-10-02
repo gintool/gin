@@ -1,4 +1,4 @@
-public class Sort1ProblemTest {
+public class SortBubble {
   public static Integer[] sort(  Integer[] a,  Integer length){
     for (int i=0; i < length; i++) {
       for (int j=0; j < length - 1; j++) {

@@ -1,4 +1,4 @@
-public class Sort1Shell {
+public class SortShell {
   public static Integer[] sort(  Integer[] a,  Integer length){
     int increment=length / 2;
     while (increment > 0) {

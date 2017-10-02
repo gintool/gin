@@ -1,4 +1,4 @@
-public class Sort1Insertion {
+public class SortInsertion {
   public static Integer[] sort(  Integer[] a,  Integer array_size){
     int i, j, index;
     for (i=1; i < array_size; ++i) {

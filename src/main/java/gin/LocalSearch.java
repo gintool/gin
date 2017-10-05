@@ -103,7 +103,8 @@ public class LocalSearch {
         System.out.println("\nBest patch found: " + bestPatch);
         System.out.println("Found at step: " + bestStep);
         System.out.println("Best execution time: " + bestTime + " (ns) ");
-        System.out.println("Speedup (%): " + (origTime - bestTime)/origTime);
+        System.out.printf("Speedup (%%): %.2f ", 100*((origTime - bestTime)/origTime));
+
         bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
         return bestPatch;

@@ -45,7 +45,7 @@ These instructions were tested on OS X.
 Clone the repo:
 
 ```
-git clone https://github.com/drdrwhite/gin
+git clone https://github.com/gintool/gin
 ```
 
 Build using gradle (alternatively import into your favourite IDE, such as IntelliJ)
@@ -78,6 +78,34 @@ If you build the far jar as above, you can run gin on a simple example with:
 ```
 java -jar build/gin.jar examples/Triangle.java
 ```
+
+Your output will be similar to the following:
+
+```
+Optimising source file: examples/Triangle.java
+
+Initial execution time: 1.66700594275E9 (ns) 
+
+Step 1 | COPY 27 -> 4:0 |Failed to compile
+Step 2 | MOVE 32 -> 4:0 |Patch invalid
+Step 3 | COPY 0 -> 6:0 |Failed to compile
+Step 4 | COPY 21 -> 1:2 |Failed to compile
+Step 5 | MOVE 21 -> 3:0 |Patch invalid
+Step 6 | DEL 10 |Failed to pass all tests
+Step 7 | DEL 29 |*** New best *** Time: 2679060.0(ns)
+Step 8 |Time: 1.653746228E9
+.
+.
+.
+Step 100 | DEL 29 | COPY 2 -> 9:0 | COPY 21 -> 4:0 |Failed to compile
+
+Best patch found: | DEL 29 | COPY 2 -> 9:0 |
+Found at step: 72
+Best execution time: 1549250.0 (ns) 
+Speedup (%): 99.91 
+```
+
+The output tells you for each step whether a patch was invalid (e.g. because it could not be applied) or whether the patched code failed to compile or it failed to pass all provided tests. If none of these conditions hold, then the runtime is shown, and it is highlighted if the patch has resulted in the fastest successful passing of all tests seen so far. At the end, a brief summary is shown.
 
 ## Analysing Patches
 

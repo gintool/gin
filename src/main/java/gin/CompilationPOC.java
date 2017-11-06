@@ -2,6 +2,7 @@ package gin;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.List;
 
 public class CompilationPOC {
 
@@ -31,6 +33,11 @@ public class CompilationPOC {
 
     }
 
+    // This should eventually:
+    // 1. Run test.
+    // 2. Modify source.
+    // 3. Compile in memory.
+    // 4. Re-run test
     private void go(String sourceFilenamePath) {
 
         sourceFile = new SourceFile(sourceFilenamePath);  // just parses the code and counts statements etc.
@@ -47,6 +54,7 @@ public class CompilationPOC {
 
         System.out.println(unit.toString());
 
+        // Work out name of the test class given the original source filename as input from commandline
         File sourceFile = new File(sourceFilenamePath);
         String sourceFilename = sourceFile.getName();
         String sourceFilenameWithoutExtension = FilenameUtils.removeExtension(sourceFilename);
@@ -60,11 +68,17 @@ public class CompilationPOC {
             notFound.printStackTrace();
             System.exit(0);
         }
+
+        // Run jUnit tests
         runTests(1, testClass);
 
         // Now alter and dynamically compile and load and run again
+        List<Node> nodes = unit.getChildNodes();
 
+        // Delete the print statement that outputs "Simple One"
+        nodes.get(0).getChildNodes().get(1).getChildNodes().get(2).getChildNodes().get(0).remove();
 
+        System.out.println("Exiting my POC");
         //Patch patch = new Patch(sourceFile);
         //testRunner.test(patch);
 

@@ -20,116 +20,105 @@ import java.util.Locale;
 
 public class CompilationPOC {
 
-    protected SourceFile sourceFile;
-    protected TestRunner testRunner;
-
     public static void main(String args[]) {
 
         if (args.length < 1) {
-            System.out.println("Please provide filename of source file to optimise.");
+            System.out.println("Usage: source_filename test_classname");
             System.exit(0);
         }
 
         CompilationPOC poc = new CompilationPOC();
-        poc.go(args[0]);
+        poc.runModifyRerun(args[0], args[1]);
 
     }
 
-    // This should eventually:
-    // 1. Run test.
-    // 2. Modify source.
-    // 3. Compile in memory.
-    // 4. Re-run test
-    private void go(String sourceFilenamePath) {
+    private CompilationUnit loadAndParseSource(String sourceFilename) {
 
-        sourceFile = new SourceFile(sourceFilenamePath);  // just parses the code and counts statements etc.
+        // Load and parse source
         CompilationUnit unit = null;
 
         try {
-            unit = JavaParser.parse(new File(sourceFilenamePath));
+            unit = JavaParser.parse(new File(sourceFilename));
         } catch (IOException io) {
-            System.err.println("Exception reading source file: " + sourceFilenamePath);
-            System.err.println("Exception: " + io);
+            System.err.println("Exception reading source file: " + sourceFilename + " " + io);
             io.printStackTrace();
             System.exit(-1);
         }
 
-        System.out.println(unit.toString());
+        return unit;
 
-        // Work out name of the test class given the original source filename as input from commandline
-        File sourceFile = new File(sourceFilenamePath);
-        String sourceFilename = sourceFile.getName();
-        String sourceFilenameWithoutExtension = FilenameUtils.removeExtension(sourceFilename);
-        String testClassName = sourceFilenameWithoutExtension + "Test";
-        Class testClass = null;
-        try {
-            testClass = Class.forName(testClassName);
-        } catch (ClassNotFoundException notFound) {
-            System.err.println("Cannot find test class: " + testClassName);
-            System.err.println(notFound);
-            notFound.printStackTrace();
-            System.exit(0);
-        }
+    }
 
-        // Run jUnit tests
-        runTests(1, testClass);
-
-        // Now alter and dynamically compile and load and run again
-        List<Node> nodes = unit.getChildNodes();
-
-        // Delete the print statement that outputs "Simple One"
-        nodes.get(0).getChildNodes().get(1).getChildNodes().get(2).getChildNodes().get(0).remove();
-
-        // Now dynamically compile
-        // See http://www.beyondlinux.com/2011/07/20/3-steps-to-dynamically-compile-instantiate-and-run-a-java-class/
+    // Compile a class.
+    // TODO: have it write result to memory rather than disk
+    private void compile(String classname, String source) {
 
         // Create an in-memory Java File Object
         JavaFileObject so = null;
         try {
-            so = new InMemoryJavaFileObject("Triangle", unit.toString());
+            so = new InMemoryJavaFileObject(classname, source);
         } catch (Exception exception) {
-            exception.printStackTrace();
+            System.err.println("Error creating memory file object " + exception);
+            System.exit(-1);
         }
 
-        //get system compiler:
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-
-        // I think we can provide a new filemanager that will provide an in-memory Java File Object when requesting a file,
-        // so we intercept the writing of the Java class to disk.
-
-        // BUT - for now, writing to disk is enough IFF we can load the file from disk and override the already loaded one
 
         // for compilation diagnostic message processing on compilation WARNING/ERROR
         MyDiagnosticListener c = new MyDiagnosticListener();
-        StandardJavaFileManager fileManager = compiler.getStandardFileManager(c,
-                Locale.ENGLISH,
-                null);
-        //specify classes output folder
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(c, Locale.ENGLISH,null);
         Iterable options = Arrays.asList("-d", "tmp");
-        JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager,
-                c, options, null,
+        JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, c, options, null,
                 Arrays.asList(so));
+
         Boolean result = task.call();
-        if (result == true)
-        {
-            System.out.println("Succeeded");
+        if (result == true) {
+            System.out.println("Compilation succeeded");
         }
 
-        // NOW - Try to run the test again!
+    }
+
+    private void runModifyRerun(String sourceFilename, String testClassname) {
+
+        // Parse source file
+        CompilationUnit unit = loadAndParseSource(sourceFilename);
+        System.out.println(unit.toString());
+
+        // Run test class through jUnit
+        runTests(testClassname);
+
+        // Delete the print statement that outputs "Simple One"
+        List<Node> nodes = unit.getChildNodes();
+        nodes.get(0).getChildNodes().get(1).getChildNodes().get(2).getChildNodes().get(0).remove();
+
+        // Compile the modified class
+        compile("Triangle", unit.toString());
+
+        // Run jUnit tests
+        runTests(testClassname);
+
+        System.out.println("Exiting my POC");
+
+    }
+
+    private void runTests(String testClassname) {
 
         // Create a class loader initialised for the temp directory.
-        URLClassLoader classLoader = null;
+        //URLClassLoader classLoader = null;
+        ClassLoader classLoader = null;
 
         try {
-            classLoader = new URLClassLoader(new URL[]{new File("tmp/").toURI().toURL()});
-        } catch (MalformedURLException e) {
+            //classLoader = new URLClassLoader(new URL[]{new File("/Users/whited/Documents/gin/tmp/").toURI().toURL()});
+            classLoader = new Reloader();
+        } catch (Exception e) {
+            System.err.println("Error instantiating class loader: " + e);
             e.printStackTrace();
         }
 
         // Load the Test class. The required class under test will be loaded from the same directory by jUnit.
-        Class<?> loadedClass = null;
+        Class<?> loadedTestClass = null;
         try {
-            loadedClass = classLoader.loadClass(sourceFilenameWithoutExtension);
+            loadedTestClass = classLoader.loadClass(testClassname);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -137,43 +126,10 @@ public class CompilationPOC {
         // Instantiate jUnit
         JUnitCore jUnitCore = new JUnitCore();
 
-        Result result2 = jUnitCore.run(loadedClass);
+        System.out.println("Running test class: " + loadedTestClass.getCanonicalName());
+        //System.out.println("Running class from: " + loadedTestClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        System.out.println(result2.wasSuccessful());
-
-        System.out.println("Exiting my POC");
-
-        // NEXT STEPS - to (1) not have to write the class to file; (2) Get it loading
-
-        //Patch patch = new Patch(sourceFile);
-        //testRunner.test(patch);
-
-    }
-
-    private void runTests(int reps, Class testClass) {
-
-        // Create a class loader initialised for the temp directory.
-//        URLClassLoader classLoader = null;
-//
-//        try {
-//            classLoader = new URLClassLoader(new URL[]{new File(TMP_DIR).toURI().toURL()});
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
-
-        // Load the Test class. The required class under test will be loaded from the same directory by jUnit.
-//        Class<?> loadedTestClass = null;
-//        try {
-//            String classname = FilenameUtils.removeExtension(new File(sourceFile.getFilename()).getName());
-//            loadedTestClass = classLoader.loadClass(classname + "Test");
-//        } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
-//        }
-
-        // Instantiate jUnit
-        JUnitCore jUnitCore = new JUnitCore();
-
-        Result result = jUnitCore.run(testClass);
+        Result result = jUnitCore.run(loadedTestClass);
 
         System.out.println(result.wasSuccessful());
 

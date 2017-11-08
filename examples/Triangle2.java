@@ -40,10 +40,10 @@ public class Triangle2 {
 
     private static void delay() {
     	if (System.currentTimeMillis() > 0) {
-	    	try {
+	        try {
 	            Thread.sleep(100);
 	        } catch (InterruptedException e) {
-	
+	            // do nothing
 	        }
     	}
     }

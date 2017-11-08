@@ -17,7 +17,7 @@ public class LogicalOperatorReplacement extends ModifyNode {
 	private final Operator source;
 	private final Operator replacement;
 	
-	// the following list is not perfect! needs refinement.
+	// the following list is not perfect! needs refinement, if not total replacement with a better way to do this
 	private static final Map<Operator, List<Operator>> REPLACEMENTS = new LinkedHashMap<>();
 	static {
 		REPLACEMENTS.put(Operator.AND, Arrays.asList(Operator.BINARY_AND, Operator.EQUALS, Operator.BINARY_OR, Operator.NOT_EQUALS, Operator.OR, Operator.XOR));

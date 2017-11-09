@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gintool/gin.svg?branch=master)](https://travis-ci.org/gintool/gin)
+
 # Gin: Genetic Improvement in No Time
 
 This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. [Please see this preprint of the paper](doc/gin.pdf).

@@ -41,21 +41,31 @@ public class CompilationPOCTwo {
         CompilationUnit unit = loadAndParseSource(sourceFilename);
         System.out.println(unit.toString());
 
-        // Run test class through jUnit
+        // Create our own class loader
         ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-        runTests(systemClassLoader, testClassname);
+        URL[] urls;
+        if (systemClassLoader instanceof URLClassLoader) {
+            urls = ((URLClassLoader) systemClassLoader).getURLs();
+        } else {
+            urls = new URL[]
+                    {new File(".").toURI().toURL()};
+        }
+        ClassLoader parent = systemClassLoader.getParent();
+        CacheClassLoader cacheClassLoader = new CacheClassLoader(urls, null);
+        cacheClassLoader.addToWhiteList(testClassname); // ok to load this from disk yourself
+
+        // Run the tests, as normal
+        runTests(cacheClassLoader, testClassname);
 
         // Delete the print statement that outputs "Simple One"
         List<Node> nodes = unit.getChildNodes();
         nodes.get(0).getChildNodes().get(1).getChildNodes().get(2).getChildNodes().get(0).remove();
 
-        System.out.println("After deletion: \n" + unit);
-
-        // Compile the modified class
+        // Compile the modified class and update in the class loader
         Class newClass = compile("Triangle", unit.toString());
-        CacheClassLoader cacheClassLoader = new CacheClassLoader(systemClassLoader);
         cacheClassLoader.putInCache("Triangle", newClass);
 
+        // Rerun the tests
         runTests(cacheClassLoader, testClassname);
 
         System.out.println("Exiting my POC");

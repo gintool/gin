@@ -1,16 +1,15 @@
 package gin;
 
 // See https://stackoverflow.com/questions/3971534/how-to-force-java-to-reload-class-upon-instantiation
-
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.HashMap;
 
 public class CacheClassLoader extends ClassLoader {
 
     private HashMap<String, Class> cache = new HashMap<>();
+
+    public CacheClassLoader(ClassLoader parent) {
+        super(parent);
+    }
 
     @Override
     public Class<?> loadClass(String s) {
@@ -32,19 +31,8 @@ public class CacheClassLoader extends ClassLoader {
         }
     }
 
-    public void setClass(String classname, Class klass) {
-            cache.put(classname, klass);
+    public void putInCache(String classname, Class klass) {
+        cache.put(classname, klass);
     }
 
-
-//    private byte[] loadClassData(String className) throws IOException {
-//        File f = new File("./tmp/" + className.replaceAll("\\.", "/") + ".class");
-//        int size = (int) f.length();
-//        byte buff[] = new byte[size];
-//        FileInputStream fis = new FileInputStream(f);
-//        DataInputStream dis = new DataInputStream(fis);
-//        dis.readFully(buff);
-//        dis.close();
-//        return buff;
-//    }
 }

@@ -8,9 +8,8 @@ import java.util.Random;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import com.github.javaparser.ast.expr.UnaryExpr;
+import com.github.javaparser.ast.expr.UnaryExpr.Operator;
 
 import gin.edit.ModifyNode;
 
@@ -19,45 +18,31 @@ public class UnaryOperatorReplacement extends ModifyNode {
 	private final Operator replacement;
 	
 	// the following list is not perfect! needs refinement, if not total replacement with a better way to do this
+	// also missing removal/insertion of these - e.g. where we have a complement, there isn't a "no-complement" operator, 
+	// so instead we have to look for nodes with/without a complement and possibly delete/insert 
 	private static final Map<Operator, List<Operator>> REPLACEMENTS = new LinkedHashMap<>();
 	static {
-		REPLACEMENTS.put(Operator.AND, Arrays.asList(Operator.BINARY_AND, Operator.EQUALS, Operator.BINARY_OR, Operator.NOT_EQUALS, Operator.OR, Operator.XOR));
-		REPLACEMENTS.put(Operator.BINARY_AND, Arrays.asList(Operator.AND, Operator.EQUALS, Operator.BINARY_OR, Operator.NOT_EQUALS, Operator.OR, Operator.XOR));
-		REPLACEMENTS.put(Operator.BINARY_OR, Arrays.asList(Operator.AND, Operator.BINARY_AND, Operator.EQUALS, Operator.NOT_EQUALS, Operator.OR, Operator.XOR));
-		REPLACEMENTS.put(Operator.OR, Arrays.asList(Operator.AND, Operator.BINARY_AND, Operator.EQUALS, Operator.BINARY_OR, Operator.NOT_EQUALS, Operator.XOR));
-		REPLACEMENTS.put(Operator.XOR, Arrays.asList(Operator.AND, Operator.BINARY_AND, Operator.EQUALS, Operator.BINARY_OR, Operator.NOT_EQUALS, Operator.OR));
+		REPLACEMENTS.put(Operator.BITWISE_COMPLEMENT, Arrays.asList(Operator.LOGICAL_COMPLEMENT, Operator.MINUS, Operator.PLUS));
+		REPLACEMENTS.put(Operator.LOGICAL_COMPLEMENT, Arrays.asList(Operator.BITWISE_COMPLEMENT, Operator.MINUS, Operator.PLUS));
+		REPLACEMENTS.put(Operator.MINUS, Arrays.asList(Operator.BITWISE_COMPLEMENT, Operator.LOGICAL_COMPLEMENT, Operator.PLUS));
+		REPLACEMENTS.put(Operator.PLUS, Arrays.asList(Operator.BITWISE_COMPLEMENT, Operator.LOGICAL_COMPLEMENT, Operator.MINUS));
 		
-		REPLACEMENTS.put(Operator.GREATER, Arrays.asList(Operator.EQUALS, Operator.GREATER_EQUALS, Operator.LESS, Operator.LESS_EQUALS));
-		REPLACEMENTS.put(Operator.GREATER_EQUALS, Arrays.asList(Operator.EQUALS, Operator.GREATER, Operator.LESS, Operator.LESS_EQUALS));
-		REPLACEMENTS.put(Operator.LESS, Arrays.asList(Operator.EQUALS, Operator.GREATER, Operator.GREATER_EQUALS, Operator.LESS_EQUALS));
-		REPLACEMENTS.put(Operator.LESS_EQUALS, Arrays.asList(Operator.EQUALS, Operator.GREATER, Operator.GREATER_EQUALS, Operator.LESS));
-				
-		REPLACEMENTS.put(Operator.DIVIDE, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.MULTIPLY, Operator.PLUS, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.LEFT_SHIFT, Arrays.asList(Operator.DIVIDE, Operator.MINUS, Operator.MULTIPLY, Operator.PLUS, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.MINUS, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MULTIPLY, Operator.PLUS, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.MULTIPLY, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.PLUS, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.PLUS, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.MULTIPLY, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.REMAINDER, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.MULTIPLY, Operator.PLUS, Operator.SIGNED_RIGHT_SHIFT, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.SIGNED_RIGHT_SHIFT, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.MULTIPLY, Operator.PLUS, Operator.REMAINDER, Operator.UNSIGNED_RIGHT_SHIFT));
-		REPLACEMENTS.put(Operator.UNSIGNED_RIGHT_SHIFT, Arrays.asList(Operator.DIVIDE, Operator.LEFT_SHIFT, Operator.MINUS, Operator.MULTIPLY, Operator.PLUS, Operator.REMAINDER, Operator.SIGNED_RIGHT_SHIFT));
-		
-		REPLACEMENTS.put(Operator.EQUALS, Arrays.asList(Operator.AND, Operator.BINARY_AND, Operator.BINARY_OR, Operator.GREATER_EQUALS, Operator.LESS, Operator.LESS_EQUALS, Operator.NOT_EQUALS, Operator.OR, Operator.XOR));
-		REPLACEMENTS.put(Operator.NOT_EQUALS, Arrays.asList(Operator.AND, Operator.BINARY_AND, Operator.BINARY_OR, Operator.EQUALS, Operator.GREATER_EQUALS, Operator.LESS, Operator.LESS_EQUALS, Operator.OR, Operator.XOR));
+		REPLACEMENTS.put(Operator.POSTFIX_DECREMENT, Arrays.asList(Operator.POSTFIX_INCREMENT, Operator.PREFIX_DECREMENT, Operator.PREFIX_INCREMENT));
+		REPLACEMENTS.put(Operator.POSTFIX_INCREMENT, Arrays.asList(Operator.POSTFIX_DECREMENT, Operator.PREFIX_DECREMENT, Operator.PREFIX_INCREMENT));
+		REPLACEMENTS.put(Operator.PREFIX_DECREMENT, Arrays.asList(Operator.POSTFIX_DECREMENT, Operator.POSTFIX_INCREMENT, Operator.PREFIX_INCREMENT));
+		REPLACEMENTS.put(Operator.PREFIX_INCREMENT, Arrays.asList(Operator.POSTFIX_DECREMENT, Operator.POSTFIX_INCREMENT, Operator.PREFIX_DECREMENT));		
 	}
 	
 	/**
-	 * Naming follows MuJava convention
-	 * LOR
-	 * 
 	 * @param sourceNodes is the list of possible nodes for modification; these won't be
 	 * 	      modified, just used for reference
 	 * @param r is needed to choose a node and a suitable replacement 
 	 *        (keeps this detail out of Patch class)
 	 */
-	public UnaryOperatorReplacement(List<Node> sourceNodes, LogicalOperatorReplacementFactory factory, Random r) {
+	public UnaryOperatorReplacement(List<Node> sourceNodes, UnaryOperatorReplacementFactory factory, Random r) {
 		super(sourceNodes, factory, r);
 		
-		BinaryExpr sourceNode = (BinaryExpr)(this.sourceNodes.get(sourceNodeIndex));
+		UnaryExpr sourceNode = (UnaryExpr)(this.sourceNodes.get(sourceNodeIndex));
 		
 		this.source = sourceNode.getOperator();
 		this.replacement = chooseRandomReplacement(source, r);
@@ -70,7 +55,7 @@ public class UnaryOperatorReplacement extends ModifyNode {
 		
 		Node node = nodes.get(sourceNodeIndex);
 		
-		((BinaryExpr)node).setOperator(replacement);
+		((UnaryExpr)node).setOperator(replacement);
 		
 		return true;
 	}

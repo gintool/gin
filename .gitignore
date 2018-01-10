@@ -17,3 +17,4 @@ src/test/resources/ExampleTriangleProgram.java.patched
 *.blocks
 classes/
 gin.iml
+examples/*.class

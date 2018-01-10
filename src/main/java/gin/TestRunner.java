@@ -57,50 +57,6 @@ public class TestRunner {
     }
 
 
-    private TestResult runTests(Class modifiedClass, int reps) {
-
-        classLoader = new CacheClassLoader(workingDirectory);
-
-        if (modifiedClass != null) {
-            classLoader.store(this.className, modifiedClass);
-        }
-
-        Class<?> runnerClass = null;
-
-        try {
-            runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // Invoke via reflection (List.class is OK because it just uses the string form of it)
-        Object runner = null;
-        try {
-            runner = runnerClass.newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        Method method = null;
-        try {
-            method = runner.getClass().getMethod("runTestClasses", List.class);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        List<String> testClasses = new LinkedList<>();
-        testClasses.add(this.testName);
-
-        try {
-            method.invoke(runner, testClasses);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * Compile the temporary (patched) source file and a copy of the test class.
@@ -168,6 +124,49 @@ public class TestRunner {
         return new TestResult(result, thirdQuartile, true, true, "");
 
     }
+
+
+    private TestResult runTests(Class modifiedClass, int reps) {
+
+        CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
+        classLoader.store(this.className, modifiedClass);
+
+        Class<?> runnerClass = null;
+
+        try {
+            runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
+        } catch (ClassNotFoundException e) {
+            System.err.println("Could not load isolated test runner - class not found.");
+            System.exit(-1);
+        }
+
+        Object runner = null;
+        try {
+            runner = runnerClass.newInstance();
+        } catch (InstantiationException e) {
+            // UPTO HERE
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        Method method = null;
+        try {
+            method = runner.getClass().getMethod("runTestClasses", List.class);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        List<String> testClasses = new LinkedList<>();
+        testClasses.add(this.testName);
+
+        try {
+            method.invoke(runner, testClasses);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /**
      * Class to hold the junitResult of running jUnit.

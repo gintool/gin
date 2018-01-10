@@ -4,6 +4,7 @@ import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.MoveStatement;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +31,9 @@ public class PatchAnalyser {
 
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFile sourceFile = new SourceFile(sourceFilename);
-        TestRunner testRunner = new TestRunner(sourceFile);
+
+        File topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
+        TestRunner testRunner = new TestRunner(topDirectory, ?????);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFile.statementList();

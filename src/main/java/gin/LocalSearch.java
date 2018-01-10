@@ -51,6 +51,7 @@ public class LocalSearch {
 
         this.sourceFile = new SourceFile(sourceFilename);  // just parses the code and counts statements etc.
         this.topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
+        this.className = FilenameUtils.getBaseName(sourceFile.getFilename());
         this.testRunner = new TestRunner(this.topDirectory, this.className); // Utility class for running junits
         this.rng = new Random(seed);
 

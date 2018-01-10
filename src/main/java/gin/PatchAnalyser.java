@@ -31,9 +31,10 @@ public class PatchAnalyser {
 
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFile sourceFile = new SourceFile(sourceFilename);
-
         File topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
-        TestRunner testRunner = new TestRunner(topDirectory, ?????);
+        String className = FilenameUtils.getBaseName(sourceFile.getFilename());
+
+        TestRunner testRunner = new TestRunner(topDirectory, className);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFile.statementList();
@@ -62,7 +63,7 @@ public class PatchAnalyser {
         System.out.println("Block numbering written to: " + blockFilename);
 
         Patch patch = parsePatch(patchText, sourceFile);
-        String patchedSource = patch.apply().getSource();
+        String patchedSource = patch.apply();
 
         System.out.println("Evaluating patch for Class Source: " + sourceFilename);
 
@@ -88,7 +89,7 @@ public class PatchAnalyser {
 
         // Evaluate patch
         System.out.println("Timing patched sourceFile execution...");
-        TestRunner.TestResult result = testRunner.test(patch, REPS);
+        TestResult result = testRunner.test(patch, REPS);
         System.out.println("Test result: " + result);
         System.out.println("Execution time of patched sourceFile: " + result.executionTime);
         System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.executionTime)/originalExecutionTime)));

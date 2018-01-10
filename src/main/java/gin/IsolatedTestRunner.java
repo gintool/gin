@@ -1,7 +1,9 @@
 package gin;
 
 import com.sun.xml.internal.rngom.ast.builder.BuildException;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.runner.JUnitCore;
+import org.junit.runner.Result;
 
 import java.util.List;
 
@@ -9,7 +11,16 @@ import java.util.List;
 
 public class IsolatedTestRunner {
 
-    public void runTestClasses(List<String> testClasses) throws BuildException {
+    private static final int REPS = 10;
+
+    /**
+     * This method is called using reflection to ensure tests are run in an environment that employs a separate
+     * classloader.
+     * @param testClasses
+     * @throws BuildException
+     */
+    @SuppressWarnings("unused")
+    public TestResult runTestClasses(List<String> testClasses) throws BuildException {
 
         // Load classes
         Class<?>[] classes = new Class<?>[testClasses.size()];
@@ -27,8 +38,27 @@ public class IsolatedTestRunner {
         }
 
         // Run
-        JUnitCore junit = new JUnitCore();
-        junit.run(classes);
+        JUnitCore jUnitCore = new JUnitCore();
+
+        // Run the tests REPS times and calculate the mean via a running average
+        double[] elapsed = new double[REPS];
+        Result result = null;
+        for (int rep=0; rep < elapsed.length; rep++) {
+            try {
+                long start = System.nanoTime();
+                result = jUnitCore.run(classes[0]);
+                elapsed[rep] = System.nanoTime() - start;
+            } catch (Exception e) {
+                System.err.println("Error running junit: " + e);
+                System.exit(-1);
+            }
+        }
+
+        double thirdQuartile = new DescriptiveStatistics(elapsed).getPercentile(75);
+
+        return new TestResult(result, thirdQuartile, true, true, "");
+
+
     }
 
 }

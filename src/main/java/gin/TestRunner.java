@@ -1,16 +1,10 @@
 package gin;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.mdkt.compiler.InMemoryJavaCompiler;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,10 +14,12 @@ public class TestRunner {
 
     private File packageDirectory;
     private String className;
+    private String testName;
 
     public TestRunner(File packageDirectory, String className) {
         this.packageDirectory = packageDirectory;
         this.className = className;
+        this.testName = className + "Test";
     }
 
     public TestResult test(Patch patch) {
@@ -56,8 +52,6 @@ public class TestRunner {
 
     }
 
-
-
     /**
      * Compile the temporary (patched) source file and a copy of the test class.
      *
@@ -65,67 +59,29 @@ public class TestRunner {
      */
     protected Class compile(String className, String source)  {
 
-        Class<?> after = null;
+        Class<?> compiledClass = null;
 
         try {
-            after = InMemoryJavaCompiler.newInstance().compile(className, source);
+            compiledClass = InMemoryJavaCompiler.newInstance().compile(className, source);
         } catch (Exception e) {
-            System.err.println("Error compiling in memory: " + e);
+            System.err.println("Error compiling class " + className + " in memory: " + e);
+            System.err.println("Source was: " + source);
             System.exit(-1);
         }
 
-        return after;
+        return compiledClass;
 
     }
 
     /**
-     * Run the tests against the patched class.
-     *
-     * @return TestResult giving the outcome of running jUnit.
+     * Run the test class for a modified class.
+     * Loads IsolatedTestRunner using a separate classloader and invokes jUnit using reflection.
+     * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
+     * class with the freshly compiled version.
+     * @param modifiedClass The compiled class.
+     * @param reps The number of repetitions (primarily for timing measurements)
+     * @return
      */
-    private TestResult loadClassAndRunTests(int reps) {
-
-        // Create a class loader initialised for the temp directory.
-        URLClassLoader classLoader = null;
-
-        try {
-            classLoader = new URLClassLoader(new URL[]{new File(TMP_DIR).toURI().toURL()});
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        // Load the Test class. The required class under test will be loaded from the same directory by jUnit.
-        Class<?> loadedTestClass = null;
-        try {
-            String classname = FilenameUtils.removeExtension(new File(sourceFile.getFilename()).getName());
-            loadedTestClass = classLoader.loadClass(classname + "Test");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // Instantiate jUnit
-        JUnitCore jUnitCore = new JUnitCore();
-
-        // Run the tests REPS times and calculate the mean via a running average
-        double[] elapsed = new double[reps];
-        Result result = null;
-        for (int rep=0; rep < reps; rep++) {
-            try {
-                long start = System.nanoTime();
-                result = jUnitCore.run(loadedTestClass);
-                elapsed[rep] = System.nanoTime() - start;
-            } catch (Exception e) {
-                System.err.println("Error running junit: " + e);
-                System.exit(-1);
-            }
-        }
-
-        double thirdQuartile = new DescriptiveStatistics(elapsed).getPercentile(75);
-        return new TestResult(result, thirdQuartile, true, true, "");
-
-    }
-
-
     private TestResult runTests(Class modifiedClass, int reps) {
 
         CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
@@ -144,55 +100,38 @@ public class TestRunner {
         try {
             runner = runnerClass.newInstance();
         } catch (InstantiationException e) {
-            // UPTO HERE
+            System.err.println("Could not instantiate isolated test runner: " + e);
+            System.exit(-1);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            System.err.println("Could not instantiate isolated test runner: " + e);
+            System.exit(-1);
         }
+
         Method method = null;
+        String methodName = "runTestClasses";
         try {
             method = runner.getClass().getMethod("runTestClasses", List.class);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            System.err.println("Could not run isolated test runner, can't find method: " + methodName);
+            System.exit(-1);
         }
 
         List<String> testClasses = new LinkedList<>();
         testClasses.add(this.testName);
 
+        Object result = null;
         try {
-            method.invoke(runner, testClasses);
+            result = method.invoke(runner, testClasses);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+
+        return (TestResult)result;
+
     }
 
 
-    /**
-     * Class to hold the junitResult of running jUnit.
-     */
-    public class TestResult {
-        String patchedProgram = "";
-        Result junitResult = null;
-        double executionTime = -1;
-        boolean compiled = false;
-        boolean patchSuccess = false;
-        public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
-                          String patchedProgram) {
-            this.junitResult = result;
-            this.executionTime = executionTime;
-            this.compiled = compiled;
-            this.patchSuccess = patchedOK;
-            this.patchedProgram = patchedProgram;
-        }
-        public String toString() {
-            boolean junitOK = false;
-            if (this.junitResult != null) {
-                junitOK = this.junitResult.wasSuccessful();;
-            }
-            return String.format("Patch Valid: %b; Compiled: %b; Time: %f; Passed: %b", this.patchSuccess,
-                    this.compiled, this.executionTime, junitOK);
-        }
-    }
 
 }

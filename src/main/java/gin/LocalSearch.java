@@ -1,5 +1,8 @@
 package gin;
 
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
 import java.util.Random;
 
 /**
@@ -14,6 +17,8 @@ public class LocalSearch {
     protected SourceFile sourceFile;
     protected TestRunner testRunner;
     protected Random rng;
+    protected File topDirectory;
+    protected String className;
 
     /**
      * Main method. Take a source code filename, instantiate a search instance and execute the search.
@@ -45,7 +50,8 @@ public class LocalSearch {
     public LocalSearch(String sourceFilename) {
 
         this.sourceFile = new SourceFile(sourceFilename);  // just parses the code and counts statements etc.
-        this.testRunner = new TestRunner(this.sourceFile); // Utility class for running junits
+        this.topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
+        this.testRunner = new TestRunner(this.topDirectory, this.className); // Utility class for running junits
         this.rng = new Random(seed);
 
     }
@@ -72,7 +78,7 @@ public class LocalSearch {
 
             System.out.print(neighbour);
 
-            TestRunner.TestResult testResult = testRunner.test(neighbour);
+            TestResult testResult = testRunner.test(neighbour);
 
             if (!testResult.patchSuccess) {
                 System.out.println("Patch invalid");

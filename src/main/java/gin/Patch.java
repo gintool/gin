@@ -190,10 +190,10 @@ public class Patch {
     public void writePatchedSourceToFile(String filename) {
 
         // Apply this patch
-        SourceFile patchedSourceFile = this.apply();
+        String patchedSourceFile = this.apply();
 
         try {
-            FileUtils.writeStringToFile(new File(filename), patchedSourceFile.getSource(), Charset.defaultCharset());
+            FileUtils.writeStringToFile(new File(filename), patchedSourceFile, Charset.defaultCharset());
         } catch (IOException e) {
             System.err.println("Exception writing source code of patched program to: " + filename);
             e.printStackTrace();

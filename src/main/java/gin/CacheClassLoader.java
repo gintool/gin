@@ -1,55 +1,81 @@
 package gin;
 
-// See https://stackoverflow.com/questions/3971534/how-to-force-java-to-reload-class-upon-instantiation
+import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 public class CacheClassLoader extends URLClassLoader {
 
+    /**
+     * A cache of compiled classes for a given class name. Used to ensure modified classes are loaded.
+     */
     private HashMap<String, Class> cache = new HashMap<>();
-    private Set<String> whiteList = new HashSet<>();
 
-    public CacheClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
-    }
+    /**
+     * Construct a new class loader that will prioritise an internal cache of classes, and otherwise load from
+     * the standard classpath.
+     *
+     * @param directory
+     */
+    public CacheClassLoader(File directory) {
 
-    @Override
-    public Class<?> loadClass(String s) {
-        return findClass(s);
-    }
+        super(systemClassPath(), null);
 
-    @Override
-    public Class<?> findClass(String s) {
-        System.out.println("Request to load: " + s);
-        if (cache.containsKey(s)) {
-            return cache.get(s);
-        } else if (whiteList.contains(s)) {
-            try {
-                return super.findClass(s);
-            } catch (ClassNotFoundException e) {
-                System.err.println("Error dynamically loading class from URLs: " + s);
-                System.err.println(e);
-                return null;
-            }
-        } else {
-            try {
-                return ClassLoader.getSystemClassLoader().loadClass(s);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-                System.err.println("Error using system class loader to get class: " + s);
-                return null;
-            }
+        try {
+            super.addURL(directory.toURI().toURL());
+        } catch (MalformedURLException urlException) {
+            System.err.println("Class path provided to class loader is invalid");
+            System.err.println("Classpath was: " + directory.getAbsolutePath());
+            System.exit(-1);
         }
+
     }
 
-    public void putInCache(String classname, Class klass) {
-        cache.put(classname, klass);
+    /**
+     * Retrieve current classpath.
+     * @return array of URLs containing current classpath.
+     */
+    private static URL[] systemClassPath() {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        URL[] urls = new URL[0];
+        if (contextClassLoader instanceof URLClassLoader) {
+            urls = ((URLClassLoader) (Thread.currentThread().getContextClassLoader())).getURLs();
+        }
+        return urls;
     }
 
-    public void addToWhiteList(String classname) {
-        whiteList.add(classname);
+    @Override
+    public Class<?> findClass(String name) throws ClassNotFoundException {
+
+        if (name.equals("Triangle")) {
+            System.out.println("Triangle request received");
+        }
+
+        if (cache.containsKey(name)) {
+            return cache.get(name);
+        }
+
+        try {
+            Class<?> loaded = super.findLoadedClass(name);
+            if(loaded != null) {
+                return loaded;
+            }
+            return super.findClass(name);
+        } catch(ClassNotFoundException e) {
+            return this.getParent().loadClass(name);
+        }
+
     }
+
+    /**
+     * Store a compiled class in the classloader's cache. This will override any classes on disk.
+     * @param classname
+     * @param klass
+     */
+    public void store(String classname, Class<?> klass) {
+        this.cache.put(classname, klass);
+    }
+
 }

@@ -1,155 +1,124 @@
 package gin;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
-
-import javax.tools.*;
+import org.mdkt.compiler.InMemoryJavaCompiler;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 public class TestRunner {
 
-    private static final String TMP_DIR = "tmp" + File.separator;
     private static final int DEFAULT_REPS = 1;
 
-    protected SourceFile sourceFile;
+    private File packageDirectory;
+    private String className;
 
-    public TestRunner(SourceFile classSource) {
-        this.sourceFile = classSource;
+    public TestRunner(File packageDirectory, String className) {
+        this.packageDirectory = packageDirectory;
+        this.className = className;
     }
 
     public TestResult test(Patch patch) {
         return test(patch, DEFAULT_REPS);
     }
 
-    public File getTmpDir() {
-        return new File (TMP_DIR);
-    }
-
     public TestResult test(Patch patch, int reps) {
 
         // Apply the patch
-        SourceFile patchedSource = patch.apply();
+        String patchedSource = patch.apply();
 
         // If unable to apply patch, report as invalid
         if (patchedSource == null) {
             return new TestResult(null, -1, false, false, "");
         }
 
-        // Create temp dir
-        ensureDirectory(new File(TMP_DIR));
-
-        // Copy patched sourceFile and test source to temp directory
-        copySource(patchedSource);
-
         // Compile the patched sourceFile and test classes
-        boolean compiledOK = compile();
+        Class modifiedClass = compile(this.className, patchedSource);
 
         // If failed to compile, return with partial result
-        if (!compiledOK) {
-            return new TestResult(null, -1, false, true, patchedSource.getSource());
+        if (modifiedClass == null) {
+            return new TestResult(null, -1, false, true, patchedSource);
         }
 
         // Otherwise, run tests and return
-        TestResult result = loadClassAndRunTests(reps);
-        result.patchedProgram = patchedSource.getSource();
+        TestResult result = runTests(modifiedClass, reps);
+        result.patchedProgram = patchedSource;
+
         return result;
 
     }
 
-    /**
-     * Write the patched source and test class to a temporary directory.
-     *
-     * @param patchedProgram The original sourceFile with a patch applied, to be written to the temp directory.
-     */
-    protected void copySource(SourceFile patchedProgram) {
 
-        File tmpPackageDir = new File(TMP_DIR);
-        tmpPackageDir.mkdirs();
+    private TestResult runTests(Class modifiedClass, int reps) {
 
-        // Write patched sourceFile to temp dir
-        String programFilename = new File(sourceFile.getFilename()).getName();
-        File tmpSourceFile = new File(tmpPackageDir, programFilename);
+        classLoader = new CacheClassLoader(workingDirectory);
+
+        if (modifiedClass != null) {
+            classLoader.store(this.className, modifiedClass);
+        }
+
+        Class<?> runnerClass = null;
+
         try {
-            FileWriter writer = new FileWriter(tmpSourceFile);
-            writer.write(patchedProgram.getSource());
-            writer.close();
-        } catch (IOException e) {
+            runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
-        // Copy test source to tmp directory
-        String originalTestFilename = FilenameUtils.removeExtension(sourceFile.getFilename()) + "Test.java";
-        File originalTestFile = new File(originalTestFilename);
-
-        File tmpTestFile = new File(tmpPackageDir, originalTestFile.getName());
-
+        // Invoke via reflection (List.class is OK because it just uses the string form of it)
+        Object runner = null;
         try {
-            FileUtils.copyFile(originalTestFile, tmpTestFile);
-        } catch (IOException e) {
-            System.err.println("Error copying test class to temporary directory.");
-            System.err.println(originalTestFile + " -> " + tmpTestFile);
+            runner = runnerClass.newInstance();
+        } catch (InstantiationException e) {
             e.printStackTrace();
-            System.exit(-1);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        Method method = null;
+        try {
+            method = runner.getClass().getMethod("runTestClasses", List.class);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
         }
 
+        List<String> testClasses = new LinkedList<>();
+        testClasses.add(this.testName);
+
+        try {
+            method.invoke(runner, testClasses);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
+
 
     /**
      * Compile the temporary (patched) source file and a copy of the test class.
      *
      * @return Boolean indicating whether the compilation was successful.
      */
-    protected boolean compile()  {
+    protected Class compile(String className, String source)  {
 
-        // Configure the compiler
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+        Class<?> after = null;
 
         try {
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(new File(TMP_DIR)));
-        } catch (IOException e) {
-            System.err.println("Error configuring compiler: " + e);
-        }
-
-        // Add the source files to a list
-        LinkedList<File> programFiles = new LinkedList<>();
-
-        File tmpDir = new File(TMP_DIR);
-
-        String programFilename = new File(sourceFile.getFilename()).getName();
-        File sourceFile = new File(tmpDir, programFilename);
-
-        String originalTestFilename = FilenameUtils.removeExtension(this.sourceFile.getFilename()) + "Test.java";
-        File originalTestFile = new File(originalTestFilename);
-        File testFile = new File(tmpDir, originalTestFile.getName());
-
-        programFiles.add(sourceFile);
-        programFiles.add(testFile);
-
-        // Compile the files
-        CompilerListener diagnosticListener = new CompilerListener();
-        boolean success = compiler.getTask(null, fileManager,  diagnosticListener, null, null,
-                fileManager.getJavaFileObjectsFromFiles(programFiles)).call();
-
-        try {
-            fileManager.close();
-        } catch (IOException ioException) {
-            System.err.println("Error closing file manager when compiling: " + ioException);
-            ioException.printStackTrace();
+            after = InMemoryJavaCompiler.newInstance().compile(className, source);
+        } catch (Exception e) {
+            System.err.println("Error compiling in memory: " + e);
             System.exit(-1);
         }
 
-        return success;
+        return after;
 
     }
 
@@ -198,24 +167,6 @@ public class TestRunner {
         double thirdQuartile = new DescriptiveStatistics(elapsed).getPercentile(75);
         return new TestResult(result, thirdQuartile, true, true, "");
 
-    }
-
-    /**
-     * Callback for the compilation. Used to silence the compiler.
-      */
-    private static final class CompilerListener implements DiagnosticListener {
-        @Override
-        public void report(Diagnostic diagnostic) {
-        }
-    }
-
-    /**
-     * Helper function to clean a directory.
-     * @param f
-     */
-    protected void ensureDirectory(File f) {
-        FileUtils.deleteQuietly(f);
-        f.mkdirs();
     }
 
     /**

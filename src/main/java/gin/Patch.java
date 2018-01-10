@@ -53,7 +53,7 @@ public class Patch {
      * Apply this patch to the source file.
      * @return a new SourceFile object representing the patched source code.
      */
-    public SourceFile apply() {
+    public String apply() {
 
         /**
          * Helper class used in applying a patch.
@@ -135,7 +135,7 @@ public class Patch {
         }
 
         if (removedOK) {
-            return new SourceFile(patchedCompilationUnit);
+            return patchedCompilationUnit.toString();
         } else {
             return null;
         }

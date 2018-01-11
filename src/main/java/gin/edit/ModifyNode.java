@@ -8,19 +8,22 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 
 public abstract class ModifyNode extends Edit {
-	/**the refers to the applicable nodes in the corresponding factory!*/
+	/**the node to be modified*/
     public final int sourceNodeIndex;
 
+    /**the applicable nodes in the corresponding factory*/
     public final List<Node> sourceNodes;
     
     public final ModifyNodeFactory factory;
     
     /**
+     * Note: this will assume that there will be some applicable nodes!
+     * @throws IllegalArgumentException if sourceNodes is empty
      * @param sourceNodes is the list of possible nodes for modification; these won't be
 	 * 	      modified, just used for reference
      * @param r is provided to choose a node to modify, and choose a replacement*/
     public ModifyNode(List<Node> sourceNodes, ModifyNodeFactory factory, Random r) {
-        this.sourceNodes = Collections.unmodifiableList(sourceNodes);
+    	this.sourceNodes = Collections.unmodifiableList(sourceNodes);
         this.sourceNodeIndex = r.nextInt(sourceNodes.size());
         this.factory = factory;
     }

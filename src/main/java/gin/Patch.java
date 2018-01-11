@@ -3,6 +3,7 @@ package gin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -17,8 +18,11 @@ import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.Edit;
 import gin.edit.ModifyNode;
+import gin.edit.ModifyNodeFactory;
 import gin.edit.MoveStatement;
 import gin.edit.modifynode.LogicalOperatorReplacementFactory;
+import gin.edit.modifynode.UnaryOperatorReplacement;
+import gin.edit.modifynode.UnaryOperatorReplacementFactory;
 
 /**
  * Represents a patch, a potential set of changes to a sourcefile.
@@ -155,14 +159,25 @@ public class Patch {
     }
 
     private Edit randomEdit(Random rng) {
-
+    	// the following factory stuff might be better elsewhere?
+    	
     	// separate factories needed for different modifyNode operators
     	LogicalOperatorReplacementFactory lorFactory = new LogicalOperatorReplacementFactory(sourceFile.getCompilationUnit());
+    	UnaryOperatorReplacementFactory uorFactory = new UnaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
     	// ...
+    	
+    	// not all modifiers will be applicable! Check which are and only consider those.
+    	List<ModifyNodeFactory> mnfs = new ArrayList<>();
+    	if (!lorFactory.getSourceNodes().isEmpty()) {
+    		mnfs.add(lorFactory);
+    	}
+    	if (!uorFactory.getSourceNodes().isEmpty()) {
+    		mnfs.add(uorFactory);
+    	} 
     	
         Edit edit = null;
 
-        int editType = rng.nextInt(4);
+        int editType = rng.nextInt(3 + mnfs.size());
 
         switch (editType) {
             case (0): // delete statement
@@ -193,13 +208,19 @@ public class Patch {
                 }
                 edit = new MoveStatement(statementToMove, moveBlock, movePoint);
                 break;
-            case (3): // modify statement
+            default: // modify statement
+            	// binary operators (was originally just logical operators)
             	// could do some checking for type here by calling ModifyNodeFactory.applicability().appliesTo()
             	// just to be sure there are some nodes that can be changed by a particular operator!
             
+            	// also unary operators
+            	
             	// will also need a random choice between different modifications...
             	// see https://github.com/gintool/gin/issues/13#issuecomment-342489660
-            	edit = lorFactory.newModifier(rng);
+            	
+            	// which factory do we want? Subtract 3 from index (for the 3 edit types above)
+            	ModifyNodeFactory mnf = mnfs.get(editType - 3);
+            	edit = mnf.newModifier(rng);
             	break;
         }
 

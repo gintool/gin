@@ -20,7 +20,7 @@ import gin.edit.Edit;
 import gin.edit.ModifyNode;
 import gin.edit.ModifyNodeFactory;
 import gin.edit.MoveStatement;
-import gin.edit.modifynode.LogicalOperatorReplacementFactory;
+import gin.edit.modifynode.BinaryOperatorReplacementFactory;
 import gin.edit.modifynode.UnaryOperatorReplacement;
 import gin.edit.modifynode.UnaryOperatorReplacementFactory;
 
@@ -162,7 +162,7 @@ public class Patch {
     	// the following factory stuff might be better elsewhere?
     	
     	// separate factories needed for different modifyNode operators
-    	LogicalOperatorReplacementFactory lorFactory = new LogicalOperatorReplacementFactory(sourceFile.getCompilationUnit());
+    	BinaryOperatorReplacementFactory lorFactory = new BinaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
     	UnaryOperatorReplacementFactory uorFactory = new UnaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
     	// ...
     	

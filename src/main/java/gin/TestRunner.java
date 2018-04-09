@@ -12,9 +12,9 @@ public class TestRunner {
 
     private static final int DEFAULT_REPS = 1;
 
-    private File packageDirectory;
-    private String className;
-    private String testName;
+    protected File packageDirectory;
+    protected String className;
+    protected String testName;
 
     public TestRunner(File packageDirectory, String className) {
         this.packageDirectory = packageDirectory;
@@ -36,7 +36,7 @@ public class TestRunner {
             return new TestResult(null, -1, false, false, "");
         }
 
-        // Compile the patched sourceFile and test classes
+        // Compile the patched sourceFile
         Class modifiedClass = compile(this.className, patchedSource);
 
         // If failed to compile, return with partial result
@@ -88,7 +88,6 @@ public class TestRunner {
         classLoader.store(this.className, modifiedClass);
 
         Class<?> runnerClass = null;
-
         try {
             runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
         } catch (ClassNotFoundException e) {

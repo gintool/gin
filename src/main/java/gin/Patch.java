@@ -51,7 +51,7 @@ public class Patch {
 
     /**
      * Apply this patch to the source file.
-     * @return a new SourceFile object representing the patched source code.
+     * @return text of patched sourcecode.
      */
     public String apply() {
 

@@ -89,8 +89,8 @@ public class PatchTest {
         // Delete a single line
         DeleteStatement delete = new DeleteStatement(2);
         deletePatch.add(delete);
-        SourceFile deletedLineProgram = deletePatch.apply();
-        assertEqualsWithoutWhitespace(deletedExpected, deletedLineProgram.toString());
+        String modifiedSource = deletePatch.apply();
+        assertEqualsWithoutWhitespace(deletedExpected, modifiedSource);
 
         // Move a single line
         MoveStatement moveLine = new MoveStatement(1, 0, 2);
@@ -104,8 +104,8 @@ public class PatchTest {
                 "        int c = a + b;\n" +
                 "    }\n" +
                 "}";
-        SourceFile movedFile = movePatch.apply();
-        assertEqualsWithoutWhitespace(moveExpected, movedFile.getSource());
+        String movedSource = movePatch.apply();
+        assertEqualsWithoutWhitespace(moveExpected, movedSource);
 
 
         // Move one line, copy another
@@ -124,8 +124,8 @@ public class PatchTest {
                 "        int c = a + b;\n" +
                 "    }\n" +
                 "}";
-        SourceFile copyMovedFile = moveCopyPatch.apply();
-        assertEqualsWithoutWhitespace(copyMoveExpected, copyMovedFile.getSource());
+        String copiedSource = moveCopyPatch.apply();
+        assertEqualsWithoutWhitespace(copyMoveExpected, copiedSource);
 
         // Move copy delete
         String moveCopyDeleteExpected = "package gin;\n" +
@@ -143,8 +143,8 @@ public class PatchTest {
         moveCopyDeletePatch.add(move2);
         moveCopyDeletePatch.add(copy2);
         moveCopyDeletePatch.add(delete2);
-        SourceFile moveCopyDeleteProgram = moveCopyDeletePatch.apply();
-        assertEqualsWithoutWhitespace(moveCopyDeleteExpected, moveCopyDeleteProgram.toString());
+        String moveCopyDeleteSource = moveCopyDeletePatch.apply();
+        assertEqualsWithoutWhitespace(moveCopyDeleteExpected, moveCopyDeleteSource);
 
 
     }

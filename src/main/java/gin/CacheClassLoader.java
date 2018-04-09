@@ -49,10 +49,6 @@ public class CacheClassLoader extends URLClassLoader {
     @Override
     public Class<?> findClass(String name) throws ClassNotFoundException {
 
-        if (name.equals("Triangle")) {
-            System.out.println("Triangle request received");
-        }
-
         if (cache.containsKey(name)) {
             return cache.get(name);
         }

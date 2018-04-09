@@ -39,7 +39,6 @@ public class LocalSearchTest {
     @Test
     public void neighbour() throws Exception {
         SourceFile sourceFile = new SourceFile(exampleSourceFilename);
-        CompilationUnit compilationUnit = sourceFile.getCompilationUnit();
         Patch patch = new Patch(sourceFile);
         Random rng = new Random(1234);
 

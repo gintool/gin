@@ -16,7 +16,6 @@ public class IsolatedTestRunner {
      * This method is called using reflection to ensure tests are run in an environment that employs a separate
      * classloader.
      * @param testClasses
-     * @throws BuildException
      */
     public TestResult runTestClasses(List<String> testClasses) {
 

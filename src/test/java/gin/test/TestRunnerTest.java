@@ -26,7 +26,6 @@ public class TestRunnerTest {
 
     @Test
     public void testRunner() {
-        SourceFile sourceFile = new SourceFile(exampleSourceFilename);
         TestRunner test = new TestRunner(examplePackageDirectory, exampleClassName);
         assertEquals(examplePackageDirectory, test.packageDirectory);
         assertEquals(exampleClassName, test.className);
@@ -38,6 +37,11 @@ public class TestRunnerTest {
         Class compiledClass = testRunner.compile("SimpleExample", "public class SimpleExample {} ");
         assertNotNull(compiledClass);
         assertEquals("SimpleExample", compiledClass.getSimpleName());
+    }
+
+    @Test
+    public void testRunTests() {
+        assert(false);
     }
 
 }

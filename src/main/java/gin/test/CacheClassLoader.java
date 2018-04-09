@@ -11,7 +11,7 @@ public class CacheClassLoader extends URLClassLoader {
     /**
      * A cache of compiled classes for a given class name. Used to ensure modified classes are loaded.
      */
-    private HashMap<String, Class> cache = new HashMap<>();
+    protected HashMap<String, Class> cache = new HashMap<>();
 
     /**
      * Construct a new class loader that will prioritise an internal cache of classes, and otherwise load from
@@ -37,7 +37,7 @@ public class CacheClassLoader extends URLClassLoader {
      * Retrieve current classpath.
      * @return array of URLs containing current classpath.
      */
-    private static URL[] systemClassPath() {
+    protected static URL[] systemClassPath() {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         URL[] urls = new URL[0];
         if (contextClassLoader instanceof URLClassLoader) {
@@ -53,15 +53,11 @@ public class CacheClassLoader extends URLClassLoader {
             return cache.get(name);
         }
 
-        try {
-            Class<?> loaded = super.findLoadedClass(name);
-            if(loaded != null) {
-                return loaded;
-            }
-            return super.findClass(name);
-        } catch(ClassNotFoundException e) {
-            return this.getParent().loadClass(name);
+        Class<?> loaded = super.findLoadedClass(name);
+        if(loaded != null) {
+            return loaded;
         }
+        return super.findClass(name);
 
     }
 

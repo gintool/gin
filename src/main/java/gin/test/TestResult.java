@@ -9,6 +9,10 @@ public class TestResult {
     String patchedProgram = "";
     Result junitResult = null;
 
+    double executionTime = -1;
+    boolean compiled = false;
+    boolean patchSuccess = false;
+
     public String getPatchedProgram() {
         return patchedProgram;
     }
@@ -28,10 +32,6 @@ public class TestResult {
     public boolean getValidPatch() {
         return patchSuccess;
     }
-
-    double executionTime = -1;
-    boolean compiled = false;
-    boolean patchSuccess = false;
 
     public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
                       String patchedProgram) {

@@ -1,4 +1,4 @@
-package gin;
+package gin.test;
 
 import java.io.File;
 import java.net.MalformedURLException;

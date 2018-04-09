@@ -3,6 +3,8 @@ package gin;
 import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.MoveStatement;
+import gin.test.TestResult;
+import gin.test.TestRunner;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -84,15 +86,15 @@ public class PatchAnalyser {
         // Evaluate original class
         System.out.println("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFile);
-        double originalExecutionTime = testRunner.test(emptyPatch, REPS).executionTime;
+        double originalExecutionTime = testRunner.test(emptyPatch, REPS).getExecutionTime();
         System.out.println("Original execution time: " + originalExecutionTime);
 
         // Evaluate patch
         System.out.println("Timing patched sourceFile execution...");
         TestResult result = testRunner.test(patch, REPS);
         System.out.println("Test result: " + result);
-        System.out.println("Execution time of patched sourceFile: " + result.executionTime);
-        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.executionTime)/originalExecutionTime)));
+        System.out.println("Execution time of patched sourceFile: " + result.getExecutionTime());
+        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.getExecutionTime())/originalExecutionTime)));
 
     }
 

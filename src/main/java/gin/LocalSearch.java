@@ -1,5 +1,7 @@
 package gin;
 
+import gin.test.TestResult;
+import gin.test.TestRunner;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -65,7 +67,7 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(sourceFile);
-        double bestTime = testRunner.test(bestPatch, WARMUP_REPS).executionTime;
+        double bestTime = testRunner.test(bestPatch, WARMUP_REPS).getExecutionTime();
         double origTime = bestTime;
         int bestStep = 0;
 
@@ -81,28 +83,28 @@ public class LocalSearch {
 
             TestResult testResult = testRunner.test(neighbour);
 
-            if (!testResult.patchSuccess) {
+            if (!testResult.getValidPatch()) {
                 System.out.println("Patch invalid");
                 continue;
             }
 
-            if (!testResult.compiled) {
+            if (!testResult.getCleanCompile()) {
                 System.out.println("Failed to compile");
                 continue;
             }
 
-            if (!testResult.junitResult.wasSuccessful()) {
+            if (!testResult.getJunitResult().wasSuccessful()) {
                 System.out.println("Failed to pass all tests");
                 continue;
             }
 
-            if (testResult.executionTime < bestTime) {
+            if (testResult.getExecutionTime() < bestTime) {
                 bestPatch = neighbour;
-                bestTime = testResult.executionTime;
+                bestTime = testResult.getExecutionTime();
                 bestStep = step;
                 System.out.println("*** New best *** Time: " + bestTime + "(ns)");
             } else {
-                System.out.println("Time: " + testResult.executionTime);
+                System.out.println("Time: " + testResult.getExecutionTime());
             }
 
         }

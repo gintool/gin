@@ -1,6 +1,5 @@
 package gin;
 
-import com.sun.xml.internal.rngom.ast.builder.BuildException;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
@@ -19,8 +18,7 @@ public class IsolatedTestRunner {
      * @param testClasses
      * @throws BuildException
      */
-    @SuppressWarnings("unused")
-    public TestResult runTestClasses(List<String> testClasses) throws BuildException {
+    public TestResult runTestClasses(List<String> testClasses) {
 
         // Load classes
         Class<?>[] classes = new Class<?>[testClasses.size()];

@@ -33,6 +33,24 @@ public class CacheClassLoader extends URLClassLoader {
 
     }
 
+    @Override
+    public Class loadClass(String name) throws ClassNotFoundException {
+
+        if (cache.containsKey(name)) {
+            return cache.get(name);
+        }
+
+        // Horribly hardcoded: ensure that we can pass back the result, by loading it via the system classloader
+        if (name.equals("gin.test.TestResult")) {
+            return Thread.currentThread().getContextClassLoader().loadClass(name);
+        }
+
+        return super.loadClass(name);
+
+        //return Thread.currentThread().getContextClassLoader().loadClass(name);
+
+    }
+
     /**
      * Retrieve current classpath.
      * @return array of URLs containing current classpath.
@@ -46,20 +64,20 @@ public class CacheClassLoader extends URLClassLoader {
         return urls;
     }
 
-    @Override
-    public Class<?> findClass(String name) throws ClassNotFoundException {
-
-        if (cache.containsKey(name)) {
-            return cache.get(name);
-        }
-
-        Class<?> loaded = super.findLoadedClass(name);
-        if(loaded != null) {
-            return loaded;
-        }
-        return super.findClass(name);
-
-    }
+//    @Override
+//    public Class<?> findClass(String name) throws ClassNotFoundException {
+//
+//        if (cache.containsKey(name)) {
+//            return cache.get(name);
+//        }
+//
+//        Class<?> loaded = super.findLoadedClass(name);
+//        if(loaded != null) {
+//            return loaded;
+//        }
+//        return super.findClass(name);
+//
+//    }
 
     /**
      * Store a compiled class in the classloader's cache. This will override any classes on disk.

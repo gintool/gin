@@ -65,23 +65,23 @@ public class CacheClassLoaderTest {
 
 
     @Test(expected = ClassNotFoundException.class)
-    public void findClass() throws ClassNotFoundException {
-        loader.findClass("NonexistentClass");
+    public void loadClass() throws ClassNotFoundException {
+        loader.loadClass("NonexistentClass");
     }
 
     @Test
     public void findClassInCache() throws ClassNotFoundException {
         loader.store("ExampleClass", this.getClass());
-        assertEquals(this.getClass(), loader.findClass("ExampleClass"));
+        assertEquals(this.getClass(), loader.loadClass("ExampleClass"));
     }
 
     @Test
     public void findClassInHierarchy() throws ClassNotFoundException {
-        Class patchClass = loader.findClass("gin.Patch");
+        Class patchClass = loader.loadClass("gin.Patch");
         // this will have loaded the class separately from the system
         assertNotEquals(gin.Patch.class, patchClass);
         // But should be internally consistent
-        assertEquals(patchClass, loader.findClass("gin.Patch"));
+        assertEquals(patchClass, loader.loadClass("gin.Patch"));
     }
 
 }

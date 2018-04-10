@@ -40,17 +40,12 @@ public class IsolatedTestRunnerTest {
         assertNotNull(expectedSrc);
 
         ClassLoader classLoader = new CacheClassLoader(RESOURCES_DIR);
-        classLoader.loadClass("ExampleTriangleProgramTest");
 
         Class runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
-
         Object runner = runnerClass.newInstance();
-
-        Method method = runner.getClass().getMethod("runTestClasses", List.class);
-
+        Method method = runnerClass.getMethod("runTestClasses", List.class);
         List<String> testClasses = new LinkedList<>();
         testClasses.add("ExampleTriangleProgramTest");
-
         Object result = method.invoke(runner, testClasses);
 
         // Due to class loader issues as we're running in junit (and it has a separate classloader)

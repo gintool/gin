@@ -13,10 +13,6 @@ public class TestResult {
     boolean compiled = false;
     boolean patchSuccess = false;
 
-    public String getPatchedProgram() {
-        return patchedProgram;
-    }
-
     public Result getJunitResult() {
         return junitResult;
     }
@@ -33,13 +29,11 @@ public class TestResult {
         return patchSuccess;
     }
 
-    public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK,
-                      String patchedProgram) {
+    public TestResult(Result result, double executionTime, boolean compiled, boolean patchedOK) {
         this.junitResult = result;
         this.executionTime = executionTime;
         this.compiled = compiled;
         this.patchSuccess = patchedOK;
-        this.patchedProgram = patchedProgram;
     }
 
     public String toString() {

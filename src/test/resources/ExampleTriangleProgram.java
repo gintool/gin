@@ -40,7 +40,7 @@ public class ExampleTriangleProgram {
 
     private static void delay() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(1);
         } catch (InterruptedException e) {
 
         }

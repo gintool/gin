@@ -53,7 +53,7 @@ public class IsolatedTestRunner {
 
         double thirdQuartile = new DescriptiveStatistics(elapsed).getPercentile(75);
 
-        return new TestResult(result, thirdQuartile, true, true, "");
+        return new TestResult(result, thirdQuartile, true, true);
 
 
     }

@@ -67,7 +67,7 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(sourceFile);
-        double bestTime = testRunner.test(bestPatch, WARMUP_REPS).getExecutionTime();
+        double bestTime = testRunner.test(bestPatch).getExecutionTime();
         double origTime = bestTime;
         int bestStep = 0;
 

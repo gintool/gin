@@ -16,12 +16,7 @@ public class TestResultTest {
 
     @Before
     public void setUp() throws Exception {
-        testResult = new TestResult(result, 253, true,  true, patchedProgram);
-    }
-
-    @Test
-    public void getPatchedProgram() {
-        assertEquals(patchedProgram, testResult.getPatchedProgram());
+        testResult = new TestResult(result, 253, true,  true);
     }
 
     @Test

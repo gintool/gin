@@ -10,8 +10,6 @@ import java.util.List;
 
 public class TestRunner {
 
-    private static final int DEFAULT_REPS = 1;
-
     protected File packageDirectory;
     protected String className;
     protected String testName;
@@ -23,17 +21,13 @@ public class TestRunner {
     }
 
     public TestResult test(Patch patch) {
-        return test(patch, DEFAULT_REPS);
-    }
-
-    public TestResult test(Patch patch, int reps) {
 
         // Apply the patch
         String patchedSource = patch.apply();
 
         // If unable to apply patch, report as invalid
         if (patchedSource == null) {
-            return new TestResult(null, -1, false, false, "");
+            return new TestResult(null, -1, false, false);
         }
 
         // Compile the patched sourceFile
@@ -41,12 +35,11 @@ public class TestRunner {
 
         // If failed to compile, return with partial result
         if (modifiedClass == null) {
-            return new TestResult(null, -1, false, true, patchedSource);
+            return new TestResult(null, -1, false, true);
         }
 
         // Otherwise, run tests and return
-        TestResult result = runTests(modifiedClass, reps);
-        result.patchedProgram = patchedSource;
+        TestResult result = runTests(modifiedClass);
 
         return result;
 
@@ -79,10 +72,9 @@ public class TestRunner {
      * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
      * class with the freshly compiled version.
      * @param modifiedClass The compiled class.
-     * @param reps The number of repetitions (primarily for timing measurements)
      * @return
      */
-    private TestResult runTests(Class modifiedClass, int reps) {
+    protected TestResult runTests(Class modifiedClass) {
 
         CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
         classLoader.store(this.className, modifiedClass);

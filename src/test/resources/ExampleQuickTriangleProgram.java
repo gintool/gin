@@ -1,12 +1,10 @@
-public class ExampleTriangleProgram {
+public class ExampleQuickTriangleProgram {
 
     public enum TriangleType {
         INVALID, SCALENE, EQUALATERAL, ISOCELES
     }
 
     public static TriangleType classifyTriangle(int a, int b, int c) {
-
-        delay();
 
         if (a > b) {
             int tmp = a;
@@ -38,13 +36,5 @@ public class ExampleTriangleProgram {
 
     }
 
-    private static void delay() {
-        try {
-            System.out.println("DELAY");
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-
-        }
-    }
 
 }

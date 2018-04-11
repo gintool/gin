@@ -38,7 +38,7 @@ public class IsolatedTestRunnerTest {
         Object runner = runnerClass.newInstance();
         Method method = runnerClass.getMethod("runTestClasses", List.class, int.class);
         List<String> testClasses = new LinkedList<>();
-        testClasses.add("ExampleTriangleProgramTest");
+        testClasses.add("ExampleQuickTriangleProgramTest");
         TestResult result = (TestResult)method.invoke(runner, testClasses, 1);
 
         assertTrue(result.getExecutionTime() > 0);

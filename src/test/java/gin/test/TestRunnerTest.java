@@ -1,12 +1,13 @@
 package gin.test;
 
+import gin.Patch;
 import gin.SourceFile;
-import gin.test.TestRunner;
+import gin.edit.DeleteStatement;
 import org.junit.Before;
 import org.junit.Test;
+import org.mdkt.compiler.InMemoryJavaCompiler;
+
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.*;
 
 import static org.junit.Assert.*;
@@ -43,7 +44,7 @@ public class TestRunnerTest {
     }
 
     @Test
-    public void testRunTests() throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testRunTests() throws MalformedURLException, ClassNotFoundException {
 
         URL[] classLoaderUrls = new URL[]{new URL("file:////./src/test/resources/")};
         URLClassLoader classLoader = new URLClassLoader(classLoaderUrls);
@@ -56,11 +57,32 @@ public class TestRunnerTest {
         assertTrue(result.getValidPatch());
         assertNotNull(result.getJunitResult());
         assertEquals(0, result.getJunitResult().getFailureCount());
+
     }
 
     @Test
     public void testOptimisation() {
 
+        SourceFile sourceFile = new SourceFile(exampleSourceFilename);
+
+        Patch emptyPatch = new Patch(sourceFile);
+        double originalTime = testRunner.test(emptyPatch, 10).getExecutionTime();
+
+        Patch deleteDelayPatch = new Patch(sourceFile);
+        DeleteStatement edit = new DeleteStatement(1);
+        deleteDelayPatch.add(edit);
+
+        System.out.println(deleteDelayPatch.apply());
+
+        double newTime = testRunner.test(deleteDelayPatch, 10).getExecutionTime();
+
+        System.out.println("original: " + originalTime + " new " + newTime);
+
+        assertTrue(originalTime > newTime);
+
+
     }
+
+
 
 }

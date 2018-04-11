@@ -6,6 +6,21 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 
+/**
+ *
+ * This classloader intercepts classloading when running unit tests on the software being optimised, and
+ * allows us to "overlay" modified classes on the running system.
+ *
+ * Any other classes are loaded by the system classloader if they're standard Java classes, otherwise
+ * if they are non-modified classes belonging to the software being optimised, they will be loaded as normal.
+ *
+ * There's one extra trick: the IsolatedTestRunner class is loaded by this classloader rather than by the
+ * System classloader. That allows Gin to intercept classloading during the actual running of the unit tests.
+ * This is because jUnit will use the classloader associated with the class that invoked it.
+ * Hence IsolatedTestRunner calls jUnit, jUnit sees that ITR was loaded by this classloader, and hence this
+ * classloader becomes the default classloader for that jUnit run.
+ *
+ */
 public class CacheClassLoader extends URLClassLoader {
 
     /**
@@ -36,18 +51,28 @@ public class CacheClassLoader extends URLClassLoader {
     @Override
     public Class loadClass(String name) throws ClassNotFoundException {
 
+        // Case (1) Firstly, when the ITR is instantiated, I will load it (via inherited method)
+        // To ensure I am recorded as the classloader for IsolatedTestRunner.
+        // This means all test executions will load classes via me, so I can intercept them as in case (2)
+        if (name.equals("gin.test.IsolatedTestRunner")) {
+            return super.loadClass(name);
+        }
+
+        // Case (2) Check my cache as modified ("optimised") classes will be in there.
         if (cache.containsKey(name)) {
             return cache.get(name);
         }
 
-        // Horribly hardcoded: ensure that we can pass back the result, by loading it via the system classloader
-        if (name.equals("gin.test.TestResult")) {
-            return Thread.currentThread().getContextClassLoader().loadClass(name);
+        // Case (3) Otherwise, it's a system class - use the system loader.
+        // Case (4) If the system loader can't find it, then it must be a class that's part of the software being
+        // optimised in which case, I load it as I know the path to that software (given in my constructor)
+        // If neither work, then we have a missing class / likely typo so let the exception be raised.
+        try {
+            ClassLoader system = ClassLoader.getSystemClassLoader();
+            return system.loadClass(name);
+        } catch (ClassNotFoundException e) {
+            return super.loadClass(name);
         }
-
-        return super.loadClass(name);
-
-        //return Thread.currentThread().getContextClassLoader().loadClass(name);
 
     }
 
@@ -63,21 +88,6 @@ public class CacheClassLoader extends URLClassLoader {
         }
         return urls;
     }
-
-//    @Override
-//    public Class<?> findClass(String name) throws ClassNotFoundException {
-//
-//        if (cache.containsKey(name)) {
-//            return cache.get(name);
-//        }
-//
-//        Class<?> loaded = super.findLoadedClass(name);
-//        if(loaded != null) {
-//            return loaded;
-//        }
-//        return super.findClass(name);
-//
-//    }
 
     /**
      * Store a compiled class in the classloader's cache. This will override any classes on disk.

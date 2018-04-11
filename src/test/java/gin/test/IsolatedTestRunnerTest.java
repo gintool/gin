@@ -1,18 +1,11 @@
 package gin.test;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.Result;
-
-import java.beans.IntrospectionException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +14,6 @@ import static org.junit.Assert.*;
 
 public class IsolatedTestRunnerTest {
 
-    IsolatedTestRunner runner;
     File RESOURCES_DIR = new File("./src/test/resources/");
     File SRC_FILE = new File(RESOURCES_DIR, "ExampleTriangleProgram.java");
 
@@ -29,7 +21,8 @@ public class IsolatedTestRunnerTest {
     public void runTestClasses() throws ClassNotFoundException, IllegalAccessException, InstantiationException,
             NoSuchMethodException, InvocationTargetException {
 
-        String expectedSrc= null;
+        // Expected source is just the source in SRC_FILE
+        String expectedSrc = null;
         try {
             Charset charSet = null; // platform default
             expectedSrc = FileUtils.readFileToString(SRC_FILE, charSet);
@@ -41,14 +34,14 @@ public class IsolatedTestRunnerTest {
 
         ClassLoader classLoader = new CacheClassLoader(RESOURCES_DIR);
 
-        Class runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
+        Class runnerClass = classLoader.loadClass("gin.test.IsolatedTestRunner");
         Object runner = runnerClass.newInstance();
         Method method = runnerClass.getMethod("runTestClasses", List.class);
         List<String> testClasses = new LinkedList<>();
         testClasses.add("ExampleTriangleProgramTest");
         Object result = method.invoke(runner, testClasses);
 
-        // Due to class loader issues as we're running in junit (and it has a separate classloader)
+        // Due to classloader issues as we're running in junit (and it has a separate classloader)
         // we need to use reflection rather than casting the result.
         Method getExecutionTime = result.getClass().getMethod("getExecutionTime");
         Double executionTime = (Double)getExecutionTime.invoke(result);

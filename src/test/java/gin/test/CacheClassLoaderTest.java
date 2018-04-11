@@ -63,25 +63,36 @@ public class CacheClassLoaderTest {
         assertEquals(loader.cache.get("ExampleClass"), this.getClass());
     }
 
+    // The special case of IsolatedTestRunner - should load a new class in the cache class loader
+    @Test
+    public void loadTestRunner() throws ClassNotFoundException {
+        Class systemClassForTestRunner = TestRunner.class;
+        Class loadedTestRunner = loader.loadClass("gin.test.IsolatedTestRunner");
+        assertNotEquals(systemClassForTestRunner, loadedTestRunner);
+    }
 
+    // Now a standard system class
+
+    @Test
+    public void loadSystemClass() throws ClassNotFoundException {
+        Class patchClass = loader.loadClass("gin.Patch");
+        assertEquals(gin.Patch.class, patchClass);
+        // and try again
+        assertEquals(patchClass, loader.loadClass("gin.Patch"));
+    }
+
+    // Next, a class that has been modified by gin and stored in the cache
+    @Test
+    public void loadClassFromCache() throws ClassNotFoundException {
+        loader.store("ExampleClass", this.getClass());
+        assertEquals(this.getClass(), loader.loadClass("ExampleClass"));
+    }
+
+    // Non existent class
     @Test(expected = ClassNotFoundException.class)
     public void loadClass() throws ClassNotFoundException {
         loader.loadClass("NonexistentClass");
     }
 
-    @Test
-    public void findClassInCache() throws ClassNotFoundException {
-        loader.store("ExampleClass", this.getClass());
-        assertEquals(this.getClass(), loader.loadClass("ExampleClass"));
-    }
-
-    @Test
-    public void findClassInHierarchy() throws ClassNotFoundException {
-        Class patchClass = loader.loadClass("gin.Patch");
-        // this will have loaded the class separately from the system
-        assertNotEquals(gin.Patch.class, patchClass);
-        // But should be internally consistent
-        assertEquals(patchClass, loader.loadClass("gin.Patch"));
-    }
 
 }

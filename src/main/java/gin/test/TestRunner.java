@@ -57,9 +57,7 @@ public class TestRunner {
         try {
             compiledClass = InMemoryJavaCompiler.newInstance().compile(className, source);
         } catch (Exception e) {
-            System.err.println("Error compiling class " + className + " in memory: " + e);
-            System.err.println("Source was: " + source);
-            System.exit(-1);
+            System.out.println("Error compiling class " + className + " in memory: " + e);
         }
 
         return compiledClass;

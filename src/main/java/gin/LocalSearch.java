@@ -1,5 +1,6 @@
 package gin;
 
+import gin.edit.DeleteStatement;
 import gin.test.TestResult;
 import gin.test.TestRunner;
 import org.apache.commons.io.FilenameUtils;
@@ -128,15 +129,19 @@ public class LocalSearch {
      */
     public Patch neighbour(Patch patch, Random rng) {
 
-        Patch neighbour = patch.clone();
-
-        if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
-            neighbour.remove(rng.nextInt(neighbour.size()));
-        } else {
-            neighbour.addRandomEdit(rng);
-        }
-
+        Patch neighbour = new Patch(patch.sourceFile);
+        neighbour.add(new DeleteStatement(1));
         return neighbour;
+
+//        Patch neighbour = patch.clone();
+//
+//        if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
+//            neighbour.remove(rng.nextInt(neighbour.size()));
+//        } else {
+//            neighbour.addRandomEdit(rng);
+//        }
+//
+//        return neighbour;
 
     }
 

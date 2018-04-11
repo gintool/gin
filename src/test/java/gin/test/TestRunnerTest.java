@@ -56,6 +56,10 @@ public class TestRunnerTest {
         assertTrue(result.getValidPatch());
         assertNotNull(result.getJunitResult());
         assertEquals(0, result.getJunitResult().getFailureCount());
+    }
+
+    @Test
+    public void testOptimisation() {
 
     }
 

@@ -39,29 +39,13 @@ public class IsolatedTestRunnerTest {
         Method method = runnerClass.getMethod("runTestClasses", List.class);
         List<String> testClasses = new LinkedList<>();
         testClasses.add("ExampleTriangleProgramTest");
-        Object result = method.invoke(runner, testClasses);
+        TestResult result = (TestResult)method.invoke(runner, testClasses);
 
-        // Due to classloader issues as we're running in junit (and it has a separate classloader)
-        // we need to use reflection rather than casting the result.
-        Method getExecutionTime = result.getClass().getMethod("getExecutionTime");
-        Double executionTime = (Double)getExecutionTime.invoke(result);
-
-        Method getCleanCompile = result.getClass().getMethod("getCleanCompile");
-        boolean cleanCompile = (boolean)getCleanCompile.invoke(result);
-
-        Method getValidPatch = result.getClass().getMethod("getValidPatch");
-        boolean validPatch = (boolean)getValidPatch.invoke(result);
-
-        Method getJunitResult = result.getClass().getMethod("getJunitResult");
-        Object junitResult =  getJunitResult.invoke(result);
-        Method getFailureCount = junitResult.getClass().getMethod("getFailureCount");
-        int failureCount = (int)getFailureCount.invoke(junitResult);
-
-        assertTrue(executionTime > 0);
-        assertTrue(cleanCompile);
-        assertTrue(validPatch);
-        assertNotNull(junitResult);
-        assertEquals(0, failureCount);
+        assertTrue(result.getExecutionTime() > 0);
+        assertTrue(result.getCleanCompile());
+        assertTrue(result.getValidPatch());
+        assertNotNull(result.getJunitResult());
+        assertEquals(0, result.getJunitResult().getFailureCount());
 
     }
 }

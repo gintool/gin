@@ -36,10 +36,10 @@ public class IsolatedTestRunnerTest {
 
         Class runnerClass = classLoader.loadClass("gin.test.IsolatedTestRunner");
         Object runner = runnerClass.newInstance();
-        Method method = runnerClass.getMethod("runTestClasses", List.class);
+        Method method = runnerClass.getMethod("runTestClasses", List.class, int.class);
         List<String> testClasses = new LinkedList<>();
         testClasses.add("ExampleTriangleProgramTest");
-        TestResult result = (TestResult)method.invoke(runner, testClasses);
+        TestResult result = (TestResult)method.invoke(runner, testClasses, 1);
 
         assertTrue(result.getExecutionTime() > 0);
         assertTrue(result.getCleanCompile());

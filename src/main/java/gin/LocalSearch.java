@@ -67,7 +67,7 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(sourceFile);
-        double bestTime = testRunner.test(bestPatch).getExecutionTime();
+        double bestTime = testRunner.test(bestPatch, 20).getExecutionTime();
         double origTime = bestTime;
         int bestStep = 0;
 
@@ -81,7 +81,7 @@ public class LocalSearch {
 
             System.out.print(neighbour);
 
-            TestResult testResult = testRunner.test(neighbour);
+            TestResult testResult = testRunner.test(neighbour, 10);
 
             if (!testResult.getValidPatch()) {
                 System.out.println("Patch invalid");

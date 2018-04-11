@@ -20,7 +20,7 @@ public class TestRunner {
         this.testName = className + "Test";
     }
 
-    public TestResult test(Patch patch) {
+    public TestResult test(Patch patch, int reps) {
 
         // Apply the patch
         String patchedSource = patch.apply();
@@ -39,7 +39,7 @@ public class TestRunner {
         }
 
         // Otherwise, run tests and return
-        TestResult result = runTests(modifiedClass);
+        TestResult result = runTests(modifiedClass, reps);
 
         return result;
 
@@ -74,7 +74,7 @@ public class TestRunner {
      * @param modifiedClass The compiled class.
      * @return
      */
-    protected TestResult runTests(Class modifiedClass) {
+    protected TestResult runTests(Class modifiedClass, int reps) {
 
         CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
         classLoader.store(this.className, modifiedClass);
@@ -101,7 +101,7 @@ public class TestRunner {
         Method method = null;
         String methodName = "runTestClasses";
         try {
-            method = runner.getClass().getMethod("runTestClasses", List.class);
+            method = runner.getClass().getMethod("runTestClasses", List.class, int.class);
         } catch (NoSuchMethodException e) {
             System.err.println("Could not run isolated test runner, can't find method: " + methodName);
             System.exit(-1);
@@ -112,7 +112,7 @@ public class TestRunner {
 
         Object result = null;
         try {
-            result = method.invoke(runner, testClasses);
+            result = method.invoke(runner, testClasses, reps);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {

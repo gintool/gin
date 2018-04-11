@@ -49,7 +49,7 @@ public class TestRunnerTest {
         URLClassLoader classLoader = new URLClassLoader(classLoaderUrls);
         Class exampleClass = classLoader.loadClass(exampleClassName);
 
-        TestResult result = testRunner.runTests(exampleClass);
+        TestResult result = testRunner.runTests(exampleClass, 1);
 
         assertTrue(result.getExecutionTime() > 0);
         assertTrue(result.getCleanCompile());

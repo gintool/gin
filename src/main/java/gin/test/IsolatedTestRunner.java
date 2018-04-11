@@ -10,14 +10,12 @@ import java.util.List;
 
 public class IsolatedTestRunner {
 
-    private static final int REPS = 10;
-
     /**
      * This method is called using reflection to ensure tests are run in an environment that employs a separate
      * classloader.
      * @param testClasses
      */
-    public TestResult runTestClasses(List<String> testClasses) {
+    public TestResult runTestClasses(List<String> testClasses, int reps) {
 
         // Load classes
         Class<?>[] classes = new Class<?>[testClasses.size()];
@@ -38,7 +36,7 @@ public class IsolatedTestRunner {
         JUnitCore jUnitCore = new JUnitCore();
 
         // Run the tests REPS times and calculate the mean via a running average
-        double[] elapsed = new double[REPS];
+        double[] elapsed = new double[reps];
         Result result = null;
         for (int rep=0; rep < elapsed.length; rep++) {
             try {

@@ -86,12 +86,12 @@ public class PatchAnalyser {
         // Evaluate original class
         System.out.println("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFile);
-        double originalExecutionTime = testRunner.test(emptyPatch).getExecutionTime();
+        double originalExecutionTime = testRunner.test(emptyPatch, REPS).getExecutionTime();
         System.out.println("Original execution time: " + originalExecutionTime);
 
         // Evaluate patch
         System.out.println("Timing patched sourceFile execution...");
-        TestResult result = testRunner.test(patch);
+        TestResult result = testRunner.test(patch, REPS);
         System.out.println("Test result: " + result);
         System.out.println("Execution time of patched sourceFile: " + result.getExecutionTime());
         System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.getExecutionTime())/originalExecutionTime)));

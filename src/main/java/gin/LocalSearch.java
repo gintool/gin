@@ -138,7 +138,7 @@ public class LocalSearch {
         } else {
             neighbour.addRandomEdit(rng);
         }
-
+        
         return neighbour;
 
     }

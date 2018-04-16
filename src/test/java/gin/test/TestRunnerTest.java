@@ -60,23 +60,27 @@ public class TestRunnerTest {
 
     }
 
+    /*
+        This test does not work in IntelliJ.
+        The class reload fails. Probably something to do with the way IntelliJ calls jUnit.
+     */
     @Test
     public void testOptimisation() {
 
         SourceFile sourceFile = new SourceFile(exampleSourceFilename);
 
         Patch emptyPatch = new Patch(sourceFile);
-        double originalTime = testRunner.test(emptyPatch, 10).getExecutionTime();
+        TestResult result = testRunner.test(emptyPatch, 10);
+        double originalTime = result.getExecutionTime();
 
         Patch deleteDelayPatch = new Patch(sourceFile);
         DeleteStatement edit = new DeleteStatement(1);
         deleteDelayPatch.add(edit);
 
-        System.out.println(deleteDelayPatch.apply());
+        TestRunner testRunner2 = new TestRunner(new File(examplePackageName), exampleClassName);
 
-        double newTime = testRunner.test(deleteDelayPatch, 10).getExecutionTime();
-
-        System.out.println("original: " + originalTime + " new " + newTime);
+        TestResult newResult = testRunner2.test(deleteDelayPatch, 10);
+        double newTime = newResult.getExecutionTime();
 
         assertTrue(originalTime > newTime);
 

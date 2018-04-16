@@ -68,7 +68,9 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(sourceFile);
-        double bestTime = testRunner.test(bestPatch, 20).getExecutionTime();
+        TestResult result = testRunner.test(bestPatch, WARMUP_REPS);
+        System.out.println("Original test result: " + result);
+        double bestTime = result.getExecutionTime();
         double origTime = bestTime;
         int bestStep = 0;
 
@@ -129,19 +131,15 @@ public class LocalSearch {
      */
     public Patch neighbour(Patch patch, Random rng) {
 
-        Patch neighbour = new Patch(patch.sourceFile);
-        neighbour.add(new DeleteStatement(1));
-        return neighbour;
+        Patch neighbour = patch.clone();
 
-//        Patch neighbour = patch.clone();
-//
-//        if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
-//            neighbour.remove(rng.nextInt(neighbour.size()));
-//        } else {
-//            neighbour.addRandomEdit(rng);
-//        }
-//
-//        return neighbour;
+        if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
+            neighbour.remove(rng.nextInt(neighbour.size()));
+        } else {
+            neighbour.addRandomEdit(rng);
+        }
+
+        return neighbour;
 
     }
 

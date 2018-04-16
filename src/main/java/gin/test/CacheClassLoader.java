@@ -51,8 +51,6 @@ public class CacheClassLoader extends URLClassLoader {
     @Override
     public Class loadClass(String name) throws ClassNotFoundException {
 
-        System.out.println("Load class: " + name);
-
         // Case (1) Firstly, when the ITR is instantiated, I will load it (via inherited method)
         // To ensure I am recorded as the classloader for IsolatedTestRunner.
         // This means all test executions will load classes via me, so I can intercept them as in case (2)
@@ -73,7 +71,8 @@ public class CacheClassLoader extends URLClassLoader {
             ClassLoader system = ClassLoader.getSystemClassLoader();
             return system.loadClass(name);
         } catch (ClassNotFoundException e) {
-            return super.loadClass(name);
+            Class fromSuper = super.loadClass(name);
+            return fromSuper;
         }
 
     }

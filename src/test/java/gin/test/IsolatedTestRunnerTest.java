@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 public class IsolatedTestRunnerTest {
 
     File RESOURCES_DIR = new File("./src/test/resources/");
-    File SRC_FILE = new File(RESOURCES_DIR, "ExampleTriangleProgram.java");
+    File SRC_FILE = new File(RESOURCES_DIR, "Triangle.java");
 
     @Test
     public void runTestClasses() throws ClassNotFoundException, IllegalAccessException, InstantiationException,
@@ -38,7 +38,7 @@ public class IsolatedTestRunnerTest {
         Object runner = runnerClass.newInstance();
         Method method = runnerClass.getMethod("runTestClasses", List.class, int.class);
         List<String> testClasses = new LinkedList<>();
-        testClasses.add("ExampleQuickTriangleProgramTest");
+        testClasses.add("QuickTriangleTest");
         TestResult result = (TestResult)method.invoke(runner, testClasses, 1);
 
         assertTrue(result.getExecutionTime() > 0);

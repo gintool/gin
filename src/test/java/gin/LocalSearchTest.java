@@ -16,7 +16,7 @@ public class LocalSearchTest {
 
 
     private final static String examplePackageDirectory = "src/test/resources/";
-    private final static String exampleClassName = "ExampleTriangleProgram";
+    private final static String exampleClassName = "Triangle";
     private final static String exampleSourceFilename = examplePackageDirectory + exampleClassName + ".java";
 
     LocalSearch localSearch;

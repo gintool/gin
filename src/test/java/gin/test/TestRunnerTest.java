@@ -16,8 +16,8 @@ public class TestRunnerTest {
 
     private final static String examplePackageName = "src/test/resources/";
     private final static File examplePackageDirectory = new File(examplePackageName);
-    private final static String exampleClassName = "ExampleTriangleProgram";
-    private final static String exampleTestClassName = "ExampleTriangleProgramTest";
+    private final static String exampleClassName = "Triangle";
+    private final static String exampleTestClassName = "TriangleTest";
     private final static String exampleSourceFilename = examplePackageName + exampleClassName + ".java";
     private final static String exampleTestFilename = examplePackageName + exampleTestClassName + ".java";
 
@@ -46,7 +46,7 @@ public class TestRunnerTest {
     @Test
     public void testRunTests() throws MalformedURLException, ClassNotFoundException {
 
-        URL[] classLoaderUrls = new URL[]{new URL("file:////./src/test/resources/")};
+        URL[] classLoaderUrls = new URL[]{new URL("file:////./src/test/resources/classes/")};
         URLClassLoader classLoader = new URLClassLoader(classLoaderUrls);
         Class exampleClass = classLoader.loadClass(exampleClassName);
 
@@ -81,6 +81,8 @@ public class TestRunnerTest {
 
         TestResult newResult = testRunner2.test(deleteDelayPatch, 10);
         double newTime = newResult.getExecutionTime();
+
+        System.out.println(newResult.junitResult.wasSuccessful());
 
         assertTrue(originalTime > newTime);
 

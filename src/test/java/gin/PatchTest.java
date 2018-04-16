@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 
 public class PatchTest {
 
-    private final static String exampleSourceFilename = "src/test/resources/ExampleTriangleProgram.java";
+    private final static String exampleSourceFilename = "src/test/resources/Triangle.java";
     private final static String tmpPatchedFilename = exampleSourceFilename + ".patched";
     private final static String verySmallExampleSourceFilename = "src/test/resources/Small.java";
     private final static Charset charSet = Charset.forName("UTF-8");

@@ -22,7 +22,8 @@ public class IsolatedTestRunner {
         for (int i=0; i<testClasses.size(); i++) {
             String test = testClasses.get(i);
             try {
-                classes[i] = Class.forName(test);
+                //classes[i] = Class.forName(test);
+                classes[i] = this.getClass().getClassLoader().loadClass(test);
             } catch (ClassNotFoundException e) {
                 String msg = "Unable to find class file for test ["+test+"]. Make sure all " +
                         "tests sources are either included in this test target via a 'src' " +

@@ -72,7 +72,7 @@ public class TestRunner {
      * @param modifiedClass The compiled class.
      * @return
      */
-    protected TestResult runTests(Class modifiedClass, int reps) {
+    public TestResult runTests(Class modifiedClass, int reps) {
 
         CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
         classLoader.store(this.className, modifiedClass);

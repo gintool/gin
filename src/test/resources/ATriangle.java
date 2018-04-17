@@ -1,4 +1,4 @@
-public class Triangle {
+public class ATriangle {
 
     static final int INVALID = 0;
     static final int SCALENE = 1;

@@ -2,16 +2,22 @@ package gin;
 
 import com.github.javaparser.ast.CompilationUnit;
 import gin.edit.DeleteStatement;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Random;
 
 import static org.junit.Assert.*;
 
 public class LocalSearchTest {
 
-    private final static String exampleSourceFilename = "src/test/resources/ExampleTriangleProgram.java";
+
+    private final static String examplePackageDirectory = "src/test/resources/";
+    private final static String exampleClassName = "ATriangle";
+    private final static String exampleSourceFilename = examplePackageDirectory + exampleClassName + ".java";
 
     LocalSearch localSearch;
 
@@ -24,14 +30,15 @@ public class LocalSearchTest {
     public void localSearch() {
         localSearch = new LocalSearch(exampleSourceFilename);
         assertEquals(exampleSourceFilename, localSearch.sourceFile.getFilename());
-        assertEquals(localSearch.testRunner.sourceFile, localSearch.sourceFile);
+        assertEquals(new File(examplePackageDirectory), localSearch.topDirectory);
+        assertEquals(exampleClassName, localSearch.className);
+        assertNotNull(localSearch.testRunner);
         assertNotNull(localSearch.rng);
     }
 
     @Test
     public void neighbour() throws Exception {
         SourceFile sourceFile = new SourceFile(exampleSourceFilename);
-        CompilationUnit compilationUnit = sourceFile.getCompilationUnit();
         Patch patch = new Patch(sourceFile);
         Random rng = new Random(1234);
 

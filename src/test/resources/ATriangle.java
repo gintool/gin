@@ -1,13 +1,15 @@
-public class ExampleTriangleProgram {
+public class ATriangle {
 
-    public enum TriangleType {
-        INVALID, SCALENE, EQUALATERAL, ISOCELES
-    }
+    static final int INVALID = 0;
+    static final int SCALENE = 1;
+    static final int EQUALATERAL = 2;
+    static final int ISOCELES = 3;
 
-    public static TriangleType classifyTriangle(int a, int b, int c) {
+    public static int classifyTriangle(int a, int b, int c) {
 
         delay();
 
+        // Sort the sides so that a <= b <= c
         if (a > b) {
             int tmp = a;
             a = b;
@@ -27,13 +29,13 @@ public class ExampleTriangleProgram {
         }
 
         if (a + b <= c) {
-            return TriangleType.INVALID;
+            return INVALID;
         } else if (a == b && b == c) {
-            return TriangleType.EQUALATERAL;
+            return EQUALATERAL;
         } else if (a == b || b == c) {
-            return TriangleType.ISOCELES;
+            return ISOCELES;
         } else {
-            return TriangleType.SCALENE;
+            return SCALENE;
         }
 
     }

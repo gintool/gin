@@ -1,4 +1,4 @@
-public class Triangle {
+public class QuickTriangle {
 
     static final int INVALID = 0;
     static final int SCALENE = 1;
@@ -6,8 +6,6 @@ public class Triangle {
     static final int ISOCELES = 3;
 
     public static int classifyTriangle(int a, int b, int c) {
-
-        delay();
 
         // Sort the sides so that a <= b <= c
         if (a > b) {
@@ -42,9 +40,9 @@ public class Triangle {
 
     private static void delay() {
         try {
-            Thread.sleep(100);
+            Thread.sleep(1);
         } catch (InterruptedException e) {
-            // do nothing
+
         }
     }
 

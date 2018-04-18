@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 public class SourceFileTest {
 
     private SourceFile sourceFile;
-    private final static String exampleSourceFilename = "src/test/resources/ExampleTriangleProgram.java";
+    private final static String exampleSourceFilename = "src/test/resources/ATriangle.java";
     private final static String verySmallExampleSourceFilename = "src/test/resources/Small.java";
     private final static Charset charSet = Charset.forName("UTF-8");
 

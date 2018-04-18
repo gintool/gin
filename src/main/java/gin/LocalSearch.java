@@ -1,5 +1,11 @@
 package gin;
 
+import gin.edit.DeleteStatement;
+import gin.test.TestResult;
+import gin.test.TestRunner;
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
 import java.util.Random;
 
 /**
@@ -14,6 +20,8 @@ public class LocalSearch {
     protected SourceFile sourceFile;
     protected TestRunner testRunner;
     protected Random rng;
+    protected File topDirectory;
+    protected String className;
 
     /**
      * Main method. Take a source code filename, instantiate a search instance and execute the search.
@@ -45,7 +53,9 @@ public class LocalSearch {
     public LocalSearch(String sourceFilename) {
 
         this.sourceFile = new SourceFile(sourceFilename);  // just parses the code and counts statements etc.
-        this.testRunner = new TestRunner(this.sourceFile); // Utility class for running junits
+        this.topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
+        this.className = FilenameUtils.getBaseName(sourceFile.getFilename());
+        this.testRunner = new TestRunner(this.topDirectory, this.className); // Utility class for running junits
         this.rng = new Random(seed);
 
     }
@@ -58,7 +68,9 @@ public class LocalSearch {
 
         // start with the empty patch
         Patch bestPatch = new Patch(sourceFile);
-        double bestTime = testRunner.test(bestPatch, WARMUP_REPS).executionTime;
+        TestResult result = testRunner.test(bestPatch, WARMUP_REPS);
+        System.out.println("Original test result: " + result);
+        double bestTime = result.getExecutionTime();
         double origTime = bestTime;
         int bestStep = 0;
 
@@ -72,30 +84,30 @@ public class LocalSearch {
 
             System.out.print(neighbour);
 
-            TestRunner.TestResult testResult = testRunner.test(neighbour);
+            TestResult testResult = testRunner.test(neighbour, 10);
 
-            if (!testResult.patchSuccess) {
+            if (!testResult.getValidPatch()) {
                 System.out.println("Patch invalid");
                 continue;
             }
 
-            if (!testResult.compiled) {
+            if (!testResult.getCleanCompile()) {
                 System.out.println("Failed to compile");
                 continue;
             }
 
-            if (!testResult.junitResult.wasSuccessful()) {
+            if (!testResult.getJunitResult().wasSuccessful()) {
                 System.out.println("Failed to pass all tests");
                 continue;
             }
 
-            if (testResult.executionTime < bestTime) {
+            if (testResult.getExecutionTime() < bestTime) {
                 bestPatch = neighbour;
-                bestTime = testResult.executionTime;
+                bestTime = testResult.getExecutionTime();
                 bestStep = step;
                 System.out.println("*** New best *** Time: " + bestTime + "(ns)");
             } else {
-                System.out.println("Time: " + testResult.executionTime);
+                System.out.println("Time: " + testResult.getExecutionTime());
             }
 
         }

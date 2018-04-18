@@ -56,9 +56,9 @@ public class Patch {
 
     /**
      * Apply this patch to the source file.
-     * @return a new SourceFile object representing the patched source code.
+     * @return text of patched sourcecode.
      */
-    public SourceFile apply() {
+    public String apply() {
 
         /**
          * Helper class used in applying a patch.
@@ -147,7 +147,7 @@ public class Patch {
         }
 
         if (removedOK) {
-            return new SourceFile(patchedCompilationUnit);
+            return patchedCompilationUnit.toString();
         } else {
             return null;
         }
@@ -231,10 +231,10 @@ public class Patch {
     public void writePatchedSourceToFile(String filename) {
 
         // Apply this patch
-        SourceFile patchedSourceFile = this.apply();
+        String patchedSourceFile = this.apply();
 
         try {
-            FileUtils.writeStringToFile(new File(filename), patchedSourceFile.getSource(), Charset.defaultCharset());
+            FileUtils.writeStringToFile(new File(filename), patchedSourceFile, Charset.defaultCharset());
         } catch (IOException e) {
             System.err.println("Exception writing source code of patched program to: " + filename);
             e.printStackTrace();

@@ -3,7 +3,10 @@ package gin;
 import gin.edit.CopyStatement;
 import gin.edit.DeleteStatement;
 import gin.edit.MoveStatement;
+import gin.test.TestResult;
+import gin.test.TestRunner;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +33,10 @@ public class PatchAnalyser {
 
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFile sourceFile = new SourceFile(sourceFilename);
-        TestRunner testRunner = new TestRunner(sourceFile);
+        File topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
+        String className = FilenameUtils.getBaseName(sourceFile.getFilename());
+
+        TestRunner testRunner = new TestRunner(topDirectory, className);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFile.statementList();
@@ -59,7 +65,7 @@ public class PatchAnalyser {
         System.out.println("Block numbering written to: " + blockFilename);
 
         Patch patch = parsePatch(patchText, sourceFile);
-        String patchedSource = patch.apply().getSource();
+        String patchedSource = patch.apply();
 
         System.out.println("Evaluating patch for Class Source: " + sourceFilename);
 
@@ -80,15 +86,15 @@ public class PatchAnalyser {
         // Evaluate original class
         System.out.println("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFile);
-        double originalExecutionTime = testRunner.test(emptyPatch, REPS).executionTime;
+        double originalExecutionTime = testRunner.test(emptyPatch, REPS).getExecutionTime();
         System.out.println("Original execution time: " + originalExecutionTime);
 
         // Evaluate patch
         System.out.println("Timing patched sourceFile execution...");
-        TestRunner.TestResult result = testRunner.test(patch, REPS);
+        TestResult result = testRunner.test(patch, REPS);
         System.out.println("Test result: " + result);
-        System.out.println("Execution time of patched sourceFile: " + result.executionTime);
-        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.executionTime)/originalExecutionTime)));
+        System.out.println("Execution time of patched sourceFile: " + result.getExecutionTime());
+        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.getExecutionTime())/originalExecutionTime)));
 
     }
 

@@ -36,9 +36,13 @@ public abstract class ModifyNodeFactory {
 	public abstract Collection<Class<? extends Node>> appliesTo();
 	
     /**
+     * By default this just calls appliesTo() and uses those classes as a static filter.
+     * If you want to do something more interesting (e.g. filter by operator within a node),
+     * then override this method.
+     * 
      * @return collection of nodes from a given source file that the modification applies to
      */
-    public final List<Node> appliesToNodes(CompilationUnit cu) {
+    public List<Node> appliesToNodes(CompilationUnit cu) {
     	Set<Node> nodes = new LinkedHashSet<Node>(); // LinkedHashSet preserves order - keeps operation deterministic
     	
     	for (Class<? extends Node> clazz : appliesTo()) {

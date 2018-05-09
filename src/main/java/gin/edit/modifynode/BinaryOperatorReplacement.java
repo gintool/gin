@@ -13,7 +13,7 @@ import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 
 import gin.edit.ModifyNode;
 
-public class LogicalOperatorReplacement extends ModifyNode {
+public class BinaryOperatorReplacement extends ModifyNode {
 	private final Operator source;
 	private final Operator replacement;
 	
@@ -45,15 +45,15 @@ public class LogicalOperatorReplacement extends ModifyNode {
 	}
 	
 	/**
-	 * Naming follows MuJava convention
-	 * LOR
+	 * Following MuJava, this covers the binary operator replacements in:
+	 * arithmetic operator replacement, relational op repl, conditional op repl, shift op repl, 
 	 * 
 	 * @param sourceNodes is the list of possible nodes for modification; these won't be
 	 * 	      modified, just used for reference
 	 * @param r is needed to choose a node and a suitable replacement 
 	 *        (keeps this detail out of Patch class)
 	 */
-	public LogicalOperatorReplacement(List<Node> sourceNodes, LogicalOperatorReplacementFactory factory, Random r) {
+	public BinaryOperatorReplacement(List<Node> sourceNodes, BinaryOperatorReplacementFactory factory, Random r) {
 		super(sourceNodes, factory, r);
 		
 		BinaryExpr sourceNode = (BinaryExpr)(this.sourceNodes.get(sourceNodeIndex));

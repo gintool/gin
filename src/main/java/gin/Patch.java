@@ -20,7 +20,9 @@ import gin.edit.Edit;
 import gin.edit.ModifyNode;
 import gin.edit.ModifyNodeFactory;
 import gin.edit.MoveStatement;
-import gin.edit.modifynode.LogicalOperatorReplacementFactory;
+import gin.edit.modifynode.BinaryOperatorReplacementFactory;
+import gin.edit.modifynode.ReorderLogicalExpression;
+import gin.edit.modifynode.ReorderLogicalExpressionFactory;
 import gin.edit.modifynode.UnaryOperatorReplacement;
 import gin.edit.modifynode.UnaryOperatorReplacementFactory;
 
@@ -162,18 +164,22 @@ public class Patch {
     	// the following factory stuff might be better elsewhere?
     	
     	// separate factories needed for different modifyNode operators
-    	LogicalOperatorReplacementFactory lorFactory = new LogicalOperatorReplacementFactory(sourceFile.getCompilationUnit());
+    	BinaryOperatorReplacementFactory borFactory = new BinaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
     	UnaryOperatorReplacementFactory uorFactory = new UnaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
+    	ReorderLogicalExpressionFactory rleFactory = new ReorderLogicalExpressionFactory(sourceFile.getCompilationUnit());
     	// ...
     	
     	// not all modifiers will be applicable! Check which are and only consider those.
     	List<ModifyNodeFactory> mnfs = new ArrayList<>();
-    	if (!lorFactory.getSourceNodes().isEmpty()) {
-    		mnfs.add(lorFactory);
+    	if (!borFactory.getSourceNodes().isEmpty()) {
+    		mnfs.add(borFactory);
     	}
     	if (!uorFactory.getSourceNodes().isEmpty()) {
     		mnfs.add(uorFactory);
     	} 
+    	if (!rleFactory.getSourceNodes().isEmpty()) {
+    		mnfs.add(rleFactory);
+    	}
     	
         Edit edit = null;
 

@@ -1,5 +1,9 @@
 [![Build Status](https://travis-ci.org/gintool/gin.svg?branch=master)](https://travis-ci.org/gintool/gin)
 
+# Notice! Under Development (4th Sept 2018)
+
+Currently the Gin team are working on an extensive update to Gin. We've introduced a ton of new features, and the banner headline is: Gin now works on industrial-scale projects. As the work has involved such large scale modifications, we're working in a private fork. We expect this fork to be released to the public repo before the end of 2018. 
+
 # Gin: Genetic Improvement in No Time
 
 This is the repository for the academic research paper "Genetic Improvement in No Time", submitted to the GI 2017 workshop at GECCO 2017. [Please see this preprint of the paper](doc/gin.pdf).

@@ -3,28 +3,35 @@ package gin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.pmw.tinylog.Logger;
 
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.Statement;
-
-import gin.edit.CopyStatement;
-import gin.edit.DeleteStatement;
 import gin.edit.Edit;
-import gin.edit.ModifyNode;
-import gin.edit.ModifyNodeFactory;
-import gin.edit.MoveStatement;
-import gin.edit.modifynode.BinaryOperatorReplacementFactory;
+import gin.edit.Edit.EditType;
+import gin.edit.NoEdit;
+import gin.edit.line.CopyLine;
+import gin.edit.line.DeleteLine;
+import gin.edit.line.LineEdit;
+import gin.edit.line.ReplaceLine;
+import gin.edit.line.SwapLine;
+import gin.edit.matched.MatchedCopyStatement;
+import gin.edit.matched.MatchedDeleteStatement;
+import gin.edit.matched.MatchedReplaceStatement;
+import gin.edit.matched.MatchedSwapStatement;
+import gin.edit.modifynode.BinaryOperatorReplacement;
+import gin.edit.modifynode.NoApplicableNodesException;
 import gin.edit.modifynode.ReorderLogicalExpression;
-import gin.edit.modifynode.ReorderLogicalExpressionFactory;
 import gin.edit.modifynode.UnaryOperatorReplacement;
-import gin.edit.modifynode.UnaryOperatorReplacementFactory;
+import gin.edit.statement.CopyStatement;
+import gin.edit.statement.DeleteStatement;
+import gin.edit.statement.ReplaceStatement;
+import gin.edit.statement.StatementEdit;
+import gin.edit.statement.SwapStatement;
 
 /**
  * Represents a patch, a potential set of changes to a sourcefile.
@@ -33,14 +40,18 @@ public class Patch {
 
     protected LinkedList<Edit> edits = new LinkedList<>();
     protected SourceFile sourceFile;
+    private Class<?> superClassOfEdits;
 
     public Patch(SourceFile sourceFile) {
         this.sourceFile = sourceFile;
+        this.superClassOfEdits = null;
     }
 
+    @SuppressWarnings("unchecked")
     public Patch clone() {
         Patch clonePatch = new Patch(this.sourceFile);
         clonePatch.edits = (LinkedList<Edit>)(this.edits.clone());
+        clonePatch.superClassOfEdits = this.superClassOfEdits;
         return clonePatch;
     }
 
@@ -48,8 +59,35 @@ public class Patch {
         return this.edits.size();
     }
 
+    public List<Edit> getEdits() {
+        return this.edits;
+    }
+
+    /**
+     * add an edit to this patch.
+     * 
+     * @param edit - the edit to be added
+     * @throws IllegalArgumentException if the edit is of a different type
+     *         (i.e. line/statement) to those already in the patch
+     */
     public void add(Edit edit) {
-        this.edits.add(edit);
+        if ( (edit.getClass().toString()).equals(NoEdit.class.toString()) ) {
+            // do not add an empty Edit
+        } else {
+            if ((superClassOfEdits == null) || superClassOfEdits.isAssignableFrom(edit.getClass())) {
+                this.edits.add(edit);
+                
+                if (superClassOfEdits == null) {
+                    if (StatementEdit.class.isAssignableFrom(edit.getClass())) {
+                        superClassOfEdits = StatementEdit.class;
+                    } else {
+                        superClassOfEdits = LineEdit.class;
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("Mixed line/statement edits not supported.");
+            }
+        }
     }
 
     public void remove(int index) {
@@ -58,176 +96,150 @@ public class Patch {
 
     /**
      * Apply this patch to the source file.
-     * @return text of patched sourcecode.
+     * @return text of patched sourcecode; if there were problems, we just get the same sourcefile back
      */
     public String apply() {
 
-        /**
-         * Helper class used in applying a patch.
-         */
-        class Insertion {
-
-            Statement statementToInsert;
-            int insertionPoint;
-            BlockStmt insertionPointParent;
-
-            Insertion(Statement statementToInsert, int insertionPoint, BlockStmt insertionPointParent) {
-                this.statementToInsert = statementToInsert;
-                this.insertionPoint = insertionPoint;
-                this.insertionPointParent = insertionPointParent;
-            }
-
-        }
-
-        CompilationUnit patchedCompilationUnit = sourceFile.getCompilationUnit().clone();
-
-        List<Statement> allStatements = patchedCompilationUnit.getNodesByType(Statement.class);
-        List<BlockStmt> blocks = patchedCompilationUnit.getNodesByType(BlockStmt.class);
-
-        List<Statement> toDelete = new LinkedList<>();
-        List<Insertion> insertions = new LinkedList<>();
-
-
+        SourceFile patchedSourceFile = sourceFile.copyOf();
+        
         for (Edit edit: edits) {
-
-            if (edit instanceof DeleteStatement) {
-
-                toDelete.add(allStatements.get(((DeleteStatement)edit).statementToDelete));
-
-            } else if (edit instanceof MoveStatement) {
-
-                MoveStatement move = (MoveStatement)edit;
-                Statement source = allStatements.get(move.sourceStatement);
-                int targetStatementIndex;
-                BlockStmt parent = blocks.get(move.destinationBlock);
-
-                if (parent.isEmpty()) {
-                    targetStatementIndex = 0;
-                } else {
-                    targetStatementIndex = move.destinationChildInBlock;
-                }
-
-                Insertion insertion = new Insertion(source, targetStatementIndex, parent);
-                insertions.add(insertion);
-                toDelete.add(allStatements.get(((MoveStatement)edit).sourceStatement));
-
-            } else if (edit instanceof CopyStatement) {
-
-                CopyStatement copy = (CopyStatement)edit;
-                Statement source = allStatements.get(copy.sourceStatement);
-                int targetStatementIndex;
-                BlockStmt parent = blocks.get(copy.destinationBlock);
-
-                if (parent.isEmpty()) {
-                    targetStatementIndex = 0;
-                } else {
-                    targetStatementIndex = copy.destinationChildInBlock;
-                }
-
-                Insertion insertion = new Insertion(source, targetStatementIndex, parent);
-                insertions.add(insertion);
-
-            } else if (edit instanceof ModifyNode) {
-            	// each of these has an internal list of nodes and an index
-            	// the change will not affect the structure so we can
-            	// make the patch without a ConcurrentModificationException
-            	// Just supply the new source, and ask them to make the change.
-            	@SuppressWarnings("unused") // currently ignore the result
-            	boolean result = ((ModifyNode)edit).apply(patchedCompilationUnit);
+            try {
+                patchedSourceFile = edit.apply(patchedSourceFile);
+            } catch(Exception e) {
+                // any problem applying the edit means 
+                // we just don't apply it
             }
-
         }
 
-        for (Insertion insertion: insertions) {
-            Statement source = insertion.statementToInsert.clone();
-            insertion.insertionPointParent.addStatement(insertion.insertionPoint, source);
+        try {
+            return patchedSourceFile.getSource();
+        } catch (ClassCastException e) {
+            // sometimes happens if an edit has violated JavaParser's expectations
+            // - see https://github.com/drdrwhite/ginfork/issues/104
+            return sourceFile.getSource();
         }
-
-        boolean removedOK = true;
-        for (Statement statement: toDelete) {
-            removedOK &= statement.remove(); // Not guaranteed to work if violate some constraints.
-        }
-
-        if (removedOK) {
-            return patchedCompilationUnit.toString();
-        } else {
-            return null;
-        }
-
+        
     }
 
-    public void addRandomEdit(Random rng) {
-        this.edits.add(randomEdit(rng));
+    public void addRandomEdit(Random rng, EditType allowableEditType) {
+        addRandomEdit(rng, new LinkedList<EditType>(Arrays.asList(allowableEditType)));
     }
 
-    private Edit randomEdit(Random rng) {
-    	// the following factory stuff might be better elsewhere?
-    	
-    	// separate factories needed for different modifyNode operators
-    	BinaryOperatorReplacementFactory borFactory = new BinaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
-    	UnaryOperatorReplacementFactory uorFactory = new UnaryOperatorReplacementFactory(sourceFile.getCompilationUnit());
-    	ReorderLogicalExpressionFactory rleFactory = new ReorderLogicalExpressionFactory(sourceFile.getCompilationUnit());
-    	// ...
-    	
-    	// not all modifiers will be applicable! Check which are and only consider those.
-    	List<ModifyNodeFactory> mnfs = new ArrayList<>();
-    	if (!borFactory.getSourceNodes().isEmpty()) {
-    		mnfs.add(borFactory);
-    	}
-    	if (!uorFactory.getSourceNodes().isEmpty()) {
-    		mnfs.add(uorFactory);
-    	} 
-    	if (!rleFactory.getSourceNodes().isEmpty()) {
-    		mnfs.add(rleFactory);
-    	}
-    	
+    public void addRandomEdit(Random rng, List<EditType> allowableEditTypes) {
+        this.add(randomEdit(rng, allowableEditTypes));
+    }
+
+    private Edit randomEdit(Random rng, List<EditType> allowableEditTypes) {
+        // generate a random edit. target methods are accounted for here
+        // by pulling the appropriate line/statement IDs from sourceFile
+        
+        if (allowableEditTypes.isEmpty()) {
+            Logger.error("No edit types were specified.");
+            System.exit(-1);
+        }
+        
         Edit edit = null;
 
-        int editType = rng.nextInt(3 + mnfs.size());
-
-        switch (editType) {
-            case (0): // delete statement
-                int statementToDelete = rng.nextInt(sourceFile.getStatementCount());
-                edit = new DeleteStatement(statementToDelete);
-                break;
-            case (1): // copy statement
-                int statementToCopy = rng.nextInt(sourceFile.getStatementCount());
-                int insertBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
-                int numberOfInsertionPoints = sourceFile.getNumberOfInsertionPointsInBlock(insertBlock);
-                int insertStatement;
-                if (numberOfInsertionPoints == 0) {
-                    insertStatement = 0; // insert at start of empty block
-                } else {
-                    insertStatement = rng.nextInt(numberOfInsertionPoints);
-                }
-                edit = new CopyStatement(statementToCopy, insertBlock, insertStatement);
-                break;
-            case (2): // move statement
-                int statementToMove = rng.nextInt(sourceFile.getStatementCount());
-                int moveBlock = rng.nextInt(sourceFile.getNumberOfBlocks());
-                int numberOfDestinationPoints = sourceFile.getNumberOfInsertionPointsInBlock(moveBlock);
-                int movePoint;
-                if (numberOfDestinationPoints == 0) {
-                    movePoint = 0; // insert at start of empty block
-                } else {
-                    movePoint = rng.nextInt(numberOfDestinationPoints);
-                }
-                edit = new MoveStatement(statementToMove, moveBlock, movePoint);
-                break;
-            default: // modify statement
-            	// binary operators (was originally just logical operators)
-            	// could do some checking for type here by calling ModifyNodeFactory.applicability().appliesTo()
-            	// just to be sure there are some nodes that can be changed by a particular operator!
-            
-            	// also unary operators
-            	
-            	// will also need a random choice between different modifications...
-            	// see https://github.com/gintool/gin/issues/13#issuecomment-342489660
-            	
-            	// which factory do we want? Subtract 3 from index (for the 3 edit types above)
-            	ModifyNodeFactory mnf = mnfs.get(editType - 3);
-            	edit = mnf.newModifier(rng);
-            	break;
+        // decide what edit we're doing to make
+        // first, choose an overall type (line,statement,substatement)
+        // then choose a particular kind of edit within that type (copy/delete/move etc.)
+        EditType editType = allowableEditTypes.get(rng.nextInt(allowableEditTypes.size())); 
+        
+        try {
+            switch (editType) {
+                case LINE:
+                    int editSubType = rng.nextInt(4);
+                    switch (editSubType) {
+                        case (0): // delete line
+                            edit = new DeleteLine(sourceFile, rng);
+                            break;
+                        case (1): // copy line
+                            edit = new CopyLine(sourceFile, rng);
+                            break;
+    /* SB: omitted for experiments
+                        case (2): // move line
+                            edit = new MoveLine(sourceFile, rng);
+                            break;
+    */
+                        case (2): // replace line
+                            edit = new ReplaceLine(sourceFile, rng);
+                            break;
+                        case (3): // swap line
+                            edit = new SwapLine(sourceFile, rng);
+                            break;
+                    }
+                    break;
+                case STATEMENT:
+                    editSubType = rng.nextInt(4);
+                    switch (editSubType) {
+                        case (0): // delete statement
+                            edit = new DeleteStatement(sourceFile, rng);
+                            break;
+                        case (1): // copy statement
+                            edit = new CopyStatement(sourceFile, rng);
+                            break;
+    /*
+                        case (2): // move statement
+                            edit = new MoveStatement(sourceFile, rng);
+                            break;
+    */
+                        case (2): // replace statement
+                            edit = new ReplaceStatement(sourceFile, rng);
+                            break;
+                        case (3): // swap statement
+                            edit = new SwapStatement(sourceFile, rng);
+                            break;
+                    }
+                    break;
+                case MODIFY_STATEMENT:
+                    editSubType = rng.nextInt(2);
+                    // will also need a random choice between different modifications...
+                    // see https://github.com/gintool/gin/issues/13#issuecomment-342489660
+                    switch (editSubType) {
+                    case (0): // BinaryOperator
+                        edit = new BinaryOperatorReplacement(sourceFile, rng);
+                        break;
+                    case (1): // UnaryOperator
+                        edit = new UnaryOperatorReplacement(sourceFile, rng);
+                        break;
+    /*
+                    case (2): // ReorderLogicalExpression
+                        edit = new ReorderLogicalExpression(sourceFile, rng); // not yet ready
+                        break;
+    */
+                    }
+                    
+                    break;
+                case MATCHED_STATEMENT:
+                    editSubType = rng.nextInt(4);
+                    switch (editSubType) {
+                        case (0): // delete statement
+                            edit = new MatchedDeleteStatement(sourceFile, rng);
+                            break;
+                        case (1): // copy statement
+                            edit = new MatchedCopyStatement(sourceFile, rng);
+                            break;
+    /*
+                        case (2): // move statement
+                            edit = new MatchedMoveStatement(sourceFile, rng); // doesn't exist currently! maybe can't exist.
+                            break;
+    */
+                        case (2): // replace statement
+                            edit = new MatchedReplaceStatement(sourceFile, rng);
+                            break;
+                        case (3): // swap statement
+                            edit = new MatchedSwapStatement(sourceFile, rng);
+                            break;
+                    }
+                    break;
+            }
+        } catch (NoApplicableNodesException e) {
+            // we get here if the chosen edit couldn't be created for the given source file
+            // leave edit null, it'll be filled below.
+        }
+        
+        if (edit == null) {
+            edit = new NoEdit();
         }
 
         return edit;
@@ -242,11 +254,29 @@ public class Patch {
         try {
             FileUtils.writeStringToFile(new File(filename), patchedSourceFile, Charset.defaultCharset());
         } catch (IOException e) {
-            System.err.println("Exception writing source code of patched program to: " + filename);
-            e.printStackTrace();
+            Logger.error("Exception writing source code of patched program to: " + filename);
+            Logger.trace(e);
             System.exit(-1);
         }
 
+    }
+    
+    public boolean isOnlyLineEdits() {
+        boolean rval = true;
+        for (Edit e : edits) {
+            rval &= e.getEditType() == EditType.LINE;
+        }
+        
+        return rval;
+    }
+    
+    public boolean isOnlyStatementEdits() {
+        boolean rval = true;
+        for (Edit e : edits) {
+            rval &= e.getEditType() != EditType.LINE;
+        }
+        
+        return rval;
     }
 
     @Override

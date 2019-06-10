@@ -1,0 +1,11 @@
+allprojects { 
+
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+ 	    compile group: 'org.evosuite', name: 'evosuite-standalone-runtime', version: '1.0.6'
+    }
+}

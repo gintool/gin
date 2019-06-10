@@ -1,0 +1,209 @@
+JAVA PROFILE 1.0.1, created Wed Feb 13 14:07:28 2019
+
+Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Oracle nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=50000215, id = 200001, name="main", group="main")
+THREAD START (obj=500005ad, id = 200004, name="/0:0:0:0:0:0:0:1:51334 to /0:0:0:0:0:0:0:1:51333 workers", group="main")
+THREAD START (obj=500005e4, id = 200005, name="/0:0:0:0:0:0:0:1:51334 to /0:0:0:0:0:0:0:1:51333 workers Thread 2", group="main")
+THREAD START (obj=500005e6, id = 200006, name="/0:0:0:0:0:0:0:1:51334 to /0:0:0:0:0:0:0:1:51333 workers Thread 3", group="main")
+THREAD END (id = 200005)
+THREAD END (id = 200006)
+THREAD END (id = 200004)
+THREAD START (obj=500006e9, id = 200007, name="Thread-0", group="main")
+THREAD END (id = 200007)
+THREAD END (id = 200001)
+TRACE 300384:
+	sun.nio.ch.KQueueArrayWrapper.kevent0(KQueueArrayWrapper.java:Unknown line)
+TRACE 300460:
+	example.ExampleTest.profileEnumTest(ExampleTest.java:23)
+TRACE 300041:
+	java.lang.Thread.currentThread(Thread.java:Unknown line)
+TRACE 300095:
+	java.lang.ClassLoader.loadClass(ClassLoader.java:415)
+TRACE 300022:
+	java.lang.ClassLoader.findBootstrapClass(ClassLoader.java:Unknown line)
+TRACE 300029:
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300351:
+	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
+TRACE 300093:
+	java.util.zip.ZipFile.freeEntry(ZipFile.java:Unknown line)
+TRACE 300115:
+	java.util.BitSet.get(BitSet.java:628)
+TRACE 300354:
+	sun.net.www.protocol.jar.Handler.indexOfBangSlash(Handler.java:45)
+TRACE 300330:
+	org.gradle.process.internal.worker.WorkerLoggingSerializer.create(WorkerLoggingSerializer.java:39)
+TRACE 300383:
+	java.lang.Thread.isInterrupted(Thread.java:Unknown line)
+TRACE 300018:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+TRACE 300204:
+	jdk.internal.org.objectweb.asm.ByteVector.putUTF8(ByteVector.java:259)
+TRACE 300387:
+	org.junit.validator.AnnotationsValidator.<clinit>(AnnotationsValidator.java:22)
+TRACE 300150:
+	java.lang.ClassLoader$NativeLibrary.load(ClassLoader.java:Unknown line)
+TRACE 300142:
+	java.util.logging.LogManager$2.run(LogManager.java:348)
+TRACE 300299:
+	java.io.UnixFileSystem.canonicalize0(UnixFileSystem.java:Unknown line)
+TRACE 300338:
+	java.lang.reflect.Array.newArray(Array.java:Unknown line)
+TRACE 300318:
+	sun.nio.ch.IOUtil.setfdVal(IOUtil.java:Unknown line)
+TRACE 300085:
+	java.util.jar.JarFile.maybeInstantiateVerifier(JarFile.java:332)
+TRACE 300426:
+	sun.util.resources.LocaleData$1.run(LocaleData.java:167)
+TRACE 300366:
+	org.gradle.internal.serialize.kryo.KryoBackedDecoder.<init>(KryoBackedDecoder.java:44)
+TRACE 300459:
+	java.lang.Object.clone(Object.java:Unknown line)
+TRACE 300461:
+	example.ExampleEnum.values(ExampleEnum.java:6)
+TRACE 300225:
+	java.lang.Class.isPrimitive(Class.java:Unknown line)
+TRACE 300211:
+	java.util.Arrays.copyOf(Arrays.java:3210)
+TRACE 300465:
+	sun.misc.Unsafe.unpark(Unsafe.java:Unknown line)
+TRACE 300273:
+	java.security.Provider.<clinit>(Provider.java:1339)
+TRACE 300324:
+	java.lang.ClassLoader.loadClass(ClassLoader.java:436)
+TRACE 300347:
+	org.gradle.internal.nativeintegration.services.NativeServices.<clinit>(NativeServices.java:64)
+TRACE 300167:
+	sun.misc.ObjectInputFilter$Config.<clinit>(ObjectInputFilter.java:248)
+TRACE 300349:
+	sun.misc.URLClassPath$JarLoader.getResource(URLClassPath.java:1038)
+TRACE 300376:
+	java.lang.Throwable.fillInStackTrace(Throwable.java:Unknown line)
+TRACE 300214:
+	java.lang.invoke.MethodType.toString(MethodType.java:796)
+CPU SAMPLES BEGIN (total = 376) Wed Feb 13 14:07:31 2019
+rank   self  accum   count trace method
+   1 46.01% 46.01%     173 300384 sun.nio.ch.KQueueArrayWrapper.kevent0
+   2 44.15% 90.16%     166 300460 example.ExampleTest.profileEnumTest
+   3  0.53% 90.69%       2 300041 java.lang.Thread.currentThread
+   4  0.53% 91.22%       2 300095 java.lang.ClassLoader.loadClass
+   5  0.53% 91.76%       2 300022 java.lang.ClassLoader.findBootstrapClass
+   6  0.53% 92.29%       2 300029 java.security.AccessController.doPrivileged
+   7  0.27% 92.55%       1 300351 java.util.zip.Inflater.inflateBytes
+   8  0.27% 92.82%       1 300093 java.util.zip.ZipFile.freeEntry
+   9  0.27% 93.09%       1 300115 java.util.BitSet.get
+  10  0.27% 93.35%       1 300354 sun.net.www.protocol.jar.Handler.indexOfBangSlash
+  11  0.27% 93.62%       1 300330 org.gradle.process.internal.worker.WorkerLoggingSerializer.create
+  12  0.27% 93.88%       1 300383 java.lang.Thread.isInterrupted
+  13  0.27% 94.15%       1 300018 java.lang.ClassLoader.defineClass1
+  14  0.27% 94.41%       1 300204 jdk.internal.org.objectweb.asm.ByteVector.putUTF8
+  15  0.27% 94.68%       1 300387 org.junit.validator.AnnotationsValidator.<clinit>
+  16  0.27% 94.95%       1 300150 java.lang.ClassLoader$NativeLibrary.load
+  17  0.27% 95.21%       1 300142 java.util.logging.LogManager$2.run
+  18  0.27% 95.48%       1 300299 java.io.UnixFileSystem.canonicalize0
+  19  0.27% 95.74%       1 300338 java.lang.reflect.Array.newArray
+  20  0.27% 96.01%       1 300318 sun.nio.ch.IOUtil.setfdVal
+  21  0.27% 96.28%       1 300085 java.util.jar.JarFile.maybeInstantiateVerifier
+  22  0.27% 96.54%       1 300426 sun.util.resources.LocaleData$1.run
+  23  0.27% 96.81%       1 300366 org.gradle.internal.serialize.kryo.KryoBackedDecoder.<init>
+  24  0.27% 97.07%       1 300459 java.lang.Object.clone
+  25  0.27% 97.34%       1 300461 example.ExampleEnum.values
+  26  0.27% 97.61%       1 300225 java.lang.Class.isPrimitive
+  27  0.27% 97.87%       1 300211 java.util.Arrays.copyOf
+  28  0.27% 98.14%       1 300465 sun.misc.Unsafe.unpark
+  29  0.27% 98.40%       1 300273 java.security.Provider.<clinit>
+  30  0.27% 98.67%       1 300324 java.lang.ClassLoader.loadClass
+  31  0.27% 98.94%       1 300347 org.gradle.internal.nativeintegration.services.NativeServices.<clinit>
+  32  0.27% 99.20%       1 300167 sun.misc.ObjectInputFilter$Config.<clinit>
+  33  0.27% 99.47%       1 300349 sun.misc.URLClassPath$JarLoader.getResource
+  34  0.27% 99.73%       1 300376 java.lang.Throwable.fillInStackTrace
+  35  0.27% 100.00%       1 300214 java.lang.invoke.MethodType.toString
+CPU SAMPLES END

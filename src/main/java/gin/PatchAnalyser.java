@@ -1,135 +1,247 @@
 package gin;
 
-import gin.edit.CopyStatement;
-import gin.edit.DeleteStatement;
-import gin.edit.MoveStatement;
-import gin.test.TestResult;
-import gin.test.TestRunner;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
-/*
-    A handy utility for analysing patches. Not part of the main gin system.
+import gin.edit.Edit;
+import gin.test.InternalTestRunner;
+import gin.test.UnitTestResult;
+import gin.test.UnitTestResultSet;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.pmw.tinylog.Logger;
+
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+
+import gin.edit.Edit.EditType;
+
+/**
+ *   A handy utility for analysing patches. Not part of the main gin system.
  */
 public class PatchAnalyser {
 
     private static final int REPS = 10;
 
+    @Argument(alias = "f", description = "Required: Source filename", required = true)
+    protected File source = null;
+
+    @Argument(alias = "p", description = "Required: Patch description", required = true)
+    protected String patchText = "|";
+
+    @Argument(alias = "d", description = "Top directory")
+    protected File packageDir;
+
+    @Argument(alias = "c", description = "Class name")
+    protected String className;
+
+    @Argument(alias = "cp", description = "Classpath")
+    protected String classPath;
+
+    @Argument(alias = "t", description = "Test class name")
+    protected String testClassName;
+
+    private SourceFileLine sourceFileLine;
+    private SourceFileTree sourceFileTree;
+    private InternalTestRunner testRunner;
+
+    // Instantiate a class and call search
     public static void main(String[] args) {
+        PatchAnalyser analyser = new PatchAnalyser(args);
+        analyser.analyse();
+    }
 
-        // Check and parse arguments
-        if (args.length != 2) {
-            System.out.println("Arguments: <SourceFilename.java> \"<patch>\"");
-            System.out.println("Where patch is a sequence of | bar-separated edits");
-            System.exit(0);
-        }
+    PatchAnalyser(String[] args) {
 
-        String sourceFilename = args[0];
-        String patchText = args[1];
+        Args.parseOrExit(this, args);
 
-        // Create SourceFile and tester classes, parse the patch and generate patched source.
-        SourceFile sourceFile = new SourceFile(sourceFilename);
-        File topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
-        String className = FilenameUtils.getBaseName(sourceFile.getFilename());
+        this.sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
 
-        TestRunner testRunner = new TestRunner(topDirectory, className);
-
-        // Dump statement numbering to a file
-        String statementNumbering = sourceFile.statementList();
-        String statementFilename = sourceFilename + ".statements";
-        try {
-            FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
-        } catch (IOException e) {
-            System.err.println("Could not write statements to " + statementFilename);
-            System.err.println(e);
-            e.printStackTrace();
-            System.exit(-1);
-        }
-        System.out.println("Statement numbering written to: " + statementFilename);
-
-        // Dump block numbering to a file
-        String blockNumbering = sourceFile.blockList();
-        String blockFilename = sourceFilename + ".blocks";
-        try {
-            FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());
-        } catch (IOException e) {
-            System.err.println("Could not write blocks to " + blockFilename);
-            System.err.println(e);
-            e.printStackTrace();
-            System.exit(-1);
-        }
-        System.out.println("Block numbering written to: " + blockFilename);
-
-        Patch patch = parsePatch(patchText, sourceFile);
-        String patchedSource = patch.apply();
-
-        System.out.println("Evaluating patch for Class Source: " + sourceFilename);
-
-        System.out.println("Patch is: " + patchText);
-
-        // Write the patched source to file, for reference
-        String patchedFilename = sourceFilename + ".patched";
-        try {
-            FileUtils.writeStringToFile(new File(patchedFilename), patchedSource, Charset.defaultCharset());
-        } catch (IOException e) {
-            System.err.println("Could not write patched source to " + sourceFilename);
-            System.err.println(e);
-            e.printStackTrace();
-            System.exit(-1);
-        }
-        System.out.println("Parsed patch written to: " + patchedFilename);
-
-        // Evaluate original class
-        System.out.println("Timing original class execution...");
-        Patch emptyPatch = new Patch(sourceFile);
-        double originalExecutionTime = testRunner.test(emptyPatch, REPS).getExecutionTime();
-        System.out.println("Original execution time: " + originalExecutionTime);
-
-        // Evaluate patch
-        System.out.println("Timing patched sourceFile execution...");
-        TestResult result = testRunner.test(patch, REPS);
-        System.out.println("Test result: " + result);
-        System.out.println("Execution time of patched sourceFile: " + result.getExecutionTime());
-        System.out.println("Speedup (%): " + (100 * ((originalExecutionTime - result.getExecutionTime())/originalExecutionTime)));
+        this.sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
+        if (this.packageDir == null) {
+                this.packageDir = this.source.getParentFile().getAbsoluteFile();
+            }
+            if (this.classPath == null) {
+                this.classPath = this.packageDir.getAbsolutePath();
+            }
+            if (this.className == null) {
+                this.className = FilenameUtils.removeExtension(this.source.getName());
+            }
+            if (this.testClassName == null) {
+                this.testClassName = this.className + "Test";
+            }
 
     }
 
-    private static Patch parsePatch(String patchText, SourceFile sourceFile) {
-        Patch patch = new Patch(sourceFile);
-        String[] edits = patchText.trim().split("\\|");
-        for (String edit: edits) {
-            String[] tokens = edit.trim().split("\\s+");
-            switch (tokens[0]) {
-                case "DEL": // DEL <sourcestatement>
-                    int line = Integer.parseInt(tokens[1]);
-                    patch.add(new DeleteStatement(line));
-                    break;
-                case "COPY": // COPY <sourcestatement> -> <destinationBlock>:<destinationChild>
-                    int source = Integer.parseInt(tokens[1]);
-                    String[] destination = tokens[3].split("\\:");
-                    int destinationBlock = Integer.parseInt(destination[0]);
-                    int destinationChild = Integer.parseInt(destination[1]);
-                    patch.add(new CopyStatement(source, destinationBlock, destinationChild));
-                    break;
-                case "MOVE": // MOVE <sourcestatement> -> <destinationBlock>:<destinationChild>
-                    int moveSource = Integer.parseInt(tokens[1]);
-                    String[] moveDestination = tokens[3].split("\\:");
-                    int moveDestinationBlock = Integer.parseInt(moveDestination[0]);
-                    int moveDestinationChild = Integer.parseInt(moveDestination[1]);
-                    patch.add(new MoveStatement(moveSource, moveDestinationBlock, moveDestinationChild));
-                    break;
-                case "": // could be a leading "|"
-                    break;
-                default:
-                    System.out.println("Unrecognised edit: " + tokens[0]);
-                    System.exit(0);
-            }
+    private void analyse() {
+
+        // Create SourceFile and tester classes, parse the patch and generate patched source.
+        SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
+        SourceFileTree sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
+
+        this.testRunner = new InternalTestRunner(className, classPath, testClassName);
+
+        // Dump statement numbering to a file
+        String statementNumbering = sourceFileTree.statementList();
+        String statementFilename = source + ".statements";
+        try {
+            FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
+        } catch (IOException e) {
+            Logger.error("Could not write statements to " + statementFilename);
+            Logger.trace(e);
+            System.exit(-1);
         }
+
+        Logger.info("Statement numbering written to: " + statementFilename);
+
+        // Dump block numbering to a file
+        String blockNumbering = sourceFileTree.blockList();
+        String blockFilename = source + ".blocks";
+        try {
+            FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());
+        } catch (IOException e) {
+            Logger.error("Could not write blocks to " + blockFilename);
+            Logger.trace(e);
+            System.exit(-1);
+        }
+        Logger.info("Block numbering written to: " + blockFilename);
+
+        Patch patch = parsePatch(patchText, sourceFileLine, sourceFileTree);
+        String patchedSource = patch.apply();
+
+        Logger.info("Evaluating patch for Source: " + source);
+
+        Logger.info("Patch is: " + patchText);
+
+        // Write the patched source to file, for reference
+        String patchedFilename = source + ".patched";
+        try {
+            FileUtils.writeStringToFile(new File(patchedFilename), patchedSource, Charset.defaultCharset());
+        } catch (IOException e) {
+            Logger.error("Could not write patched source to " + patchedFilename);
+            Logger.trace(e);
+            System.exit(-1);
+        }
+        Logger.info("Parsed patch written to: " + patchedFilename);
+
+        // Evaluate original class
+        Logger.info("Timing original class execution...");
+        Patch emptyPatch = new Patch(sourceFileTree);
+        long originalExecutionTime = testRunner.runTests(emptyPatch, REPS).totalExecutionTime();
+        Logger.info("Original execution time: " + originalExecutionTime);
+
+        // Evaluate patch
+        Logger.info("Timing patched sourceFile execution...");
+        UnitTestResultSet resultSet = testRunner.runTests(patch, REPS);
+
+        // Output test results
+        logTestResults(resultSet);
+
+        Logger.info("Execution time of patched sourceFile: " + resultSet.totalExecutionTime());
+        float speedup = 100.0f * ((originalExecutionTime - resultSet.totalExecutionTime()) /
+                (1.0f * originalExecutionTime));
+        if (resultSet.getValidPatch() && resultSet.getCleanCompile()) {
+            Logger.info("Speedup (%): " + speedup);
+        } else {
+            Logger.info("Speedup (%): not applicable");
+        }
+
+    }
+
+    private static Patch parsePatch(String patchText, SourceFileLine sourceFileLine, SourceFileTree sourceFileTree) {
+
+        List<Edit> editInstances = new ArrayList<>();
+        
+        String patchTrim = patchText.trim();
+        String cleanPatch = patchTrim;
+
+        if (patchTrim.startsWith("|")) {
+            cleanPatch = patchText.replaceFirst("\\|", "").trim();
+        }
+
+        String[] editStrings = cleanPatch.trim().split("\\|");
+        
+        boolean allLineEdits = true;
+        boolean allStatementEdits = true;
+        
+        for (String editString: editStrings) {
+
+            String[] tokens = editString.trim().split("\\s+");
+
+            String editAction = tokens[0];
+
+            Class<?> clazz = null;
+
+            try {
+                clazz = Class.forName(editAction);
+            } catch (ClassNotFoundException e) {
+                Logger.error("Patch edit type unrecognised: " + editAction);
+                Logger.trace(e);
+                System.exit(-1);
+            }
+
+            Method parserMethod = null;
+            try {
+                parserMethod = clazz.getMethod("fromString", String.class);
+            } catch (NoSuchMethodException e) {
+                Logger.error("Patch edit type has no fromString method: " + clazz.getCanonicalName());
+                Logger.trace(e);
+                System.exit(-1);
+            }
+
+            Edit editInstance = null;
+            try {
+                editInstance = (Edit) parserMethod.invoke(null, editString.trim());
+            } catch (IllegalAccessException e) {
+                Logger.error("Cannot parse patch: access error invoking edit class.");
+                Logger.trace(e);
+                System.exit(-1);
+            } catch (InvocationTargetException e) {
+                Logger.error("Cannot parse patch: invocation error invoking edit class.");
+                Logger.trace(e);
+                System.exit(-1);
+            }
+
+            allLineEdits &= editInstance.getEditType() == EditType.LINE;
+            allStatementEdits &= editInstance.getEditType() != EditType.LINE;
+            editInstances.add(editInstance);
+            
+        }
+        
+        if (!allLineEdits && !allStatementEdits) {
+            Logger.error("Cannot proceed: mixed line/statement edit types found in patch");
+            System.exit(-1);
+        }
+        
+        Patch patch = new Patch(allLineEdits ? sourceFileLine : sourceFileTree);
+        for (Edit e : editInstances) {
+            patch.add(e);
+        }
+
         return patch;
+
+    }
+
+    private static void logTestResults(UnitTestResultSet results) {
+
+        Logger.info("Test Results");
+        Logger.info("Number of results: " + results.getResults().size());
+        Logger.info("Valid patch: " + results.getValidPatch());
+        Logger.info("Cleanly compiled: " + results.getCleanCompile());
+        Logger.info("All tests successful: " + results.allTestsSuccessful());
+        Logger.info("Total execution time: " + results.totalExecutionTime());
+
+
+        for (UnitTestResult result: results.getResults()) {
+            Logger.info(result);
+        }
+
     }
 
 }

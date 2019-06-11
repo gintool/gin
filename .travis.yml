@@ -6,6 +6,10 @@ jdk:
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  
+  
+after_failure:
+  - cat Build_*.failure.txt
 
 cache:
   directories:

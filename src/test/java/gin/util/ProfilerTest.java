@@ -51,8 +51,8 @@ public class ProfilerTest {
         assertTrue(logMessages.contains(missingMessage));
         assertTrue(logMessages.contains(likelyEnumMessage));
 
-        Files.deleteIfExists(scratchFile.toPath());  // tidy up
-        Files.deleteIfExists(new File("scratch").toPath());  // tidy up
+//        Files.deleteIfExists(scratchFile.toPath());  // tidy up
+//        Files.deleteIfExists(new File("scratch").toPath());  // tidy up
     }
 
 }

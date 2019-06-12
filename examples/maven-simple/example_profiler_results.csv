@@ -1,0 +1,3 @@
+"Project","MethodIndex","Method","Count","Tests"
+"my-app","1","com.mycompany.app.App.classifyTriangle(int,int,int)","5","com.mycompany.app.AppTest.testInvalidTriangles [],com.mycompany.app.AppTest.testScaleneTriangles []"
+"my-app","2","com.mycompany.app.App.classifyTriangle(int,int,int)","3","com.mycompany.app.App_ESTest.test7 [],com.mycompany.app.App_ESTest.test1 []"

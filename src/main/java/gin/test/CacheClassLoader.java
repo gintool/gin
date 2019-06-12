@@ -1,102 +1,126 @@
 package gin.test;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.mdkt.compiler.CompiledCode;
+import org.pmw.tinylog.Logger;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- *
- * This classloader intercepts classloading when running unit tests on the software being optimised, and
- * allows us to "overlay" modified classes on the running system.
- *
- * Any other classes are loaded by the system classloader if they're standard Java classes, otherwise
- * if they are non-modified classes belonging to the software being optimised, they will be loaded as normal.
- *
- * There's one extra trick: the IsolatedTestRunner class is loaded by this classloader rather than by the
- * System classloader. That allows Gin to intercept classloading during the actual running of the unit tests.
- * This is because jUnit will use the classloader associated with the class that invoked it.
- * Hence IsolatedTestRunner calls jUnit, jUnit sees that ITR was loaded by this classloader, and hence this
- * classloader becomes the default classloader for that jUnit run.
- *
+/** Intercept classloading of JUnitBridge, and provide access to class from the target system
+ * Also allow overlaying of the modified classes.
  */
 public class CacheClassLoader extends URLClassLoader {
 
-    /**
-     * A cache of compiled classes for a given class name. Used to ensure modified classes are loaded.
-     */
-    protected HashMap<String, Class> cache = new HashMap<>();
+    private static final String BRIDGE_CLASS_NAME = gin.test.JUnitBridge.class.getName();
 
-    /**
-     * Construct a new class loader that will prioritise an internal cache of classes, and otherwise load from
-     * the standard classpath.
-     *
-     * @param directory
-     */
-    public CacheClassLoader(File directory) {
+    protected Map<String, CompiledCode> customCompiledCode = new HashMap<>();
 
-        super(systemClassPath(), null);
+    private URL[] providedClassPath;
 
-        try {
-            super.addURL(directory.toURI().toURL());
-        } catch (MalformedURLException urlException) {
-            System.err.println("Class path provided to class loader is invalid");
-            System.err.println("Classpath was: " + directory.getAbsolutePath());
-            System.exit(-1);
-        }
-
+    public CacheClassLoader(URL[] classPaths) {
+        super(addSystemClassPath(classPaths), null);
+        providedClassPath = classPaths;
     }
 
+    public CacheClassLoader(String classpath) {
+        this(classPathToURLs(classpath));
+    }
+
+
+    // If the class can't be found using parents (I don't have any) then drops back here.
     @Override
-    public Class loadClass(String name) throws ClassNotFoundException {
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
 
-        // Case (1) Firstly, when the ITR is instantiated, I will load it (via inherited method)
-        // To ensure I am recorded as the classloader for IsolatedTestRunner.
-        // This means all test executions will load classes via me, so I can intercept them as in case (2)
-        if (name.equals("gin.test.IsolatedTestRunner")) {
-            return super.loadClass(name);
+        // I have to intervene here, to ensure JUnitBridge uses me in the future.
+        if (name.equals(BRIDGE_CLASS_NAME)) {
+            return super.findClass(name);
         }
 
-        // Case (2) Check my cache as modified ("optimised") classes will be in there.
-        if (cache.containsKey(name)) {
-            return cache.get(name);
+        // Modified class? Return the modified code.
+        if (customCompiledCode.containsKey(name)) {
+            CompiledCode cc = customCompiledCode.get(name);
+            byte[] byteCode = cc.getByteCode();
+            return defineClass(name, byteCode, 0, byteCode.length);
         }
 
-        // Case (3) Otherwise, it's a system class - use the system loader.
-        // Case (4) If the system loader can't find it, then it must be a class that's part of the software being
-        // optimised in which case, I load it as I know the path to that software (given in my constructor)
-        // If neither work, then we have a missing class / likely typo so let the exception be raised.
+        // Otherwise, try the system class loader. If not there, must be part of the project, so load ourselves.
         try {
             ClassLoader system = ClassLoader.getSystemClassLoader();
-            return system.loadClass(name);
+            Class fromSystemCall = system.loadClass(name);
+            return fromSystemCall;
         } catch (ClassNotFoundException e) {
-            Class fromSuper = super.loadClass(name);
-            return fromSuper;
+            return super.findClass(name);
         }
 
     }
 
-    /**
-     * Retrieve current classpath.
-     * @return array of URLs containing current classpath.
-     */
-    protected static URL[] systemClassPath() {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        URL[] urls = new URL[0];
-        if (contextClassLoader instanceof URLClassLoader) {
-            urls = ((URLClassLoader) (Thread.currentThread().getContextClassLoader())).getURLs();
-        }
-        return urls;
+    // Store the results of compilation from the InMemoryCompiler
+    public void setCustomCompiledCode(String className, CompiledCode compiledCode) {
+        this.customCompiledCode.put(className, compiledCode);
     }
 
-    /**
-     * Store a compiled class in the classloader's cache. This will override any classes on disk.
-     * @param classname
-     * @param klass
-     */
-    public void store(String classname, Class<?> klass) {
-        this.cache.put(classname, klass);
+    // Utility method to convert a : separated classpath into an array of URLs
+    private static final URL[] classPathToURLs(String classPath) {
+
+        if (classPath == null) {
+            return new URL[0];
+        }
+
+        String[] dirs = classPath.split(":");
+        List<URL> urls = new ArrayList<>();
+
+        for (String dir: dirs) {
+            try {
+                URL url = new File(dir).toURI().toURL();
+                urls.add(url);
+            } catch (MalformedURLException e) {
+                Logger.error("Error converted classpath to URL, malformed: " + dir);
+                Logger.error(e);
+                System.exit(-1);
+            }
+        }
+
+        URL[] urlArray = new URL[urls.size()];
+        return urls.toArray(urlArray);
+
     }
+
+    public static final URL[] addSystemClassPath(URL[] projectClasspath) {
+
+        String classPath = System.getProperty("java.class.path");
+
+        String[] paths = classPath.split(File.pathSeparator);
+
+        URL[] urls = new URL[paths.length];
+        int counter = 0;
+
+        for (String path : paths){
+            try {
+                urls[counter] = new File(path).toURI().toURL();
+                counter++;
+            } catch (MalformedURLException e) {
+                Logger.error("Malformed URL retrieved from system classpath.");
+                Logger.error("Cannot initialise CacheClassLoader.");
+                Logger.error("URL was: " + path);
+                Logger.trace(e);
+                System.exit(-1);
+            }
+        }
+
+        return ArrayUtils.addAll(projectClasspath, urls);
+
+    }
+
+    public URL[] getProvidedClassPath() {
+        return providedClassPath;
+    }
+
 
 }

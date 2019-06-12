@@ -1,142 +1,177 @@
 package gin;
 
-import gin.edit.DeleteStatement;
-import gin.test.TestResult;
-import gin.test.TestRunner;
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
+import java.util.Collections;
 import java.util.Random;
 
+import com.sampullara.cli.Argument;
+import com.sampullara.cli.Args;
+
+import gin.edit.Edit;
+import gin.test.UnitTestResult;
+import gin.test.UnitTestResultSet;
+import gin.test.InternalTestRunner;
+import org.apache.commons.io.FilenameUtils;
+import org.pmw.tinylog.Logger;
+
 /**
- * Simple local search.
+ * Simple local search. Takes a source filename and a method signature, optimises it.
+ * Assumes the existence of accompanying Test Class.
+ * The class must be in the top level package, if classPath not provided.
  */
 public class LocalSearch {
 
-    private static final int seed = 5678;
-    private static final int NUM_STEPS = 100;
     private static final int WARMUP_REPS = 10;
 
-    protected SourceFile sourceFile;
-    protected TestRunner testRunner;
-    protected Random rng;
-    protected File topDirectory;
+    @Argument(alias = "f", description = "Required: Source filename", required=true)
+    protected File filename = null;
+
+    @Argument(alias = "m", description = "Required: Method signature including arguments." +
+                                         "For example, \"classifyTriangle(int,int,int)\"", required=true)
+    protected String methodSignature = "";
+
+    @Argument(alias = "s", description = "Seed")
+    protected Integer seed = 123;
+
+    @Argument(alias = "n", description = "Number of steps")
+    protected Integer numSteps = 100;
+
+    @Argument(alias = "d", description = "Top directory")
+    protected File packageDir;
+
+    @Argument(alias = "c", description = "Class name")
     protected String className;
 
-    /**
-     * Main method. Take a source code filename, instantiate a search instance and execute the search.
-     * @param args A single source code filename, .java
-     */
+    @Argument(alias = "cp", description = "Classpath")
+    protected String classPath;
+
+    @Argument(alias = "t", description = "Test class name")
+    protected String testClassName;
+
+    protected SourceFile sourceFile;
+    InternalTestRunner testRunner;
+    protected Random rng;
+
+    // Instantiate a class and call search
     public static void main(String[] args) {
-
-        if (args.length == 0) {
-
-            System.out.println("Please specify a source file to optimise.");
-
-        } else {
-
-            String sourceFilename = args[0];
-            System.out.println("Optimising source file: " + sourceFilename + "\n");
-
-            LocalSearch localSearch = new LocalSearch(sourceFilename);
-            localSearch.search();
-
-        }
-
+        LocalSearch simpleLocalSearch = new LocalSearch(args);
+        simpleLocalSearch.search();
     }
 
-    /**
-     * Constructor: Create a sourceFile and a testRunner object based on the input filename.
-     *              Initialise the RNG.
-     * @param sourceFilename
-     */
-    public LocalSearch(String sourceFilename) {
+    // Constructor parses arguments
+    LocalSearch(String args[]) {
 
-        this.sourceFile = new SourceFile(sourceFilename);  // just parses the code and counts statements etc.
-        this.topDirectory = new File(FilenameUtils.getFullPath(sourceFilename));
-        this.className = FilenameUtils.getBaseName(sourceFile.getFilename());
-        this.testRunner = new TestRunner(this.topDirectory, this.className); // Utility class for running junits
+        Args.parseOrExit(this, args);
+
+        this.sourceFile = new SourceFileLine(this.filename, this.methodSignature);
         this.rng = new Random(seed);
+        if (this.packageDir == null) {
+            this.packageDir = this.filename.getParentFile().getAbsoluteFile();
+        }
+        if (this.classPath == null) {
+            this.classPath = this.packageDir.getAbsolutePath();
+        }
+        if (this.className == null) {
+            this.className = FilenameUtils.removeExtension(this.filename.getName());
+        }
+        if (this.testClassName == null) {
+            this.testClassName = this.className + "Test";
+        }
+        this.testRunner = new InternalTestRunner(className, classPath, testClassName);
 
     }
 
-    /**
-     * Actual LocalSearch.
-     * @return
-     */
-    private Patch search() {
+    // Apply empty patch and return execution time
+    private long timeOriginalCode() {
 
-        // start with the empty patch
-        Patch bestPatch = new Patch(sourceFile);
-        TestResult result = testRunner.test(bestPatch, WARMUP_REPS);
-        System.out.println("Original test result: " + result);
-        double bestTime = result.getExecutionTime();
-        double origTime = bestTime;
-        int bestStep = 0;
+        Patch emptyPatch = new Patch(this.sourceFile);
+        UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, WARMUP_REPS);
 
-        System.out.println("Initial execution time: " + bestTime + " (ns) \n");
+        if (!resultSet.allTestsSuccessful()) {
 
-        for (int step = 1; step <= NUM_STEPS; step++) {
+            if (!resultSet.getCleanCompile()) {
 
-            System.out.print("Step " + step + " ");
+                Logger.error("Original code failed to compile");
 
-            Patch neighbour = neighbour(bestPatch, rng);
-
-            System.out.print(neighbour);
-
-            TestResult testResult = testRunner.test(neighbour, 10);
-
-            if (!testResult.getValidPatch()) {
-                System.out.println("Patch invalid");
-                continue;
-            }
-
-            if (!testResult.getCleanCompile()) {
-                System.out.println("Failed to compile");
-                continue;
-            }
-
-            if (!testResult.getJunitResult().wasSuccessful()) {
-                System.out.println("Failed to pass all tests");
-                continue;
-            }
-
-            if (testResult.getExecutionTime() < bestTime) {
-                bestPatch = neighbour;
-                bestTime = testResult.getExecutionTime();
-                bestStep = step;
-                System.out.println("*** New best *** Time: " + bestTime + "(ns)");
             } else {
-                System.out.println("Time: " + testResult.getExecutionTime());
+
+                Logger.error("Original code failed to pass unit tests");
+
+                for (UnitTestResult testResult: resultSet.getResults()) {
+                    Logger.error(testResult);
+                }
+
             }
+
+            System.exit(0);
 
         }
 
-        System.out.println("\nBest patch found: " + bestPatch);
-        System.out.println("Found at step: " + bestStep);
-        System.out.println("Best execution time: " + bestTime + " (ns) ");
-        System.out.printf("Speedup (%%): %.2f ", 100*((origTime - bestTime)/origTime));
+        return resultSet.totalExecutionTime() / WARMUP_REPS;
+
+    }
+
+    // Simple local search
+    private void search() {
+
+        Logger.info(String.format("Localsearch on file: %s method: %s", filename, methodSignature));
+
+        // Time original code
+        long origTime = timeOriginalCode();
+        Logger.info("Original execution time: " + origTime + "ns");
+
+        // Start with empty patch
+        Patch bestPatch = new Patch(this.sourceFile);
+        long bestTime = origTime;
+
+        for (int step = 1; step <= numSteps; step++) {
+
+            Patch neighbour = neighbour(bestPatch);
+            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, 1);
+
+            String msg;
+
+            if (!testResultSet.getValidPatch()) {
+                msg = "Patch invalid";
+            } else if (!testResultSet.getCleanCompile()) {
+                msg = "Failed to compile";
+            } else if (!testResultSet.allTestsSuccessful()) {
+                msg = ("Failed to pass all tests");
+            } else if (testResultSet.totalExecutionTime() >= bestTime) {
+                msg = "Time: " + testResultSet.totalExecutionTime() + "ns";
+            } else {
+                bestPatch = neighbour;
+                bestTime = testResultSet.totalExecutionTime();
+                msg = "New best time: " + bestTime + "(ns)";
+            }
+
+            Logger.info(String.format("Step: %d, Patch: %s, %s ", step, neighbour, msg));
+
+        }
+
+        Logger.info(String.format("Finished. Best time: %d (ns), Speedup (%%): %.2f, Patch: %s",
+                                    bestTime,
+                                    100.0f *((origTime - bestTime)/(1.0f * origTime)),
+                                    bestPatch));
 
         bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
-        return bestPatch;
-
     }
 
 
     /**
-     * Generate a neighbouring patch, by either deleting a randomly chosen edit, or adding a new random edit
+     * Generate a neighbouring patch, by either deleting an edit, or adding a new one.
      * @param patch Generate a neighbour of this patch.
      * @return A neighbouring patch.
      */
-    public Patch neighbour(Patch patch, Random rng) {
+    Patch neighbour(Patch patch) {
 
         Patch neighbour = patch.clone();
 
         if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
             neighbour.remove(rng.nextInt(neighbour.size()));
         } else {
-            neighbour.addRandomEdit(rng);
+            neighbour.addRandomEdit(rng, Collections.singletonList(Edit.EditType.LINE));
         }
         
         return neighbour;

@@ -1,126 +1,107 @@
 package gin.test;
 
-import gin.Patch;
-import org.mdkt.compiler.InMemoryJavaCompiler;
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TestRunner {
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.TestClass;
+import org.pmw.tinylog.Logger;
 
-    protected File packageDirectory;
-    protected String className;
-    protected String testName;
+import gin.Patch;
 
-    public TestRunner(File packageDirectory, String className) {
-        this.packageDirectory = packageDirectory;
-        this.className = className;
-        this.testName = className + "Test";
+/**
+ * A TestRunner is defined by a class name, a class path, and a set of tests to run.
+ * Once instantiated for a set of tests, it can be repeatedly invoked to run tests against new patches.
+ */
+public abstract class TestRunner {
+
+    private final String packageName;
+    private final String className;
+    private final String classPath;
+    private List<UnitTest> tests;
+
+    public abstract UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException;
+
+    // Constructor with a list of tests to run
+    public TestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests) {
+        this.className = fullyQualifiedClassName;
+        this.classPath = classPath;
+        this.tests = unitTests;
+        if (className.contains(".")) {
+            this.packageName = StringUtils.substringBeforeLast(className, ".");
+        } else {
+            this.packageName = "";
+        }
     }
 
-    public TestResult test(Patch patch, int reps) {
-
-        // Apply the patch
-        String patchedSource = patch.apply();
-
-        // If unable to apply patch, report as invalid
-        if (patchedSource == null) {
-            return new TestResult(null, -1, false, false);
-        }
-
-        // Compile the patched sourceFile
-        Class modifiedClass = compile(this.className, patchedSource);
-
-        // If failed to compile, return with partial result
-        if (modifiedClass == null) {
-            return new TestResult(null, -1, false, true);
-        }
-
-        // Otherwise, run tests and return
-        TestResult result = runTests(modifiedClass, reps);
-
-        return result;
-
+    public List<UnitTest> getTests() {
+        return this.tests;
     }
 
-    /**
-     * Compile the temporary (patched) source file and a copy of the test class.
-     *
-     * @return Boolean indicating whether the compilation was successful.
-     */
-    protected Class compile(String className, String source)  {
+    public String getClassName() {
+        return className;
+    }
 
-        Class<?> compiledClass = null;
+    public String getPackageName() {
+        return packageName;
+    }
+
+    public String getClassNameWithoutPackage() {
+        if (!packageName.isEmpty()) {
+            return StringUtils.substringAfterLast(className, ".");
+        }
+        return className;
+    }
+
+    public String getClassPath() {
+        return classPath;
+    }
+
+    public void setTests(List<UnitTest> tests) {
+        this.tests = tests;
+    }
+
+    public List<UnitTest> testsForClass(String testClassName) {
+
+        CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath());
+
+        // Set up list of tests based on the class name
+        List<UnitTest> tests = new LinkedList<>();
+
+        Class clazz = null;
 
         try {
-            compiledClass = InMemoryJavaCompiler.newInstance().compile(className, source);
-        } catch (Exception e) {
-            System.out.println("Error compiling class " + className + " in memory: " + e);
-        }
-
-        return compiledClass;
-
-    }
-
-    /**
-     * Run the test class for a modified class.
-     * Loads IsolatedTestRunner using a separate classloader and invokes jUnit using reflection.
-     * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
-     * class with the freshly compiled version.
-     * @param modifiedClass The compiled class.
-     * @return
-     */
-    public TestResult runTests(Class modifiedClass, int reps) {
-
-        CacheClassLoader classLoader = new CacheClassLoader(this.packageDirectory);
-        classLoader.store(this.className, modifiedClass);
-
-        Class<?> runnerClass = null;
-        try {
-            runnerClass = classLoader.loadClass(IsolatedTestRunner.class.getName());
+            clazz = classLoader.loadClass(testClassName);
         } catch (ClassNotFoundException e) {
-            System.err.println("Could not load isolated test runner - class not found.");
-            System.exit(-1);
+            Logger.error("Failed to find test class: ");
         }
 
-        Object runner = null;
-        try {
-            runner = runnerClass.newInstance();
-        } catch (InstantiationException e) {
-            System.err.println("Could not instantiate isolated test runner: " + e);
-            System.exit(-1);
-        } catch (IllegalAccessException e) {
-            System.err.println("Could not instantiate isolated test runner: " + e);
-            System.exit(-1);
+        List<FrameworkMethod> methods = new TestClass(clazz).getAnnotatedMethods(Test.class);
+
+        for (FrameworkMethod eachTestMethod : methods){
+
+            String methodName = eachTestMethod.getName();
+            UnitTest test = new UnitTest(testClassName, methodName);
+            tests.add(test);
+
         }
 
-        Method method = null;
-        String methodName = "runTestClasses";
-        try {
-            method = runner.getClass().getMethod("runTestClasses", List.class, int.class);
-        } catch (NoSuchMethodException e) {
-            System.err.println("Could not run isolated test runner, can't find method: " + methodName);
-            System.exit(-1);
-        }
-
-        List<String> testClasses = new LinkedList<>();
-        testClasses.add(this.testName);
-
-        Object result = null;
-        try {
-            result = method.invoke(runner, testClasses, reps);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        return (TestResult)result;
+        return tests;
 
     }
 
-
+    public LinkedList<UnitTestResult> emptyResults(int reps) {
+        LinkedList<UnitTestResult> results = new LinkedList<>();
+        for (int rep=1; rep<=reps; rep++) {
+            for (UnitTest test : this.getTests()) {
+                UnitTestResult result = new UnitTestResult(test, rep);
+                results.add(result);
+            }
+        }
+        return results;
+    }
 
 }

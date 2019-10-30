@@ -21,7 +21,7 @@ public class MoveLine extends LineEdit {
      * */
     public MoveLine(SourceFile sourceFile, Random rng) {
         SourceFileLine sf = (SourceFileLine)sourceFile;
-        List<Integer> targetMethodLines = sf.getLineIDsInTargetMethod();
+        List<Integer> targetMethodLines = sf.getLineIDsNonEmptyOrComments(true);
         
         this.sourceFile = sourceFile.getFilename();
         this.sourceLine = targetMethodLines.get(rng.nextInt(targetMethodLines.size()));

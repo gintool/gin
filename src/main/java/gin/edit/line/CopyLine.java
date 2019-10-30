@@ -22,8 +22,8 @@ public class CopyLine extends LineEdit {
      */
     public CopyLine(SourceFile sourceFile, Random rng) {
         SourceFileLine sf = (SourceFileLine)sourceFile;
-        List<Integer> allLines = sf.getAllLineIDs();
-        List<Integer> targetMethodLines = sf.getLineIDsInTargetMethod();
+        List<Integer> allLines = sf.getLineIDsNonEmptyOrComments(false);
+        List<Integer> targetMethodLines = sf.getLineIDsNonEmptyOrComments(true);
         
         this.sourceFile = sourceFile.getFilename();
         this.sourceLine = allLines.get(rng.nextInt(allLines.size()));

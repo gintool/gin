@@ -133,8 +133,8 @@ public class RandomSamplerTest {
         result = lines.get(7);
 
         assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
+        assertEquals("false", result[compileIndex]);
+        assertEquals("false", result[testIndex]);
         assertEquals("1", result[patchSize]);
 
         result = lines.get(8);
@@ -148,7 +148,7 @@ public class RandomSamplerTest {
 
         assertEquals("true", result[validIndex]);
         assertEquals("true", result[compileIndex]);
-        assertEquals("false", result[testIndex]);
+        assertEquals("true", result[testIndex]);
         assertEquals("1", result[patchSize]);
 
         result = lines.get(10);

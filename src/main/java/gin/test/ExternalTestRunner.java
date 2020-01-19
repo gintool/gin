@@ -141,7 +141,7 @@ public class ExternalTestRunner extends TestRunner {
 
         // Create package directory
         String packageName = this.getPackageName();
-        String packagePath = packageName.replace(".", "/");
+        String packagePath = packageName.replace(".", File.separator);
         temporaryPackageDirectory = temporaryDirectory.resolve(packagePath);
         temporaryPackageDirectory.toFile().mkdirs();
 

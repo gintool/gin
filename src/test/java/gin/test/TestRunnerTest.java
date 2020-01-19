@@ -194,7 +194,7 @@ public class TestRunnerTest {
         LinkedList<String> methods = new LinkedList<>();
         methods.add("simpleMethod()");
 
-        File sourceWithInner = new File(TestConfiguration.EXAMPLE_DIR,"mypackage/ExampleWithInnerClass.java");
+        File sourceWithInner = new File(TestConfiguration.EXAMPLE_DIR,"mypackage"+ File.separator +"ExampleWithInnerClass.java");
         SourceFileLine sourceFile = new SourceFileLine(sourceWithInner, "simpleMethod()");
 
         Patch patch = new Patch(sourceFile);

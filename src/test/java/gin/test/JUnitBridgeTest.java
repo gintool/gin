@@ -24,7 +24,7 @@ import org.pmw.tinylog.Logger;
 
 public class JUnitBridgeTest {
 
-    final String ROOT_DIR = "./tmp";
+    final String ROOT_DIR = "."+ File.separator +"tmp";
 
     CacheClassLoader classLoader;
 

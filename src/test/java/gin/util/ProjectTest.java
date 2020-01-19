@@ -45,39 +45,39 @@ public class ProjectTest {
 
         // Source directories
         Set<File> expectedMainSourceDirs = new HashSet<>();
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src/main/java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src/main/resources").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1/src/main/java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1/src/main/resources").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2/src/main/java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2/src/main/resources").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src"+ File.separator +"main"+ File.separator +"java").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src"+ File.separator +"main"+ File.separator +"resources").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"src"+ File.separator +"main"+ File.separator +"java").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"src"+ File.separator +"main"+ File.separator +"resources").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"src"+ File.separator +"main"+ File.separator +"java").getAbsoluteFile());
+        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"src"+ File.separator +"main"+ File.separator +"resources").getAbsoluteFile());
         Set<File> actualMainSourceDirs = new HashSet<>(project.getMainSourceDirs());
         assertEquals(expectedMainSourceDirs, actualMainSourceDirs);
 
         // Test source directories
         Set<File> expectedTestSourceDirs = new HashSet<>();
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src/test/java").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1/src/test/java").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2/src/test/java").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src/test/resources").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1/src/test/resources").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2/src/test/resources").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src"+ File.separator +"test"+ File.separator +"java").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"src"+ File.separator +"test"+ File.separator +"java").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"src"+ File.separator +"test"+ File.separator +"java").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src"+ File.separator +"test"+ File.separator +"resources").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"src"+ File.separator +"test"+ File.separator +"resources").getAbsoluteFile());
+        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"src"+ File.separator +"test"+ File.separator +"resources").getAbsoluteFile());
         Set<File> actualTestSourceDirs = new HashSet<>(project.getTestSourceDirs());
         assertEquals(expectedTestSourceDirs, actualTestSourceDirs);
 
         // Main class dirs
         Set<File> expectedMainClassDirs = new HashSet<>();
-        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "module1/build/classes/java/main").getAbsoluteFile());
-        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "module2/build/classes/java/main").getAbsoluteFile());
-        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "build/classes/java/main").getAbsoluteFile());
+        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"main").getAbsoluteFile());
+        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"main").getAbsoluteFile());
+        expectedMainClassDirs.add(new File(GRADLE_MULTI_DIR, "build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"main").getAbsoluteFile());
         Set<File> actualMainClassDirs = new HashSet<>(project.getMainClassDirs());
         assertEquals(expectedMainClassDirs, actualMainClassDirs);
 
         // Test class dirs
         Set<File> expectedTestClassDirs = new HashSet<>();
-        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "module1/build/classes/java/test").getAbsoluteFile());
-        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "module2/build/classes/java/test").getAbsoluteFile());
-        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "build/classes/java/test").getAbsoluteFile());
+        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "module1"+ File.separator +"build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"test").getAbsoluteFile());
+        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "module2"+ File.separator +"build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"test").getAbsoluteFile());
+        expectedTestClassDirs.add(new File(GRADLE_MULTI_DIR, "build"+ File.separator +"classes"+ File.separator +"java"+ File.separator +"test").getAbsoluteFile());
         Set<File> actualTestClassDirs = new HashSet<>(project.getTestClassDirs());
         assertEquals(expectedTestClassDirs, actualTestClassDirs);
 
@@ -87,12 +87,12 @@ public class ProjectTest {
     @Test
     public void getMavenHome() {
         // Default
-        assertEquals(new File("/usr/local"), simpleProject.getMavenHome());
+        assertEquals(new File(""+ File.separator +"usr"+ File.separator +"local"), simpleProject.getMavenHome());
     }
 
     @Test
     public void setMavenHome() {
-        File exampleDir = new File("/home/exampleuser/apps/maven/");
+        File exampleDir = new File(""+ File.separator +"home"+ File.separator +"exampleuser"+ File.separator +"apps"+ File.separator +"maven"+ File.separator);
         simpleProject.setMavenHome(exampleDir);
         assertEquals(exampleDir, simpleProject.getMavenHome());
     }

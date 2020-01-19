@@ -33,7 +33,7 @@ public class ProfilerTest {
         tests.add(test);
         //profiler.profileTestSuite(tests); //Use this to generate the hprof
 
-        File scratchFile = new File("scratch/testEnumProfiling.txt");
+        File scratchFile = new File("scratch"+ File.separator +"testEnumProfiling.txt");
         Configurator.defaultConfig()
                 .writer(new FileWriter(scratchFile.getAbsolutePath()))
                 .level(Level.WARNING)

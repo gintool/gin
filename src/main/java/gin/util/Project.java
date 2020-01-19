@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
  */
 public class Project {
 
-    private static final String DEFAULT_MAVEN_HOME = "/usr/local/";
+    private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
     private static final boolean DEBUG = false;
 
@@ -292,7 +292,7 @@ public class Project {
         }
 
         if (source == null) {
-            source = "src/main/java";
+            source = "src"+ File.separator +"main"+ File.separator +"java";
         }
 
         File sourceDir = new File(dir, source);
@@ -305,7 +305,7 @@ public class Project {
             test = model.getBuild().getTestSourceDirectory();
         }
         if (test == null) {
-            test = "src/test/java";
+            test = "src"+ File.separator +"test"+ File.separator +"java";
         }
         File testDir = new File(dir, test);
         if (testDir.exists()) {
@@ -317,7 +317,7 @@ public class Project {
             output = model.getBuild().getOutputDirectory();
         }
         if (output == null) {
-            output = "target/classes";
+            output = "target"+ File.separator +"classes";
         }
         File mainClassDir = new File(dir, output);
         this.mainClassDirs.add(mainClassDir);
@@ -327,7 +327,7 @@ public class Project {
             model.getBuild().getTestOutputDirectory();
         }
         if (outputTest == null) {
-            outputTest = "target/test-classes";
+            outputTest = "target"+ File.separator +"test-classes";
         }
         File testClassDir = new File(dir, outputTest);
         this.testClassDirs.add(testClassDir);
@@ -412,7 +412,7 @@ public class Project {
                 Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
                 Matcher matcher = pattern.matcher(jar);
                 if (matcher.find()) {
-                    dependencies = dependencies + ":" + matcher.group(1);
+                    dependencies = dependencies + File.pathSeparator + matcher.group(1);
                 }
             }
         }

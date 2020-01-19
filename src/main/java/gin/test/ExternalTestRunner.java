@@ -173,8 +173,8 @@ public class ExternalTestRunner extends TestRunner {
         File javaBin = new File(javaHome, "bin");
         File jvm = new File(javaBin, "java");
 
-        String classpath = this.getTemporaryDirectory() + ":" +
-                           this.getClassPath() + ":" +
+        String classpath = this.getTemporaryDirectory() + File.pathSeparator +
+                           this.getClassPath() + File.pathSeparator +
                            System.getProperty("java.class.path");
 
         int index = 0;

@@ -73,7 +73,7 @@ public class CacheClassLoader extends URLClassLoader {
             return new URL[0];
         }
 
-        String[] dirs = classPath.split(":");
+        String[] dirs = classPath.split(File.pathSeparator);
         List<URL> urls = new ArrayList<>();
 
         for (String dir: dirs) {

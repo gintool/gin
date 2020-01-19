@@ -36,7 +36,7 @@ public class Compiler {
 
             String fullClassPath = classPath == null ?
                     System.getProperty("java.class.path") :
-                    classPath + ":" + System.getProperty("java.class.path");
+                    classPath + File.pathSeparator + System.getProperty("java.class.path");
 
             compiler.useOptions("-classpath", fullClassPath, "-Xlint:unchecked");
 
@@ -64,7 +64,7 @@ public class Compiler {
 
         List<String> options = new ArrayList<>();
         options.add("-cp");
-        options.add(System.getProperty("java.class.path") + ":" + classPath);
+        options.add(System.getProperty("java.class.path") + File.pathSeparator + classPath);
 
         Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(source));
 

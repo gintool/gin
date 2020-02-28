@@ -26,9 +26,10 @@ These instructions will show you how to build Gin and run a simple local search 
 
 Gin requires:
 
-* JDK 1.8.x  *note: there is currently a known issue that prevents Gin running on JDK 9 and above*
-* Gradle (tested with version 4.6)
+* JDK 1.8.x  *note: there is currently a known issue that prevents Gin running on JDK 9 Aand above*
+* Gradle (tested with version 4.10.2)
 * A number of dependencies, which can be downloaded manually or via Gradle (recommended)
+* For Maven projects: make sure the Java version is set to 1.8.x
 
 JDK downloads:<http://www.oracle.com/technetwork/java/javase/downloads/index.html>
 
@@ -236,7 +237,7 @@ projectnameforgin='spatial4j'; java -Dtinylog.level=trace -cp ../../build/gin.ja
 
 Run RandomSampler to test the effect of different edits in the space. Here, we limit to statement edits; we allow only 1 edit per patch; and we test 100 edits sampled at random.
 ```
-projectnameforgin='spatial4j'; editType='STATEMENT'; maxPatchSize='1'; patchNumber='100'; java -Dtinylog.level=trace -cp ../../build/gin.jar gin.util.RandomSampler -j -p $projectnameforgin -d . -m $projectnameforgin.Profiler_output.csv -o $projectnameforgin.RandomSampler_${editType}_maxPatchSize${maxPatchSize}_patchNumber${patchNumber}_output.csv -mavenHome /usr/share/maven -editType $editType -patchNumber $patchNumber -maxPatchSize $maxPatchSize
+projectnameforgin='spatial4j'; editType='STATEMENT'; patchSize='1'; patchNumber='100'; java -Dtinylog.level=trace -cp ../../build/gin.jar gin.util.RandomSampler -j -p $projectnameforgin -d . -m $projectnameforgin.Profiler_output.csv -o $projectnameforgin.RandomSampler_${editType}_patchSize${patchSize}_patchNumber${patchNumber}_output.csv -mavenHome /usr/share/maven -editType $editType -patchNumber $patchNumber -patchSize $patchSize
 ```
 
 ## Contributing

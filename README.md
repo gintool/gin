@@ -47,7 +47,7 @@ Clone the repo:
 git clone https://github.com/gintool/gin.git
 ```
 
-Build using gradle (alternatively import into your favourite IDE, such as IntelliJ). We also provide a gradle wrapper with Gradle 4.6.
+Build using gradle (alternatively import into your favourite IDE, such as IntelliJ). We also provide a gradle wrapper with Gradle 4.10.2.
 
 ```
 cd gin

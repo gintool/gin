@@ -1,15 +1,17 @@
 package gin.util;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import com.sampullara.cli.Argument;
-import com.sampullara.cli.Args;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
+
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 
 import gin.Patch;
 import gin.SourceFileLine;
@@ -58,7 +60,7 @@ public class DeleteEnumerator extends Sampler {
 
     protected void sampleMethods() {
 
-        Random rng = new Random(randomSeed);
+        Random rng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(randomSeed));
 
         writeHeader();
 

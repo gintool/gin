@@ -7,6 +7,7 @@ import com.github.javaparser.ast.stmt.Statement;
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
+import gin.misc.BlockedByJavaParserException;
 
 public class MoveStatement extends StatementEdit {
 
@@ -72,10 +73,13 @@ public class MoveStatement extends StatementEdit {
             return sf; // targeting a deleted location just does nothing.
         }
         
-        sf = sf.insertStatement(destinationBlock, destinationChildInBlock, source);
-        sf = sf.removeStatement(sourceStatement);
-        
-        return sf;
+        try {
+            sf = sf.insertStatement(destinationBlock, destinationChildInBlock, source);
+            sf = sf.removeStatement(sourceStatement);
+            return sf;
+        } catch (BlockedByJavaParserException e) {
+            return null;
+        }
     }
 
     @Override

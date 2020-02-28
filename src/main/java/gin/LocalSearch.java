@@ -4,15 +4,18 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Random;
 
-import com.sampullara.cli.Argument;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
+import org.pmw.tinylog.Logger;
+
 import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 
 import gin.edit.Edit;
+import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
-import gin.test.InternalTestRunner;
-import org.apache.commons.io.FilenameUtils;
-import org.pmw.tinylog.Logger;
 
 /**
  * Simple local search. Takes a source filename and a method signature, optimises it.
@@ -64,7 +67,7 @@ public class LocalSearch {
         Args.parseOrExit(this, args);
 
         this.sourceFile = new SourceFileLine(this.filename, this.methodSignature);
-        this.rng = new Random(seed);
+        this.rng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(seed));
         if (this.packageDir == null) {
             this.packageDir = this.filename.getParentFile().getAbsoluteFile();
         }

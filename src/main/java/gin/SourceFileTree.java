@@ -2,13 +2,15 @@ package gin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.pmw.tinylog.Logger;
 
@@ -21,6 +23,7 @@ import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
 
+import gin.misc.BlockedByJavaParserException;
 import gin.misc.CloneVisitorCopyIDs;
 
 /**
@@ -188,17 +191,27 @@ public class SourceFileTree extends SourceFile {
         }
         
         if (this.targetMethodRootNodes != null) {
+            // temp keep these in a sorted set to remove duplicates for overlapping methods
+            // (e.g. method in an inner class, where the inner class is also in a target method)
+            SortedSet<Integer> sIDs = new TreeSet<>(); // statementIDs (a subset of nodeIDs)
+            SortedSet<Integer> nIDs = new TreeSet<>(); // nodeIDs
+            
             for (Node tn : this.targetMethodRootNodes) {
                 List<Node> nodesInTargetMethod = tn.getChildNodesByType(Node.class);
                 
                 for (Node n : nodesInTargetMethod) {
                     Integer id = n.getData(NODEKEY_ID);
-                    targetMethodNodeIDs.add(id);
-                    if (Statement.class.isAssignableFrom(n.getClass())) {
-                        targetMethodStatementIDs.add(id);
+                    if (id != null) { // only track nodes in the original source, i.e. those with IDs
+                        nIDs.add(id);
+                        if (Statement.class.isAssignableFrom(n.getClass())) {
+                            sIDs.add(id);
+                        }
                     }
                 }
             }
+            
+            targetMethodNodeIDs.addAll(nIDs);
+            targetMethodStatementIDs.addAll(sIDs);
         } else {
             // no target methods? just add all nodes and statements
             targetMethodStatementIDs.addAll(allStatementIDs);
@@ -275,6 +288,26 @@ public class SourceFileTree extends SourceFile {
         return output;
     }
 
+    public String statementListWithIDs() {
+        List<Integer> list = getAllStatementIDs();
+        String output = "";
+        for (Integer id : list) {
+            Statement statement = getStatement(id);
+            output += "[" + id + "] " + statement.toString() + "\n";
+        }
+        return output;
+    }
+
+    public String blockListWithIDs() {
+        List<Integer> list = getAllBlockIDs();
+        String output = "";
+        for (Integer id : list) {
+            Statement block = getStatement(id);
+            output += "[" + id + "] " + block.toString() + "\n"; // can't use indexof as may appear > once
+        }
+        return output;
+    }
+
 
     //TODO
 //    /**
@@ -293,9 +326,11 @@ public class SourceFileTree extends SourceFile {
     /**
      * @param statementID - this is not an index, just an ID! use {@link #getIDForStatementNumber(int)} 
      * to convert statement numbers to IDs for use here
-     * @return a modified copy of this {@link SourceFileTree}
+     * @return a modified copy of this {@link SourceFileTree}, or this {@link SourceFileTree} if the 
+     * node ID does not exist (perhaps already deleted)
+     * @throws BlockedByJavaParserException if delete was prevented by JavaParser
      */
-    public SourceFileTree removeStatement(int statementID) {
+    public SourceFileTree removeStatement(int statementID) throws BlockedByJavaParserException {
         // node already deleted? don't bother.
         if (!this.allNodes.containsKey(statementID)) {
             return this;
@@ -308,7 +343,7 @@ public class SourceFileTree extends SourceFile {
                 sf.allNodes.remove(statementID);
                 return sf;
             } else {
-                return this;
+                throw new BlockedByJavaParserException("Could not delete statement with node ID " + statementID);
             }
         }
     }

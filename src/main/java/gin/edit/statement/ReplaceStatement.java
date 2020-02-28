@@ -61,7 +61,7 @@ public class ReplaceStatement extends StatementEdit {
         try {
             return sf.replaceNode(destinationStatement, source.clone());
         } catch (ClassCastException e) { // JavaParser sometimes throws this if the statements don't match
-            return sf;
+            return null;
         }
     }
 

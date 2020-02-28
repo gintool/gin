@@ -56,10 +56,14 @@ public class SwapStatement extends StatementEdit {
             return sf; // targeting a deleted location just does nothing.
         }
         
-        // we clone the replacement nodes, so we don't end up getting confused between the two (that would prevent us swapping statements within the same parent node)
-        sf = sf.replaceNode(sourceStatement, destination.clone());
-        sf = sf.replaceNode(destinationStatement, source.clone());
-        return sf;
+        try {
+            // we clone the replacement nodes, so we don't end up getting confused between the two (that would prevent us swapping statements within the same parent node)
+            sf = sf.replaceNode(sourceStatement, destination.clone());
+            sf = sf.replaceNode(destinationStatement, source.clone());
+            return sf;
+        } catch (ClassCastException e) { // JavaParser sometimes throws this if the statements don't match
+            return null;
+        }
     }
 
     @Override

@@ -392,7 +392,7 @@ public class Project {
         }
 
         if (result.getExitCode() != 0) {
-            Logger.error("Invocation of Maven gave non-zero return code.");
+            Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
             System.exit(-1);
         }
 
@@ -480,7 +480,7 @@ public class Project {
         }
 
         if (result.getExitCode() != 0) {
-            Logger.error("Invocation of Maven gave non-zero return code.");
+            Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
             System.exit(-1);
         }
 
@@ -802,7 +802,7 @@ public class Project {
 
         if (result.getExitCode() != 0) {
             Logger.error("Error running tests: " + test);
-            throw new FailedToExecuteTestException(BuildType.MAVEN, "Non-zero return code", test);
+            throw new FailedToExecuteTestException(BuildType.MAVEN, "Non-zero return code:" + result.getExitCode(), test);
         }
 
     }

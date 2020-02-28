@@ -9,6 +9,9 @@ import java.util.Set;
 
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -22,7 +25,7 @@ import gin.test.UnitTestResultSet;
 /**
  * Random sampler. 
  *
- * Creates patchNumber random method patches of random size 1:maxPatchSize
+ * Creates patchNumber random method patches of size 1:patchSize
  */
 
 public class RandomSampler extends Sampler {
@@ -30,8 +33,8 @@ public class RandomSampler extends Sampler {
     @Argument(alias = "et", description = "Edit type")
     protected EditType editType = EditType.LINE;
 
-    @Argument(alias = "ps", description = "Max patch size")
-    protected Integer maxPatchSize = 1;
+    @Argument(alias = "ps", description = "Number of edits per patch")
+    protected Integer patchSize = 1;
 
     @Argument(alias = "pn", description = "Number of patches")
     protected Integer patchNumber = 10;
@@ -39,7 +42,7 @@ public class RandomSampler extends Sampler {
     @Argument(alias = "rm", description = "Random seed for method selection")
     protected Integer methodSeed = 123;
 
-    @Argument(alias = "rp", description = "Random seed for patch size selection")
+    @Argument(alias = "rp", description = "Random seed for edit type selection")
     protected Integer patchSeed = 123;
 
 
@@ -61,18 +64,17 @@ public class RandomSampler extends Sampler {
 
     private void printAdditionalArguments() {
         Logger.info("Edit type: "+ editType);
-        Logger.info("Max patch size: "+ maxPatchSize);
+        Logger.info("Number of edits per patch: "+ patchSize);
         Logger.info("Number of patches: "+ patchNumber);
         Logger.info("Random seed for method selection: "+ methodSeed);
-        Logger.info("Random seed for patch size selection: "+ patchSeed);
+        Logger.info("Random seed for edit type selection: "+ patchSeed);
     }
 
    protected void sampleMethods() {
 
-        Random mrng = new Random(methodSeed); 
-        Random prng = new Random(patchSeed);
-
-        if (maxPatchSize > 0) {
+        Random mrng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(methodSeed)); 
+        
+        if (patchSize > 0) {
 
             writeHeader();
 
@@ -81,7 +83,8 @@ public class RandomSampler extends Sampler {
             Logger.info("Start applying and testing random patches..");
 
             for (int i = 0; i < patchNumber; i++) {
-
+                Random prng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(patchSeed + (100000 * i)));
+                
                 // Pick a random method
                 TargetMethod method = methodData.get(mrng.nextInt(size));
                 Integer methodID = method.getMethodID(); 
@@ -91,8 +94,7 @@ public class RandomSampler extends Sampler {
                 SourceFile sourceFile = SourceFile.makeSourceFileForEditType(editType, source.getPath(), method.getMethodName());
 
                 Patch patch = new Patch(sourceFile);
-                int patchSize = prng.nextInt(maxPatchSize);
-                for (int j = 0; j < patchSize + 1; j++) {
+                for (int j = 0; j < patchSize; j++) {
                     patch.addRandomEdit(prng, editType);
                 }
 
@@ -106,7 +108,7 @@ public class RandomSampler extends Sampler {
         Logger.info("Results saved to: " + outputFile);
 
         } else {
-            Logger.info("Max patch size must be greater than 0.");
+            Logger.info("Number of edits  must be greater than 0.");
         }
 
    }

@@ -94,8 +94,8 @@ public abstract class Sampler {
     // Used for writing data to outputFile
     private static final String[] OUT_HEADER = {"PatchIndex", "PatchSize", "Patch", "MethodIndex", "TestIndex", "UnitTest", "RepNumber",
             "PatchValid", "PatchCompiled", "TestPassed", "TestExecutionTime(ns)", "TestCPUTime(ns)",
-            "TestTimedOut", "TestExceptionType", "TestExceptionMessage", "AssertionExpectedValue",
-            "AssertionActualValue"};
+            "TestTimedOut", "TestExceptionType", "TestExceptionMessage", "AssertionExpectedValue", 
+            "AssertionActualValue", "NoOp", "EditsValid"};
     private static final Integer DEFAULT_ID = 0; // default id for MethodIndex
 
     private int patchCount = 0;
@@ -370,12 +370,13 @@ public abstract class Sampler {
                     throw new FileNotFoundException("Cannot find source for class: " + className);
                 }
 
-                 String methodName = StringUtils.substringAfterLast(method, className + METHOD_SEPARATOR);
-
+                // now using fully qualified names...
+                //String methodName = StringUtils.substringAfterLast(method, className + METHOD_SEPARATOR);
+                
                 idx++;
                 Integer methodID = (data.containsKey("MethodIndex")) ? Integer.valueOf(data.get("MethodIndex")) : idx;
 
-                TargetMethod targetMethod = new TargetMethod(source, className, methodName, ginTests, methodID);
+                TargetMethod targetMethod = new TargetMethod(source, className, method, ginTests, methodID);
 
                 if (methods.contains(targetMethod)) {
                     throw new ParseException("Duplicate method IDs in the input file.", 0);
@@ -468,11 +469,11 @@ public abstract class Sampler {
     protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID) {
         for (UnitTestResult result : testResultSet.getResults()) {
             int testNameIdx = testData.indexOf(result.getTest()) + 1;
-            writeResult(patchCount, testNameIdx, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID);
+            writeResult(patchCount, testNameIdx, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
         }
     }
 
-    private void writeResult(int patchCount, int testNameIdx, Patch patch, boolean patchValid, boolean compiledOK, UnitTestResult testResult, Integer methodID) {
+    private void writeResult(int patchCount, int testNameIdx, Patch patch, boolean patchValid, boolean compiledOK, UnitTestResult testResult, Integer methodID, boolean patchNoOp, List<Boolean> editsValid) {
 
         String patchIndex = Integer.toString(patchCount);
         String methodIndex = Integer.toString(methodID);
@@ -491,6 +492,11 @@ public abstract class Sampler {
         String testExceptionMessage = testResult.getExceptionMessage();
         String testAssertionExpectedValue = testResult.getAssertionExpectedValue();
         String testAssertionActualValue = testResult.getAssertionActualValue();
+        String noOp = Boolean.toString(patchNoOp);
+        String editsValidStr = "";
+        for (Boolean b : editsValid) {
+            editsValidStr += (b ? 1 : 0);
+        }
 
         String[] entry = {
                 patchIndex,
@@ -509,7 +515,9 @@ public abstract class Sampler {
                 testExceptionType,
                 testExceptionMessage,
                 testAssertionExpectedValue,
-                testAssertionActualValue
+                testAssertionActualValue,
+                noOp,
+                editsValidStr
         };
 
 

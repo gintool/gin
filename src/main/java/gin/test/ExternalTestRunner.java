@@ -107,13 +107,17 @@ public class ExternalTestRunner extends TestRunner {
 
         // Apply the patch.
         String patchedSource = patch.apply();
-        boolean patchValid = (patchedSource != null);
+        boolean patchValid = patch.lastApplyWasValid();
+        List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
+        
+        // Did the code change as a result of applying the patch?
+        boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
 
         // Compile in temp dir
         boolean compiledOK = false;
-        if (patchValid) {
+        //if (patchValid) { // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
             compiledOK = compileClassToTempDir(patchedSource);
-        }
+        //}
 
         // Run tests
         List<UnitTestResult> results;
@@ -125,7 +129,7 @@ public class ExternalTestRunner extends TestRunner {
 
         deleteTempDirectory();
         
-        return new UnitTestResultSet(patch, patchValid, compiledOK, results);
+        return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
 
     }
 

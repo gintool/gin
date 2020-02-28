@@ -1,9 +1,7 @@
 package gin.test;
 
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 //import java.util.HashMap;
 //import java.util.Map;
@@ -23,12 +21,19 @@ public class UnitTestResultSet {
     private Patch patch;
     private boolean patchValid;
     private boolean compiledOK;
+    private List<Boolean> editsValid;
+    
+    /**was the patch effectively a no-op? i.e. was there some difference between
+     * input and output source?*/
+    private boolean noOp;
 
-    public UnitTestResultSet(Patch patch, boolean patchValid, boolean compiledOK, List<UnitTestResult> results) {
+    public UnitTestResultSet(Patch patch, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, boolean noOp, List<UnitTestResult> results) {
         this.patch = patch;
         this.patchValid = patchValid;
+        this.editsValid = new ArrayList<>(editsValid);
         this.compiledOK = compiledOK;
         this.results = results;
+        this.noOp = noOp;
     }
 
     public Patch getPatch() {
@@ -38,9 +43,17 @@ public class UnitTestResultSet {
     public boolean getValidPatch() {
         return patchValid;
     }
+    
+    public List<Boolean> getEditsValid() {
+        return editsValid;
+    }
 
     public boolean getCleanCompile() {
         return compiledOK;
+    }
+    
+    public boolean getNoOp() {
+        return noOp;
     }
 
     public List<UnitTestResult> getResults() {
@@ -79,8 +92,8 @@ public class UnitTestResultSet {
 
     @Override
     public String toString() {
-        String myrep = String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b.",
-                patch, patchValid, compiledOK);
+        String myrep = String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
+                patch, patchValid, compiledOK, noOp);
         if (results.size() > 0) {
             myrep += " Results follow: ";
         }

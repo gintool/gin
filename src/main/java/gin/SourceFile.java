@@ -16,6 +16,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 
 import gin.edit.Edit.EditType;
+import gin.misc.FullyQualifiedNames;
 
 /**
  * In practice SourceFile can be viewed as immutable. The only way it can be changed
@@ -53,6 +54,10 @@ public abstract class SourceFile {
     
     public static SourceFile makeSourceFileForEditType(EditType type, String filename, String targetMethodName) {
         return makeSourceFileForEditTypes(new EditType[]{type}, filename, Arrays.asList(targetMethodName));
+    }
+    
+    public static SourceFile makeSourceFileForEditType(EditType type, String filename, List<String> targetMethodNames) {
+        return makeSourceFileForEditTypes(new EditType[]{type}, filename, targetMethodNames);
     }
 
     public static SourceFile makeSourceFileForEditTypes(EditType[] types, String filename, List<String> targetMethodNames) {
@@ -119,9 +124,11 @@ public abstract class SourceFile {
 
         TargetMethod(String name) {
             methodName = name;
+            fullyQualifiedMethodName = name;
         }
 
         String methodName;
+        String fullyQualifiedMethodName;
 
         @Override
         public String toString() {
@@ -155,6 +162,12 @@ public abstract class SourceFile {
                 (targetMethods.size() == 1 && targetMethods.contains(new TargetMethod("")))) {
             return Collections.singletonList(cu);
         }
+        
+        for (TargetMethod tm : targetMethods) {
+            tm.fullyQualifiedMethodName = FullyQualifiedNames.makeMethodNameFullyQualified(tm.methodName, cu); 
+        }
+        
+        FullyQualifiedNames.annotateCompilationUnit(cu);
 
         Set<TargetMethod> notFound = new HashSet<>(targetMethods);
 
@@ -165,31 +178,17 @@ public abstract class SourceFile {
 
         for (MethodDeclaration m : nodes) {
 
+            String methodName = m.getData(FullyQualifiedNames.NODEKEY_FQ_METHOD_NAME);
 
-            String methodSignature;
-            methodSignature = m.getDeclarationAsString(false, false, false);
-
-            // Strip out return type if provided
-            String prefix = methodSignature.substring(0, methodSignature.indexOf("("));
-            if (prefix.contains(" ")) {
-                String returnType = prefix.split("\\s")[0];
-                methodSignature = StringUtils.replaceOnce(methodSignature, returnType, "").trim();
-            }
-
-            // Remove all spaces
-            methodSignature = methodSignature.replaceAll("\\s", "");
-
-            for (TargetMethod method : targetMethods) {
-
-                // hprof only gives us a line number within the method. So each hprof enumerate
-                // is method:line which means that multiple samples have different line numbers, 
-                // depending where execution was when hprof took a enumerate
-                // solution here is to check range of lines in method, not just the declaration
-                if (methodSignature.equals(method.methodName)) {
-                    targetMethodNodes.add(m);
-                    notFound.remove(method);
+            if (methodName != null) {
+                for (TargetMethod targetMethod : targetMethods) {
+    
+                    if (methodName.equals(targetMethod.fullyQualifiedMethodName)) {
+                        targetMethodNodes.add(m);
+                        notFound.remove(targetMethod);
+                    }
+    
                 }
-
             }
 
         }

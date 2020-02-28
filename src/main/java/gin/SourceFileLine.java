@@ -124,6 +124,9 @@ public class SourceFileLine extends SourceFile {
         } else {
             List<Node> targetMethodRootNodes = getTargetMethodRootNodesFromCU(compilationUnit, this.targetMethods);
 
+            // put in a set to start with to avoid duplicates
+            SortedSet<LineID> ids = new TreeSet<>();
+            
             for (Node node : targetMethodRootNodes) {
                 // javaparser line numbers start at 1, now list also starts at 1 so no need to subtract 1
                 int targetMethodStartLine = node.getRange().get().begin.line;
@@ -132,11 +135,13 @@ public class SourceFileLine extends SourceFile {
                 if (this.lines != null) {
                     for (int i = 1; i <= lines.size(); i++) {
                         if ((i >= targetMethodStartLine) && (i <= targetMethodEndLine)) {
-                            this.lineIDsInTargetMethod.add(new LineID(true, i, 0));
+                            ids.add(new LineID(true, i, 0));
                         }
                     }
                 }
             }
+            
+            this.lineIDsInTargetMethod.addAll(ids);
         }
         
         // work out where the empty lines are

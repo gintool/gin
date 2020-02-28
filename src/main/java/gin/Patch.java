@@ -3,7 +3,9 @@ package gin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -25,7 +27,6 @@ import gin.edit.matched.MatchedReplaceStatement;
 import gin.edit.matched.MatchedSwapStatement;
 import gin.edit.modifynode.BinaryOperatorReplacement;
 import gin.edit.modifynode.NoApplicableNodesException;
-import gin.edit.modifynode.ReorderLogicalExpression;
 import gin.edit.modifynode.UnaryOperatorReplacement;
 import gin.edit.statement.CopyStatement;
 import gin.edit.statement.DeleteStatement;
@@ -41,10 +42,27 @@ public class Patch {
     protected LinkedList<Edit> edits = new LinkedList<>();
     protected SourceFile sourceFile;
     private Class<?> superClassOfEdits;
+    
+    // we need both of the following:
+    
+    /**
+     * if, overall the patch was valid; so all edits were applied successfully, and
+     * JP was able to parse tree as a string.
+     * false if JP couldn't parse as string (we don't know which edit caused the problem),
+     * or if any individual edit failed
+     */
+    boolean lastApplyWasValid;
+    
+    /**
+     * identifies individual edits that were applied successfully (true) or failed due to JP (false)
+     */
+    List<Boolean> editsValidOnLastApply; 
 
     public Patch(SourceFile sourceFile) {
         this.sourceFile = sourceFile;
         this.superClassOfEdits = null;
+        this.lastApplyWasValid = false;
+        this.editsValidOnLastApply = Collections.emptyList();
     }
 
     @SuppressWarnings("unchecked")
@@ -61,6 +79,13 @@ public class Patch {
 
     public List<Edit> getEdits() {
         return this.edits;
+    }
+    
+    /**
+     * @return the sourcefile object that this patch was created against
+     */
+    public SourceFile getSourceFile() {
+        return sourceFile;
     }
 
     /**
@@ -96,17 +121,43 @@ public class Patch {
 
     /**
      * Apply this patch to the source file.
+     * We loop over the edits, applying each one in turn.
+     * If any edit fails, we act as if nothing happened and move on to the next one,
+     * so it is possible for a patch to return an unaltered copy of the original source code
+     * <p>
+     * There are three places where edits might not be valid and get ignored:
+     * <ul>
+     * <li>1 - if the Edit is well behaved but detects an error, it will return null
+     * <li>2 - if the Edit throws an exception during application
+     * <li>3 - if the Edit leads to a sourceFile that can't be written out as a string
+     * </ul>
+     * In all these situations, we set a flag "lastApplyWasInvalid" to true so it
+     * can be reported via lastApplyWasInvalid(); and we act as if the edit didn't happen at all
+     * (move to next edit for 1 and 2; or return original unaltered source for 3)
+     * 
+     * 
      * @return text of patched sourcecode; if there were problems, we just get the same sourcefile back
      */
     public String apply() {
 
         SourceFile patchedSourceFile = sourceFile.copyOf();
+        lastApplyWasValid = true;
+        editsValidOnLastApply = new ArrayList<>();
         
         for (Edit edit: edits) {
             try {
-                patchedSourceFile = edit.apply(patchedSourceFile);
+                SourceFile patchedByThisEdit = edit.apply(patchedSourceFile);
+                if (patchedByThisEdit == null) {
+                    lastApplyWasValid = false;
+                    editsValidOnLastApply.add(false);
+                } else {
+                    patchedSourceFile = patchedByThisEdit; // only if the edit actually worked do we update the source
+                    editsValidOnLastApply.add(true);
+                }
             } catch(Exception e) {
-                // any problem applying the edit means 
+                lastApplyWasValid = false;
+                editsValidOnLastApply.add(false);
+                // any unexpected problem applying the edit means 
                 // we just don't apply it
             }
         }
@@ -116,6 +167,8 @@ public class Patch {
         } catch (ClassCastException e) {
             // sometimes happens if an edit has violated JavaParser's expectations
             // - see https://github.com/drdrwhite/ginfork/issues/104
+            // if we get here, the whole patch is invalid
+            this.lastApplyWasValid = false;
             return sourceFile.getSource();
         }
         
@@ -277,6 +330,14 @@ public class Patch {
         }
         
         return rval;
+    }
+    
+    public boolean lastApplyWasValid() {
+        return lastApplyWasValid;
+    }
+    
+    public List<Boolean> getEditsInvalidOnLastApply() {
+        return editsValidOnLastApply;
     }
 
     @Override

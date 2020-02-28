@@ -103,5 +103,22 @@ public abstract class TestRunner {
         }
         return results;
     }
+    
+    /**
+     * tests for a no-op patch
+     * @param original - the original source
+     * @param patchedSource - the patched source 
+     * @return true if these are the "same" (i.e. patch was a no-op) 
+     * - ignoring whitespace and line comments (JavaParser drops some line comments!)
+     */
+    protected boolean isPatchedSourceSame(String original, String patchedSource) {
+        String normalisedPatched = patchedSource.replaceAll("//.*\\n", "");
+        String normalisedOriginal = original.replaceAll("//.*\\n", "");
+        normalisedPatched = normalisedPatched.replaceAll("\\s+", " ");
+        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
+        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
+        boolean noOp = normalisedPatched.equals(normalisedOriginal);
+        return noOp;
+    }
 
 }

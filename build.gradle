@@ -1,6 +1,6 @@
 // To create fat (uber) jar
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.1'
+    id 'com.github.johnrengelman.shadow' version '4.0.4'
     id 'java'
 }
 
@@ -18,19 +18,23 @@ repositories {
 
 dependencies {
 
-    compile group: 'commons-io', name: 'commons-io', version: '2.5'
-    compile group: 'com.google.guava', name: 'guava', version: '19.0'
-    compile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    compile group: 'com.google.guava', name: 'guava', version: '28.2-jre'
+    compile group: 'junit', name: 'junit', version: '4.13'
     compile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
-    compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.2.11'
+    compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.6.25'
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
-    compile group: 'com.opencsv', name: 'opencsv', version: '4.2'
+    compile group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.3'
+    compile group: 'org.apache.commons', name: 'commons-rng-core', version: '1.3'
+    compile group: 'org.apache.commons', name: 'commons-rng-client-api', version: '1.3'
+    compile group: 'org.apache.commons', name: 'commons-rng-sampling', version: '1.3'
+    compile group: 'com.opencsv', name: 'opencsv', version: '4.6'
 
     // https://mvnrepository.com/artifact/com.github.spullara.cli-parser/cli-parser
     compile group: 'com.github.spullara.cli-parser', name: 'cli-parser', version: '1.1.5'
 
     // https://mvnrepository.com/artifact/org.tinylog/tinylog
-    compile group: 'org.tinylog', name: 'tinylog', version: '1.3.5'
+    compile group: 'org.tinylog', name: 'tinylog', version: '1.3.6'
 
     // Include the jar by "mvn package" on the fork of InMemoryCompiler created for gin.
     // This is a substitute for the following:
@@ -42,28 +46,28 @@ dependencies {
     // Used to profile maven projects
     compile group: 'org.apache.maven.shared', name: 'maven-invoker', version: '3.0.1'
 
-    compile group: 'org.apache.maven', name: 'maven-core', version: '3.5.4'
+    compile group: 'org.apache.maven', name: 'maven-core', version: '3.6.3'
 
     // Used to profile gradle projects
     compile group: 'org.gradle', name: 'gradle-tooling-api', version: '4.10.2'
-    runtime 'org.slf4j:slf4j-simple:1.7.22'
+    runtime 'org.slf4j:slf4j-simple:1.8.0-beta4'
 
     // Create jars for call graph generation using zta-zip
-    compile 'org.zeroturnaround:zt-zip:1.13'
+    compile 'org.zeroturnaround:zt-zip:1.14'
 
     // Parse commandline
-    compile group: 'org.zeroturnaround', name: 'zt-exec', version: '1.10'
+    compile group: 'org.zeroturnaround', name: 'zt-exec', version: '1.11'
 
     // Parse build reports using jsoup
-    compile 'org.jsoup:jsoup:1.11.3'
+    compile 'org.jsoup:jsoup:1.12.2'
 
-	// build example project so main project unit tests (e.g. profiler) will pass!
-	compile project(':gradle-simple')
+    // build example project so main project unit tests (e.g. profiler) will pass!
+    compile project(':gradle-simple')
 }
 
 // This is handy to copy dependencies into a folder, for use in an IDE etc.
 task copyToLib(type: Copy) {
-    into "lib/"
+    into "lib"
     from configurations.runtime
 }
 

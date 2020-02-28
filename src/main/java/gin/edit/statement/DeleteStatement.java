@@ -5,6 +5,7 @@ import java.util.Random;
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
+import gin.misc.BlockedByJavaParserException;
 
 public class DeleteStatement extends StatementEdit {
 
@@ -28,7 +29,11 @@ public class DeleteStatement extends StatementEdit {
     @Override
     public SourceFile apply(SourceFile sourceFile) {
         SourceFileTree sf = (SourceFileTree)sourceFile;
-        return sf.removeStatement(statementToDelete);
+        try {
+            return sf.removeStatement(statementToDelete);
+        } catch (BlockedByJavaParserException e) {
+            return null;
+        }
     }
 
     @Override

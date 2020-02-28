@@ -40,7 +40,7 @@ public class RandomSamplerTest {
         sampler = new RandomSampler(resourcesDir, methodFile);
         sampler.outputFile = outputFile;
         sampler.classPath = resourcesDir.getPath();
-        sampler.maxPatchSize = 2;
+        sampler.patchSize = 2;
         sampler.setUp();
 
         buildExampleClasses();
@@ -114,20 +114,20 @@ public class RandomSamplerTest {
         assertEquals("true", result[validIndex]);
         assertEquals("false", result[compileIndex]);
         assertEquals("false", result[testIndex]);
-        assertEquals("1", result[patchSize]);
+        assertEquals("2", result[patchSize]);
 
         result = lines.get(5);
 
         assertEquals("true", result[validIndex]);
         assertEquals("false", result[compileIndex]);
         assertEquals("false", result[testIndex]);
-        assertEquals("1", result[patchSize]);
+        assertEquals("2", result[patchSize]);
 
         result = lines.get(6);
 
         assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
+        assertEquals("false", result[compileIndex]);
+        assertEquals("false", result[testIndex]);
         assertEquals("2", result[patchSize]);
 
         result = lines.get(7);
@@ -135,21 +135,21 @@ public class RandomSamplerTest {
         assertEquals("true", result[validIndex]);
         assertEquals("false", result[compileIndex]);
         assertEquals("false", result[testIndex]);
-        assertEquals("1", result[patchSize]);
+        assertEquals("2", result[patchSize]);
 
         result = lines.get(8);
 
         assertEquals("true", result[validIndex]);
         assertEquals("false", result[compileIndex]);
         assertEquals("false", result[testIndex]);
-        assertEquals("1", result[patchSize]);
+        assertEquals("2", result[patchSize]);
 
         result = lines.get(9);
 
         assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        assertEquals("1", result[patchSize]);
+        assertEquals("false", result[compileIndex]);
+        assertEquals("false", result[testIndex]);
+        assertEquals("2", result[patchSize]);
 
         result = lines.get(10);
 

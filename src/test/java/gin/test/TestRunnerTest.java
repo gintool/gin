@@ -232,7 +232,7 @@ public class TestRunnerTest {
         CompiledCode code = Compiler.compile("mypackage.NewExample", srcCode, TestConfiguration.EXAMPLE_DIR_NAME);
 
         CacheClassLoader loader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME);
-        loader.setCustomCompiledCode("mypackage.NewExample", code);
+        loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
 
         try {
             Class example = loader.findClass("mypackage.NewExample");

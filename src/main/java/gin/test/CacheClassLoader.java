@@ -1,7 +1,6 @@
 package gin.test;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.mdkt.compiler.CompiledCode;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
@@ -21,7 +20,7 @@ public class CacheClassLoader extends URLClassLoader {
 
     private static final String BRIDGE_CLASS_NAME = gin.test.JUnitBridge.class.getName();
 
-    protected Map<String, CompiledCode> customCompiledCode = new HashMap<>();
+    protected Map<String, byte[]> customCompiledCode = new HashMap<>();
 
     private URL[] providedClassPath;
 
@@ -62,8 +61,7 @@ public class CacheClassLoader extends URLClassLoader {
 
         // Modified class? Return the modified code.
         if (customCompiledCode.containsKey(name)) {
-            CompiledCode cc = customCompiledCode.get(name);
-            byte[] byteCode = cc.getByteCode();
+            byte[] byteCode = customCompiledCode.get(name);
             return defineClass(name, byteCode, 0, byteCode.length);
         }
 
@@ -84,7 +82,7 @@ public class CacheClassLoader extends URLClassLoader {
      * @param className the fully qualified class name.
      * @param compiledCode the compiled code for the given class.
      */
-    public void setCustomCompiledCode(String className, CompiledCode compiledCode) {
+    public void setCustomCompiledCode(String className, byte[] compiledCode) {
         this.customCompiledCode.put(className, compiledCode);
     }
 

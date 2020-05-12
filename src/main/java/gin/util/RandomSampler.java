@@ -1,11 +1,7 @@
 package gin.util;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Random;
-import java.util.Set;
 
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
@@ -17,8 +13,6 @@ import org.pmw.tinylog.Logger;
 import gin.Patch;
 import gin.SourceFile;
 import gin.edit.Edit.EditType;
-import gin.test.UnitTest;
-import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 
 
@@ -70,7 +64,7 @@ public class RandomSampler extends Sampler {
         Logger.info("Random seed for edit type selection: "+ patchSeed);
     }
 
-   protected void sampleMethods() {
+   protected void sampleMethodsHook() {
 
         Random mrng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(methodSeed)); 
         

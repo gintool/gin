@@ -212,6 +212,7 @@ public class EmptyPatchTesterTest {
         sampler.writeHeader();
 
         assertTrue(outputFile.exists());
+        sampler.close();
         Files.deleteIfExists(outputFile.toPath());
         FileUtils.deleteDirectory(innerDir);
         FileUtils.deleteDirectory(topDir);

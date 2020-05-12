@@ -58,7 +58,7 @@ public class DeleteEnumerator extends Sampler {
         Logger.info("Random seed for method selection: "+ randomSeed);
     }
 
-    protected void sampleMethods() {
+    protected void sampleMethodsHook() {
 
         Random rng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(randomSeed));
 

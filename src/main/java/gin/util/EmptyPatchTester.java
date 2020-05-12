@@ -36,7 +36,7 @@ public class EmptyPatchTester extends Sampler{
         super(projectDir, methodFile);
     }
 
-    protected void sampleMethods() {
+    protected void sampleMethodsHook() {
         
         writeHeader();
 

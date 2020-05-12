@@ -65,6 +65,7 @@ public abstract class Sampler {
 
     @Argument(alias = "o", description = "Output CSV file")
     protected File outputFile = new File("sampler_results.csv");
+    protected CSVWriter outputFileWriter;
 
     @Argument(alias = "x", description = "Timeout in milliseconds")
     protected Long timeoutMS = 10000L;
@@ -117,13 +118,13 @@ public abstract class Sampler {
     }
 
     public Sampler(File projectDir, File methodFile) {
-
+        
         this.projectDirectory = projectDir;
         this.methodFile = methodFile;
     }
 
     protected void setUp() {
-
+        
         if (this.classPath == null) {
             this.project = new Project(projectDirectory, projectName);
             if (mavenHome != null) {
@@ -197,10 +198,19 @@ public abstract class Sampler {
             return methodID.hashCode();
         }
     }
+    
+    /*============== sampleMethods calls the hook abstract method  ==============*/
+    protected final void sampleMethods(){
+        try {
+            this.sampleMethodsHook();
+        } finally {
+            this.close();
+        }
+    }
 
-    /*============== sampleMethods should be overriden in each subclass of Sampler  ==============*/
+    /*============== sampleMethodsHook should be overriden in each subclass of Sampler  ==============*/
 
-    protected abstract void sampleMethods(); 
+    protected abstract void sampleMethodsHook(); 
 
     /*============== methods for running tests  ==============*/
     
@@ -446,9 +456,8 @@ public abstract class Sampler {
         }
 
         try {
-            CSVWriter writer = new CSVWriter(new FileWriter(outputFile));
-            writer.writeNext(OUT_HEADER);
-            writer.close();
+            outputFileWriter = new CSVWriter(new FileWriter(outputFile));
+            outputFileWriter.writeNext(OUT_HEADER);
         } catch (IOException e) {
             Logger.error(e, "Exception writing header to the output file: " + outputFile.getAbsolutePath());
             Logger.trace(e);
@@ -520,21 +529,19 @@ public abstract class Sampler {
                 editsValidStr
         };
 
-
-        try {
-
-            CSVWriter writer = new CSVWriter(new FileWriter(outputFile, true));
-            writer.writeNext(entry);
-            writer.close();
-
-        } catch (IOException e) {
-
-            Logger.error(e, "Exception writing to the output file: " + outputFile.getAbsolutePath());
-            Logger.trace(e);
-            System.exit(-1);
-
-        }
+        outputFileWriter.writeNext(entry);
     }
 
+    protected void close() {
+        try {
+            if(this.outputFileWriter != null){
+                this.outputFileWriter.close();
+            }
+        } catch(IOException ex){
+            Logger.error(ex, "Exception closing the output file: " + outputFile.getAbsolutePath());
+            Logger.trace(ex);
+            System.exit(-1);
+        }
+    }
 
 }

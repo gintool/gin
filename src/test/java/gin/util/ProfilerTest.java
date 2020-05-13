@@ -33,9 +33,10 @@ public class ProfilerTest {
         tests.add(test);
         //profiler.profileTestSuite(tests); //Use this to generate the hprof
 
-        File scratchFile = new File("scratch"+ File.separator +"testEnumProfiling.txt");
+        File scratchFile = new File("scratch" + File.separator + "testEnumProfiling.txt");
+        FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
         Configurator.defaultConfig()
-                .writer(new FileWriter(scratchFile.getAbsolutePath()))
+                .writer(fileWriter)
                 .level(Level.WARNING)
                 .activate();
 
@@ -43,14 +44,15 @@ public class ProfilerTest {
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
-        String missingMessage =  "WARNING: Excluding method as class in main tree but method not found: " +
-                "example.ExampleEnum.values";
+        String missingMessage = "WARNING: Excluding method as class in main tree but method not found: "
+                + "example.ExampleEnum.values";
 
         String likelyEnumMessage = "WARNING: This is likely because the method relates to an enum type.";
 
         assertTrue(logMessages.contains(missingMessage));
         assertTrue(logMessages.contains(likelyEnumMessage));
 
+        fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
         Files.deleteIfExists(new File("scratch").toPath());  // tidy up
     }

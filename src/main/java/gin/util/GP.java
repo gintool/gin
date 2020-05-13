@@ -43,7 +43,7 @@ public abstract class GP extends Sampler {
     protected Random mutationRng;
     protected Random individualRng;
     
-       public GP(String[] args) {
+    public GP(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
         printAdditionalArguments();
@@ -69,8 +69,7 @@ public abstract class GP extends Sampler {
     }
 
     // Implementation of the abstract method
-    protected void sampleMethods() {
-
+    protected void sampleMethodsHook() {
         writeNewHeader();
 
         for (TargetMethod method : methodData) {
@@ -121,9 +120,8 @@ public abstract class GP extends Sampler {
                         , "FitnessImprovement"
                         };
         try {
-            CSVWriter writer = new CSVWriter(new FileWriter(outputFile));
-            writer.writeNext(entry);
-            writer.close();
+            outputFileWriter = new CSVWriter(new FileWriter(outputFile));
+            outputFileWriter.writeNext(entry);
         } catch (IOException e) {
             Logger.error(e, "Exception writing results to the output file: " + outputFile.getAbsolutePath());
             Logger.trace(e);
@@ -140,15 +138,7 @@ public abstract class GP extends Sampler {
                         , Long.toString(fitness)
                         , Long.toString(improvement)
                         };
-        try {
-            CSVWriter writer = new CSVWriter(new FileWriter(outputFile, true));
-            writer.writeNext(entry);
-            writer.close();
-        } catch (IOException e) {
-            Logger.error(e, "Exception writing results to the output file: " + outputFile.getAbsolutePath());
-            Logger.trace(e);
-            System.exit(-1);
-        }
+        outputFileWriter.writeNext(entry);
     }
 
 }

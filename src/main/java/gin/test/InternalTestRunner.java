@@ -68,7 +68,7 @@ public class InternalTestRunner extends TestRunner {
         // Add to class loader and run tests
         List<UnitTestResult> results = null;
         if (compiledOK) {
-            classLoader.setCustomCompiledCode(this.getClassName(), code);
+            classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
             results = runTests(reps, classLoader);
         }
 

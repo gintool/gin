@@ -93,7 +93,7 @@ public class Trace {
         // \tsun.font.CFont.createNativeFont(CFont.java:Unknown line)
         // We're extracting: the trace number, the name of the method, the line number ('Unknown line' special case).
 
-        String regex = "^TRACE (\\d+):\\n^\\t(.*)\\(.*:(.*)\\)$";
+        String regex = "^TRACE (\\d+):(?:\\r\\n|\\r|\\n)^\\t(.*)\\(.*:(.*)\\)$";
         Pattern p = Pattern.compile(regex, Pattern.MULTILINE);
         Matcher m = p.matcher(hprof);
 

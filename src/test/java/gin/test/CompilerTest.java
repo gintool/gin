@@ -32,7 +32,7 @@ public class CompilerTest {
         assertTrue(code != null);
 
         CacheClassLoader loader = new CacheClassLoader(classPath);
-        loader.setCustomCompiledCode(className, code);
+        loader.setCustomCompiledCode(className, code.getByteCode());
         Class compiledClass = loader.findClass("SimpleExample");
 
         assertNotNull(compiledClass);

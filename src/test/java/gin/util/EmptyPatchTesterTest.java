@@ -16,7 +16,6 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.After;
@@ -53,14 +52,15 @@ public class EmptyPatchTesterTest {
             File exampleTestFile = new File(resourcesDir, "ExampleTest.java");
             File exampleBaseFile = new File(resourcesDir, "ExampleBase.java");
             Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(
-                        exampleFile
-                        , exampleTestFile
-                        , exampleBaseFile
-                        ));
-            JavaCompiler.CompilationTask task =
-                compiler.getTask(null, fm, null, options, null, compilationUnit);
-            if (!task.call())
+                    exampleFile,
+                    exampleTestFile,
+                    exampleBaseFile
+            ));
+            JavaCompiler.CompilationTask task
+                    = compiler.getTask(null, fm, null, options, null, compilationUnit);
+            if (!task.call()) {
                 throw new AssertionError("compilation failed");
+            }
         }
 
     }
@@ -76,34 +76,34 @@ public class EmptyPatchTesterTest {
         sampler.setUp();
         sampler.sampleMethods();
 
-        CSVReader reader = new CSVReader(new FileReader(outputFile));
-        List<String[]> lines = reader.readAll();
+        try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
+            List<String[]> lines = reader.readAll();
 
-        assertEquals(lines.size(), 4);
+            assertEquals(lines.size(), 4);
 
-        String[] header = lines.get(0);
-        String[] result = lines.get(1);
+            String[] header = lines.get(0);
+            String[] result = lines.get(1);
 
-        int validIndex = Arrays.asList(header).indexOf("PatchValid");
-        int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
-        int testIndex = Arrays.asList(header).indexOf("TestPassed");
+            int validIndex = Arrays.asList(header).indexOf("PatchValid");
+            int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
+            int testIndex = Arrays.asList(header).indexOf("TestPassed");
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(2);
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(3);
+            result = lines.get(2);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+
+            result = lines.get(3);
+
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+        }
         Files.deleteIfExists(outputFile.toPath());  // tidy up
 
     }
@@ -121,34 +121,34 @@ public class EmptyPatchTesterTest {
 
         sampler.sampleMethods();
 
-        CSVReader reader = new CSVReader(new FileReader(outputFile));
-        List<String[]> lines = reader.readAll();
+        try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
+            List<String[]> lines = reader.readAll();
 
-        assertEquals(lines.size(), 4);
+            assertEquals(lines.size(), 4);
 
-        String[] header = lines.get(0);
-        String[] result = lines.get(1);
+            String[] header = lines.get(0);
+            String[] result = lines.get(1);
 
-        int validIndex = Arrays.asList(header).indexOf("PatchValid");
-        int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
-        int testIndex = Arrays.asList(header).indexOf("TestPassed");
+            int validIndex = Arrays.asList(header).indexOf("PatchValid");
+            int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
+            int testIndex = Arrays.asList(header).indexOf("TestPassed");
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(2);
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(3);
+            result = lines.get(2);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+
+            result = lines.get(3);
+
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+        }
         Files.deleteIfExists(outputFile.toPath());  // tidy up
 
     }
@@ -166,34 +166,34 @@ public class EmptyPatchTesterTest {
 
         sampler.sampleMethods();
 
-        CSVReader reader = new CSVReader(new FileReader(outputFile));
-        List<String[]> lines = reader.readAll();
+        try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
+            List<String[]> lines = reader.readAll();
 
-        assertEquals(lines.size(), 4);
+            assertEquals(lines.size(), 4);
 
-        String[] header = lines.get(0);
-        String[] result = lines.get(1);
+            String[] header = lines.get(0);
+            String[] result = lines.get(1);
 
-        int validIndex = Arrays.asList(header).indexOf("PatchValid");
-        int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
-        int testIndex = Arrays.asList(header).indexOf("TestPassed");
+            int validIndex = Arrays.asList(header).indexOf("PatchValid");
+            int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
+            int testIndex = Arrays.asList(header).indexOf("TestPassed");
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(2);
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
-        result = lines.get(3);
+            result = lines.get(2);
 
-        assertEquals("true", result[validIndex]);
-        assertEquals("true", result[compileIndex]);
-        assertEquals("true", result[testIndex]);
-        
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+
+            result = lines.get(3);
+
+            assertEquals("true", result[validIndex]);
+            assertEquals("true", result[compileIndex]);
+            assertEquals("true", result[testIndex]);
+        }
         Files.deleteIfExists(outputFile.toPath());  // tidy up
 
     }
@@ -212,6 +212,7 @@ public class EmptyPatchTesterTest {
         sampler.writeHeader();
 
         assertTrue(outputFile.exists());
+        sampler.close();
         Files.deleteIfExists(outputFile.toPath());
         FileUtils.deleteDirectory(innerDir);
         FileUtils.deleteDirectory(topDir);
@@ -220,10 +221,10 @@ public class EmptyPatchTesterTest {
 
     @After
     public void tearDown() throws Exception {
-            File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
-            resourcesDir = new File(resourcesDir, "mypackage");
-            Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
+        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+        resourcesDir = new File(resourcesDir, "mypackage");
+        Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
     }
 }

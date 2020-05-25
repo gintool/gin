@@ -1,17 +1,20 @@
 package gin.util;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
-
-import com.sampullara.cli.Args;
-import com.sampullara.cli.Argument;
 
 import org.apache.commons.rng.simple.JDKRandomBridge;
 import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
 
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+
 import gin.Patch;
 import gin.SourceFile;
+import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.test.UnitTestResultSet;
 
@@ -24,9 +27,9 @@ import gin.test.UnitTestResultSet;
 
 public class RandomSampler extends Sampler {
     
-    @Argument(alias = "et", description = "Edit type")
-    protected EditType editType = EditType.LINE;
-
+    @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
+    protected String editType = EditType.LINE.toString();
+    
     @Argument(alias = "ps", description = "Number of edits per patch")
     protected Integer patchSize = 1;
 
@@ -39,6 +42,8 @@ public class RandomSampler extends Sampler {
     @Argument(alias = "rp", description = "Random seed for edit type selection")
     protected Integer patchSeed = 123;
 
+    /**allowed edit types for sampling: parsed from editType*/
+    protected List<Class<? extends Edit>> editTypes;
 
     public static void main(String[] args) {
         RandomSampler sampler = new RandomSampler(args);
@@ -48,16 +53,18 @@ public class RandomSampler extends Sampler {
     public RandomSampler(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
+        editTypes = Edit.parseEditClassesFromString(editType);
         printAdditionalArguments();
     }
 
     // Constructor used for testing
     public RandomSampler(File projectDir, File methodFile) {
         super(projectDir, methodFile);
+        editTypes = Edit.parseEditClassesFromString(editType);
     }
 
     private void printAdditionalArguments() {
-        Logger.info("Edit type: "+ editType);
+        Logger.info("Edit types: "+ editTypes);
         Logger.info("Number of edits per patch: "+ patchSize);
         Logger.info("Number of patches: "+ patchNumber);
         Logger.info("Random seed for method selection: "+ methodSeed);
@@ -85,11 +92,11 @@ public class RandomSampler extends Sampler {
                 File source = method.getFileSource();
 
                 // Setup SourceFile for patching
-                SourceFile sourceFile = SourceFile.makeSourceFileForEditType(editType, source.getPath(), method.getMethodName());
+                SourceFile sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, source.getPath(), Collections.singletonList(method.getMethodName()));
 
                 Patch patch = new Patch(sourceFile);
                 for (int j = 0; j < patchSize; j++) {
-                    patch.addRandomEdit(prng, editType);
+                    patch.addRandomEditOfClasses(prng, editTypes);
                 }
 
                 Logger.info("Testing random patch " + patch + " for method: " + method + " with ID " + methodID);

@@ -2,8 +2,8 @@ package gin.util;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.pmw.tinylog.Logger;
@@ -126,7 +126,7 @@ public abstract class GPSimple extends GP {
     // Mutation operator, returns a clone of the old patch
     protected Patch mutate(Patch oldPatch) {
         Patch patch = oldPatch.clone();
-        patch.addRandomEdit(super.mutationRng, super.editType);
+        patch.addRandomEditOfClasses(super.mutationRng, super.editTypes);
         return patch;
     }
 

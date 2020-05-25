@@ -15,7 +15,8 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 
-import gin.edit.Edit.EditType;
+import gin.edit.Edit;
+import gin.edit.line.LineEdit;
 import gin.misc.FullyQualifiedNames;
 
 /**
@@ -52,19 +53,19 @@ public abstract class SourceFile {
     }
     
     
-    public static SourceFile makeSourceFileForEditType(EditType type, String filename, String targetMethodName) {
-        return makeSourceFileForEditTypes(new EditType[]{type}, filename, Arrays.asList(targetMethodName));
+    public static SourceFile makeSourceFileForEditType(Class<? extends Edit> type, String filename, String targetMethodName) {
+        return makeSourceFileForEditTypes(Collections.singletonList(type), filename, Arrays.asList(targetMethodName));
     }
     
-    public static SourceFile makeSourceFileForEditType(EditType type, String filename, List<String> targetMethodNames) {
-        return makeSourceFileForEditTypes(new EditType[]{type}, filename, targetMethodNames);
+    public static SourceFile makeSourceFileForEditType(Class<? extends Edit> type, String filename, List<String> targetMethodNames) {
+        return makeSourceFileForEditTypes(Collections.singletonList(type), filename, targetMethodNames);
     }
 
-    public static SourceFile makeSourceFileForEditTypes(EditType[] types, String filename, List<String> targetMethodNames) {
+    public static SourceFile makeSourceFileForEditTypes(List<Class<? extends Edit>> types, String filename, List<String> targetMethodNames) {
         boolean containsLines = false;
         boolean containsStatements = false;
-        for (EditType et : types) {
-            if (et == EditType.LINE) {
+        for (Class<? extends Edit> et : types) {
+            if (LineEdit.class.isAssignableFrom(et)) {
                 containsLines = true;
             } else {
                 containsStatements = true;

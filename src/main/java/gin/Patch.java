@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,23 +15,8 @@ import org.pmw.tinylog.Logger;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.edit.NoEdit;
-import gin.edit.line.CopyLine;
-import gin.edit.line.DeleteLine;
 import gin.edit.line.LineEdit;
-import gin.edit.line.ReplaceLine;
-import gin.edit.line.SwapLine;
-import gin.edit.matched.MatchedCopyStatement;
-import gin.edit.matched.MatchedDeleteStatement;
-import gin.edit.matched.MatchedReplaceStatement;
-import gin.edit.matched.MatchedSwapStatement;
-import gin.edit.modifynode.BinaryOperatorReplacement;
-import gin.edit.modifynode.NoApplicableNodesException;
-import gin.edit.modifynode.UnaryOperatorReplacement;
-import gin.edit.statement.CopyStatement;
-import gin.edit.statement.DeleteStatement;
-import gin.edit.statement.ReplaceStatement;
 import gin.edit.statement.StatementEdit;
-import gin.edit.statement.SwapStatement;
 
 /**
  * Represents a patch, a potential set of changes to a sourcefile.
@@ -173,16 +157,28 @@ public class Patch {
         }
         
     }
+    
+    /**add a random edit to this patch of a specific class*/
+    public void addRandomEditOfClass(Random rng, Class<? extends Edit> allowableEditType) {
+    	addRandomEditOfClasses(rng, Collections.singletonList(allowableEditType));
+    }
+    
+    /**add a random edit to this patch, one of a specific list of classes*/
+    public void addRandomEditOfClasses(Random rng, List<Class<? extends Edit>> allowableEditTypes) {
+    	this.add(randomEdit(rng, allowableEditTypes));
+    }
 
+    /**add a random edit to this patch of a specific type (family of classes)*/
     public void addRandomEdit(Random rng, EditType allowableEditType) {
-        addRandomEdit(rng, new LinkedList<EditType>(Arrays.asList(allowableEditType)));
+    	addRandomEditOfClasses(rng, Edit.getEditClassesOfType(allowableEditType));
     }
 
+    /**add a random edit to this patch, one of a list of specific types (families of classes)*/
     public void addRandomEdit(Random rng, List<EditType> allowableEditTypes) {
-        this.add(randomEdit(rng, allowableEditTypes));
+    	addRandomEditOfClasses(rng, Edit.getEditClassesOfTypes(allowableEditTypes));
     }
 
-    private Edit randomEdit(Random rng, List<EditType> allowableEditTypes) {
+    private Edit randomEdit(Random rng, List<Class<? extends Edit>> allowableEditTypes) {
         // generate a random edit. target methods are accounted for here
         // by pulling the appropriate line/statement IDs from sourceFile
         
@@ -194,99 +190,18 @@ public class Patch {
         Edit edit = null;
 
         // decide what edit we're doing to make
-        // first, choose an overall type (line,statement,substatement)
-        // then choose a particular kind of edit within that type (copy/delete/move etc.)
-        EditType editType = allowableEditTypes.get(rng.nextInt(allowableEditTypes.size())); 
+        Class<? extends Edit> editType = allowableEditTypes.get(rng.nextInt(allowableEditTypes.size())); 
         
+        // make one
         try {
-            switch (editType) {
-                case LINE:
-                    int editSubType = rng.nextInt(4);
-                    switch (editSubType) {
-                        case (0): // delete line
-                            edit = new DeleteLine(sourceFile, rng);
-                            break;
-                        case (1): // copy line
-                            edit = new CopyLine(sourceFile, rng);
-                            break;
-    /* SB: omitted for experiments
-                        case (2): // move line
-                            edit = new MoveLine(sourceFile, rng);
-                            break;
-    */
-                        case (2): // replace line
-                            edit = new ReplaceLine(sourceFile, rng);
-                            break;
-                        case (3): // swap line
-                            edit = new SwapLine(sourceFile, rng);
-                            break;
-                    }
-                    break;
-                case STATEMENT:
-                    editSubType = rng.nextInt(4);
-                    switch (editSubType) {
-                        case (0): // delete statement
-                            edit = new DeleteStatement(sourceFile, rng);
-                            break;
-                        case (1): // copy statement
-                            edit = new CopyStatement(sourceFile, rng);
-                            break;
-    /*
-                        case (2): // move statement
-                            edit = new MoveStatement(sourceFile, rng);
-                            break;
-    */
-                        case (2): // replace statement
-                            edit = new ReplaceStatement(sourceFile, rng);
-                            break;
-                        case (3): // swap statement
-                            edit = new SwapStatement(sourceFile, rng);
-                            break;
-                    }
-                    break;
-                case MODIFY_STATEMENT:
-                    editSubType = rng.nextInt(2);
-                    // will also need a random choice between different modifications...
-                    // see https://github.com/gintool/gin/issues/13#issuecomment-342489660
-                    switch (editSubType) {
-                    case (0): // BinaryOperator
-                        edit = new BinaryOperatorReplacement(sourceFile, rng);
-                        break;
-                    case (1): // UnaryOperator
-                        edit = new UnaryOperatorReplacement(sourceFile, rng);
-                        break;
-    /*
-                    case (2): // ReorderLogicalExpression
-                        edit = new ReorderLogicalExpression(sourceFile, rng); // not yet ready
-                        break;
-    */
-                    }
-                    
-                    break;
-                case MATCHED_STATEMENT:
-                    editSubType = rng.nextInt(4);
-                    switch (editSubType) {
-                        case (0): // delete statement
-                            edit = new MatchedDeleteStatement(sourceFile, rng);
-                            break;
-                        case (1): // copy statement
-                            edit = new MatchedCopyStatement(sourceFile, rng);
-                            break;
-    /*
-                        case (2): // move statement
-                            edit = new MatchedMoveStatement(sourceFile, rng); // doesn't exist currently! maybe can't exist.
-                            break;
-    */
-                        case (2): // replace statement
-                            edit = new MatchedReplaceStatement(sourceFile, rng);
-                            break;
-                        case (3): // swap statement
-                            edit = new MatchedSwapStatement(sourceFile, rng);
-                            break;
-                    }
-                    break;
-            }
-        } catch (NoApplicableNodesException e) {
+        	edit = editType.getDeclaredConstructor(SourceFile.class, Random.class).newInstance(sourceFile, rng);
+        } catch (NoSuchMethodException e) {
+        	// we get here if the edit author forgot to add a (SourceFile,Random) constructor
+        	// leave edit null, it'll be filled below.
+        	// BUT we should issue a warning...
+        	Logger.warn("(SourceFile,Random) constructor not found for edit class " + editType);
+        } catch (Exception e) {
+        	// e.g. NoApplicableNodesException
             // we get here if the chosen edit couldn't be created for the given source file
             // leave edit null, it'll be filled below.
         }

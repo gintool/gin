@@ -2,6 +2,7 @@ package gin;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FilenameUtils;
@@ -13,6 +14,7 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 
 import gin.edit.Edit;
+import gin.edit.Edit.EditType;
 import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
@@ -50,6 +52,12 @@ public class LocalSearch {
 
     @Argument(alias = "t", description = "Test class name")
     protected String testClassName;
+    
+    @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
+    protected String editType = EditType.LINE.toString();
+    
+    /**allowed edit types for sampling: parsed from editType*/
+    protected List<Class<? extends Edit>> editTypes;
 
     protected SourceFile sourceFile;
     InternalTestRunner testRunner;
@@ -65,11 +73,13 @@ public class LocalSearch {
     LocalSearch(String args[]) {
 
         Args.parseOrExit(this, args);
+        editTypes = Edit.parseEditClassesFromString(editType);
 
-        this.sourceFile = new SourceFileLine(this.filename, this.methodSignature);
+        this.sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, this.filename.toString(), Collections.singletonList(this.methodSignature));
+        
         this.rng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(seed));
         if (this.packageDir == null) {
-            this.packageDir = this.filename.getParentFile().getAbsoluteFile();
+            this.packageDir = (this.filename.getParentFile()!=null) ? this.filename.getParentFile().getAbsoluteFile() : new File(System.getProperty("user.dir"));
         }
         if (this.classPath == null) {
             this.classPath = this.packageDir.getAbsolutePath();
@@ -174,7 +184,7 @@ public class LocalSearch {
         if (neighbour.size() > 0 && rng.nextFloat() > 0.5) {
             neighbour.remove(rng.nextInt(neighbour.size()));
         } else {
-            neighbour.addRandomEdit(rng, Collections.singletonList(Edit.EditType.LINE));
+            neighbour.addRandomEditOfClasses(rng, editTypes);
         }
         
         return neighbour;

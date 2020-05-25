@@ -3,6 +3,7 @@ package gin.util;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -13,6 +14,7 @@ import org.pmw.tinylog.Logger;
 
 import gin.Patch;
 import gin.SourceFile;
+import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
@@ -25,8 +27,8 @@ import gin.test.UnitTestResultSet;
 
 public abstract class GP extends Sampler {
     
-    @Argument(alias = "et", description = "Edit type")
-    protected EditType editType = EditType.MATCHED_STATEMENT;
+    @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
+    protected String editType = EditType.MATCHED_STATEMENT.toString();
 
     @Argument(alias = "gn", description = "Number of generations")
     protected Integer genNumber = 1;
@@ -39,6 +41,9 @@ public abstract class GP extends Sampler {
 
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
+    
+    /**allowed edit types for sampling: parsed from editType*/
+    protected List<Class<? extends Edit>> editTypes;
 
     protected Random mutationRng;
     protected Random individualRng;
@@ -46,6 +51,7 @@ public abstract class GP extends Sampler {
     public GP(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
+        editTypes = Edit.parseEditClassesFromString(editType);
         printAdditionalArguments();
         setup();
     }
@@ -53,10 +59,11 @@ public abstract class GP extends Sampler {
     // Constructor used for testing
     public GP(File projectDir, File methodFile) {
         super(projectDir, methodFile);
+        editTypes = Edit.parseEditClassesFromString(editType);
     }
 
     private void printAdditionalArguments() {
-        Logger.info("Edit type: "+ editType);
+        Logger.info("Edit types: "+ editTypes);
         Logger.info("Number of generations: "+ genNumber);
         Logger.info("Number of individuals: "+ indNumber);
         Logger.info("Random seed for mutation selection: "+ mutationSeed);
@@ -77,8 +84,8 @@ public abstract class GP extends Sampler {
             Logger.info("Running GP on method " + method);
 
             // Setup SourceFile for patching
-            SourceFile sourceFile = SourceFile.makeSourceFileForEditType(editType, method.getFileSource().getPath(), method.getMethodName());
-
+            SourceFile sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, method.getFileSource().getPath(), Collections.singletonList(method.getMethodName()));
+            
             search(method.getClassName(), method.getGinTests(), sourceFile);
 
         }

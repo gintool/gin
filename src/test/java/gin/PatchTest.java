@@ -11,11 +11,19 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
 import org.junit.Before;
 import org.junit.Test;
 
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
+import gin.edit.insert.InsertBreak;
+import gin.edit.insert.InsertBreakWithIf;
+import gin.edit.insert.InsertContinue;
+import gin.edit.insert.InsertContinueWithIf;
+import gin.edit.insert.InsertReturn;
+import gin.edit.insert.InsertReturnWithIf;
 import gin.edit.line.CopyLine;
 import gin.edit.line.DeleteLine;
 import gin.edit.line.MoveLine;
@@ -714,6 +722,182 @@ public class PatchTest {
                 "}";
         modifiedSource = rlePatch.apply();
         assertEqualsWithoutWhitespace(rleExpected, modifiedSource);
+    }
+    
+
+    @Test
+    public void applyInsertNodeEdits() throws Exception {
+        SourceFile sourceFile = new SourceFileTree(verySmallExampleSourceFilename, Collections.emptyList());
+        
+        // InsertBreak
+        Patch ibPatch = new Patch(sourceFile);
+        Random rng = new Random(10); // add break as first line of "if" block
+        InsertBreak ib = new InsertBreak(sourceFile, rng);
+        ibPatch.add(ib);
+        String ibExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            break;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        String modifiedSource = ibPatch.apply();
+        assertEqualsWithoutWhitespace(ibExpected, modifiedSource);
+        
+
+        // check tostring and fromstring
+        assertEquals(InsertBreak.fromString(ib.toString()).toString(), ib.toString());
+        
+        // InsertBreakWithIf
+        Patch ibfPatch = new Patch(sourceFile);
+        rng = new Random(10); // add break as first line of "if" block
+        InsertBreakWithIf ibf = new InsertBreakWithIf(sourceFile, rng);
+        ibfPatch.add(ibf);
+        String ibfExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            if (a < 0)" + 
+                "                break;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        modifiedSource = ibfPatch.apply();
+        assertEqualsWithoutWhitespace(ibfExpected, modifiedSource);
+
+        // check tostring and fromstring
+        assertEquals(InsertBreakWithIf.fromString(ibf.toString()).toString(), ibf.toString());
+        
+        // this makes an InsertBreakWithIf without the "if"
+        // (no in-scope variables at insert point)
+        // and checks we can still fromString it
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+    	ibf = new InsertBreakWithIf(sourceFile, rng);
+    	assertEquals(InsertBreakWithIf.fromString(ibf.toString()).toString(), ibf.toString());
+        
+        
+        // InsertContinue
+        Patch icPatch = new Patch(sourceFile);
+        rng = new Random(10); // add continue as first line of "if" block
+        InsertContinue ic = new InsertContinue(sourceFile, rng);
+        icPatch.add(ic);
+        String icExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            continue;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        modifiedSource = icPatch.apply();
+        assertEqualsWithoutWhitespace(icExpected, modifiedSource);
+
+
+        // check tostring and fromstring
+        assertEquals(InsertContinue.fromString(ic.toString()).toString(), ic.toString());
+
+        
+        // InsertContinueWithIf
+        Patch icfPatch = new Patch(sourceFile);
+        rng = new Random(10); // add continue as first line of "if" block
+        InsertContinueWithIf icf = new InsertContinueWithIf(sourceFile, rng);
+        icfPatch.add(icf);
+        String icfExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            if (a < 0)" + 
+                " 		         continue;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        modifiedSource = icfPatch.apply();
+        assertEqualsWithoutWhitespace(icfExpected, modifiedSource);
+
+
+        // check tostring and fromstring
+        assertEquals(InsertContinueWithIf.fromString(icf.toString()).toString(), icf.toString());
+
+        
+        // this makes an InsertcontinueWithIf without the "if"
+        // (no in-scope variables at insert point)
+        // and checks we can still fromString it
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+    	icf = new InsertContinueWithIf(sourceFile, rng);
+    	assertEquals(InsertContinueWithIf.fromString(icf.toString()).toString(), icf.toString());
+        
+        // InsertReturn
+        Patch irPatch = new Patch(sourceFile);
+        rng = new Random(10); // add return as first line of "if" block
+        InsertReturn ir = new InsertReturn(sourceFile, rng);
+        irPatch.add(ir);
+        String irExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            return;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        modifiedSource = irPatch.apply();
+        assertEqualsWithoutWhitespace(irExpected, modifiedSource);
+
+        // check tostring and fromstring
+        assertEquals(InsertReturn.fromString(ir.toString()).toString(), ir.toString());
+
+        // InsertReturn with if condition
+        Patch irfPatch = new Patch(sourceFile);
+        rng = new Random(10); // add return as first line of "if" block
+        InsertReturnWithIf irf = new InsertReturnWithIf(sourceFile, rng);
+
+        irfPatch.add(irf);
+        String irfExpected = "package gin;\n" +
+                "public class Small {\n" +
+                "    public static void Dummy() {\n" +
+                "        int a = 1;\n" +
+                "        int b = 2;\n" +
+                "        int c = a + b;\n" +
+                "        if ((a < b) || (a > c)) {\n" + 
+                "            if (a < 0)\n" + 
+                "                return;\n" + 
+                "            c++;\n" + 
+                "        }" +
+                "    }\n" +
+                "}";
+        modifiedSource = irfPatch.apply();
+        assertEqualsWithoutWhitespace(irfExpected, modifiedSource);  
+
+        // check tostring and fromstring
+        assertEquals(InsertReturnWithIf.fromString(irf.toString()).toString(), irf.toString());
+        
+        // this makes an InsertReturnWithIf without the "if"
+        // (no in-scope variables at insert point)
+        // and checks we can still fromString it
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+    	irf = new InsertReturnWithIf(sourceFile, rng);
+    	assertEquals(InsertReturnWithIf.fromString(irf.toString()).toString(), irf.toString());
+    	
     }
 
     

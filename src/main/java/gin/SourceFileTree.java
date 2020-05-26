@@ -20,8 +20,15 @@ import com.github.javaparser.ast.DataKey;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.type.Type;
 
 import gin.misc.BlockedByJavaParserException;
 import gin.misc.CloneVisitorCopyIDs;
@@ -686,6 +693,51 @@ public class SourceFileTree extends SourceFile {
 
         return -1;
     }
+    
+    
+    public List<VariableTypeAndName> getPrimitiveVariablesInScopeForStatement(int ID) {
+    	// get parent, walk through its children until we reach the target statement
+    	List<VariableTypeAndName> rval = new ArrayList<>();
+    	Node n = allNodes.get(ID);
+    	
+    	while (n.getParentNode().isPresent()) {
+    		Node parent = n.getParentNode().get();
+    		
+    		// loop through children...
+    		childLoop:
+    		for (Node child : parent.getChildNodes()) {
+    			// stop when we reach the present node
+    			if (child == n) {
+    				break childLoop;
+    			}
+
+    			if ((child instanceof ExpressionStmt) && ((ExpressionStmt)child).getExpression() instanceof VariableDeclarationExpr) {
+    				for (VariableDeclarator vd : ((VariableDeclarationExpr)((ExpressionStmt)child).getExpression()).getVariables()) {
+    					if ((vd.getType()).isPrimitiveType()) {
+    						rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
+    					}
+    				}
+    			} else if (child instanceof Parameter) { // parameters of the containing method
+    				if (((Parameter)child).getType().isPrimitiveType()) {
+    					rval.add(new VariableTypeAndName(((Parameter)child).getType(), ((Parameter)child).getName()));
+    				}
+    			} else if (child instanceof FieldDeclaration) {
+    				for (VariableDeclarator vd : ((FieldDeclaration)child).getVariables()) {
+    					if ((vd.getType()).isPrimitiveType()) {
+    						rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
+    					}
+    				}
+    			}
+    		}
+    		
+    		// move up a level and try again
+    		n = parent;
+    		
+    	}
+    	
+    	return rval;
+    }
+    
 
  
     /*============== the following are some helper methods and classes ==============*/
@@ -710,4 +762,27 @@ public class SourceFileTree extends SourceFile {
         return rval;
     }
 
+    
+    public static class VariableTypeAndName {
+    	public final Type type;
+    	public final SimpleName name;
+    	
+    	public VariableTypeAndName(Type t, SimpleName n) {
+    		type = t;
+    		name = n;
+    	}
+    	
+    	public Type getType() {
+			return type;
+		}
+    	
+    	public SimpleName getName() {
+			return name;
+		}
+    	
+    	public String toString() {
+    		return type + ":" + name;
+    	}
+    }
+    
 }

@@ -3,7 +3,7 @@ package gin.util;
 import java.io.File;
 import java.util.List;
 
-import gin.SourceFile;
+import gin.Patch;
 import gin.test.UnitTest;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
@@ -30,13 +30,13 @@ public class GPRuntime extends GPSimple {
         super(projectDir, methodFile);
     }   
 
-    // Use parent's search strategy
-    @Override
-    protected void search(String className, List<UnitTest> tests, SourceFile sourceFile) {
-        super.search(className, tests, sourceFile);
-    }   
-
     /*============== Implementation of abstract methods  ==============*/
+
+    protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
+
+        UnitTestResultSet results = testPatch(className, tests, origPatch);
+        return results;
+    }
 
     // Calculate fitness
     protected long fitness(UnitTestResultSet results) {
@@ -50,11 +50,10 @@ public class GPRuntime extends GPSimple {
         return results.allTestsSuccessful();
     }   
 
+    // Compare two fitness values, newFitness better if result > 0
+    protected long compareFitness(long newFitness, long oldFitness) {
 
-    // Compare two fitness values, result of comparison printed on commandline if > 0
-    protected long compareFitness(long newFitness, long best) {
-
-        return best - newFitness;
+        return oldFitness - newFitness;
     }
 
 

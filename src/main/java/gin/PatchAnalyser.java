@@ -136,6 +136,17 @@ public class PatchAnalyser {
         long originalExecutionTime = testRunner.runTests(emptyPatch, REPS).totalExecutionTime();
         Logger.info("Original execution time: " + originalExecutionTime);
 
+        // Write the original source to file, for easy diff with *.patched file
+        patchedFilename = source + ".original";
+        try {
+            FileUtils.writeStringToFile(new File(patchedFilename), emptyPatch.apply(), Charset.defaultCharset());
+        } catch (IOException e) {
+            Logger.error("Could not write patched source to " + patchedFilename);
+            Logger.trace(e);
+            System.exit(-1);
+        }
+        Logger.info("Parsed patch written to: " + patchedFilename);
+
         // Evaluate patch
         Logger.info("Timing patched sourceFile execution...");
         UnitTestResultSet resultSet = testRunner.runTests(patch, REPS);
@@ -155,6 +166,12 @@ public class PatchAnalyser {
     }
 
     private static Patch parsePatch(String patchText, SourceFileLine sourceFileLine, SourceFileTree sourceFileTree) {
+
+	if (patchText.equals("|")) {
+	    Logger.info("No edits to be applied. Running original code.");
+	    Patch patch = new Patch(sourceFileTree);
+	    return patch;
+	}
 
         List<Edit> editInstances = new ArrayList<>();
         

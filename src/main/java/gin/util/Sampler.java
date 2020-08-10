@@ -26,6 +26,10 @@ import gin.test.InternalTestRunner;
 import gin.test.UnitTest;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Handy class for mutating and running tests on mutated code.
@@ -105,7 +109,7 @@ public abstract class Sampler {
 
     protected List<TargetMethod> methodData = new ArrayList<>();
     
-    protected List<UnitTest> testData = new ArrayList<>();
+    protected Set<UnitTest> testData = new LinkedHashSet<>();
 
 
     /*============== Constructors ==============*/
@@ -214,7 +218,7 @@ public abstract class Sampler {
 
     /*============== methods for running tests  ==============*/
     
-    protected UnitTestResultSet testEmptyPatch(String targetClass, List<UnitTest> tests, SourceFile sourceFile) {
+    protected UnitTestResultSet testEmptyPatch(String targetClass, Collection<UnitTest> tests, SourceFile sourceFile) {
 
         Logger.debug("Testing the empty patch..");
 
@@ -223,9 +227,9 @@ public abstract class Sampler {
         UnitTestResultSet resultSet = null;
 
         if (!inSubprocess && !inNewSubprocess) {
-            resultSet = testPatchInternally(targetClass, tests, new Patch(sourceFile));
+            resultSet = testPatchInternally(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
         } else {
-            resultSet = testPatchInSubprocess(targetClass, tests, new Patch(sourceFile));
+            resultSet = testPatchInSubprocess(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
         }
 
         if (!resultSet.allTestsSuccessful()) {
@@ -365,9 +369,7 @@ public abstract class Sampler {
                     ginTest = UnitTest.fromString(test);
                     ginTest.setTimeoutMS(timeoutMS);
                     ginTests.add(ginTest);
-                    if (!testData.contains(ginTest)) {
-                        testData.add(ginTest);
-                    }
+                    testData.add(ginTest);
                 }
 
                 String method = data.get("Method");
@@ -477,7 +479,7 @@ public abstract class Sampler {
 
     protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID) {
         for (UnitTestResult result : testResultSet.getResults()) {
-            int testNameIdx = testData.indexOf(result.getTest()) + 1;
+            int testNameIdx = result.getTest().hashCode();
             writeResult(patchCount, testNameIdx, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
         }
     }

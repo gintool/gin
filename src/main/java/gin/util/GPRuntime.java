@@ -39,19 +39,23 @@ public class GPRuntime extends GPSimple {
     }
 
     // Calculate fitness
-    protected long fitness(UnitTestResultSet results) {
-    
-        return results.totalExecutionTime() / 1000000;
+    protected double fitness(UnitTestResultSet results) {
+   
+	double fitness = Double.MAX_VALUE;
+	if (results.getCleanCompile() && results.allTestsSuccessful()) {
+            return (double) (results.totalExecutionTime() / 1000000);
+	}
+	return fitness;
     }   
 
     // Calculate fitness threshold, for selection to the next generation
-    protected boolean fitnessThreshold(UnitTestResultSet results, long orig) {
+    protected boolean fitnessThreshold(UnitTestResultSet results, double orig) {
     
         return results.allTestsSuccessful();
     }   
 
     // Compare two fitness values, newFitness better if result > 0
-    protected long compareFitness(long newFitness, long oldFitness) {
+    protected double compareFitness(double newFitness, double oldFitness) {
 
         return oldFitness - newFitness;
     }

@@ -54,15 +54,14 @@ public abstract class GP extends Sampler {
     public GP(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
-        editTypes = Edit.parseEditClassesFromString(editType);
-        printAdditionalArguments();
         setup();
+        printAdditionalArguments();
     }
 
     // Constructor used for testing
     public GP(File projectDir, File methodFile) {
         super(projectDir, methodFile);
-        editTypes = Edit.parseEditClassesFromString(editType);
+        setup();
     }
 
     private void printAdditionalArguments() {
@@ -76,21 +75,28 @@ public abstract class GP extends Sampler {
     private void setup() {
         mutationRng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(mutationSeed));
         individualRng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(individualSeed));
+        editTypes = Edit.parseEditClassesFromString(editType);
     }
 
     // Implementation of gin.util.Sampler's abstract method
     protected void sampleMethodsHook() {
-        writeNewHeader();
 
-        for (TargetMethod method : methodData) {
+        if ((indNumber < 1) || (genNumber < 1)) {
+            Logger.info("Please enter a positive number of generations and individuals.");
+        } else {
 
-            Logger.info("Running GP on method " + method);
+            writeNewHeader();
 
-            // Setup SourceFile for patching
-            SourceFile sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, method.getFileSource().getPath(), Collections.singletonList(method.getMethodName()));
-            
-            search(method, new Patch(sourceFile));
+            for (TargetMethod method : methodData) {
 
+                Logger.info("Running GP on method " + method);
+
+                // Setup SourceFile for patching
+                SourceFile sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, method.getFileSource().getPath(), Collections.singletonList(method.getMethodName()));
+
+                search(method, new Patch(sourceFile));
+
+            }
         }
 
     }
@@ -101,7 +107,7 @@ public abstract class GP extends Sampler {
     protected abstract void search(TargetMethod method, Patch origPatch);
 
     // Individual selection
-    protected abstract List<Patch> select(Map<Patch, Long> population, Patch origPatch, long origFitness);
+    protected abstract List<Patch> select(Map<Patch, Double> population, Patch origPatch, double origFitness);
 
     // Mutation operator
     protected abstract Patch mutate(Patch oldPatch);
@@ -113,13 +119,13 @@ public abstract class GP extends Sampler {
     protected abstract UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch);
 
     // Calculate fitness
-    protected abstract long fitness(UnitTestResultSet results);
+    protected abstract double fitness(UnitTestResultSet results);
 
     // Calculate fitness threshold, for selection to the next generation
-    protected abstract boolean fitnessThreshold(UnitTestResultSet results, long originalFitness);
+    protected abstract boolean fitnessThreshold(UnitTestResultSet results, double originalFitness);
 
     // Compare two fitness values
-    protected abstract long compareFitness(long newFitness, long oldFitness);
+    protected abstract double compareFitness(double newFitness, double oldFitness);
 
     /*============== Helper methods  ==============*/
 
@@ -142,14 +148,14 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(UnitTestResultSet results, String methodName, long fitness, long improvement) {
+    protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
         String[] entry = {methodName
                         , results.getPatch().toString()
                         , Boolean.toString(results.getCleanCompile())
                         , Boolean.toString(results.allTestsSuccessful())
                         , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                        , Long.toString(fitness)
-                        , Long.toString(improvement)
+                        , Double.toString(fitness)
+                        , Double.toString(improvement)
                         };
         outputFileWriter.writeNext(entry);
     }

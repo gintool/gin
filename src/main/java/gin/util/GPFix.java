@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -21,7 +23,10 @@ import gin.test.UnitTestResultSet;
  */
 
 public class GPFix extends GPSimple {
-    
+   
+    @Argument(alias = "rec", description = "Record all fitness values in a HashMap")
+    protected Boolean record = false;
+
     public static void main(String[] args) {
         GPFix sampler = new GPFix(args);
         sampler.sampleMethods();
@@ -29,7 +34,13 @@ public class GPFix extends GPSimple {
 
     public GPFix(String[] args) {
         super(args);
+        Args.parseOrExit(this, args);
+        printAdditionalArguments();
     }   
+
+    private void printAdditionalArguments() {
+        Logger.info("Record all fitness values in a HashMap: "+ record);
+    }
 
     // Constructor used for testing
     public GPFix(File projectDir, File methodFile) {
@@ -39,7 +50,9 @@ public class GPFix extends GPSimple {
     // Arguments used in fitness calculation
     private static int weight = 2;
     private int multiplier = 0;
+    private double targetFitness = -1;
     private Map<UnitTest, Boolean> testResults = new HashMap<>();
+    private Map<Patch, Double> recordedFitness = new HashMap<>();
 
     /*============== Implementation of abstract methods  ==============*/
 
@@ -54,9 +67,22 @@ public class GPFix extends GPSimple {
     }
 
     // Calculate fitness
-    protected long fitness(UnitTestResultSet results) {
+    protected double fitness(UnitTestResultSet results) {
 
-        long fitness = 0;
+        double fitness = 0;
+        Patch patch = results.getPatch();
+
+        if (recordedFitness.containsKey(patch)) {
+            return recordedFitness.get(patch);
+        }
+
+        if (!results.getCleanCompile()) {
+            if (record) {
+                recordedFitness.put(patch, fitness);
+            }
+            return fitness;
+        }
+
         for (UnitTestResult res : results.getResults()) {
             boolean check = this.testResults.get(res.getTest());
             if (res.getPassed()) {
@@ -67,17 +93,24 @@ public class GPFix extends GPSimple {
                 }
             }
         }   
+        if (record) {
+            recordedFitness.put(patch, fitness);
+        }
+        if (fitness == this.targetFitness) {
+            Logger.info("Found individual with target fitness: " + patch);
+        }
         return fitness;
+
     }   
 
     // Calculate fitness threshold, for selection to the next generation
-    protected boolean fitnessThreshold(UnitTestResultSet results, long orig) {
-    
-        return results.getCleanCompile();
+    protected boolean fitnessThreshold(UnitTestResultSet results, double orig) {
+
+        return fitness(results) > 0;
     }
     
     // Compare two fitness values, newFitness better if result > 0
-    protected long compareFitness(long newFitness, long oldFitness) {
+    protected double compareFitness(double newFitness, double oldFitness) {
             
         return newFitness - oldFitness;
     }       
@@ -90,6 +123,7 @@ public class GPFix extends GPSimple {
         int passing = 0;
         int failing = 0;
         this.testResults = new HashMap<>();
+            this.recordedFitness = new HashMap<>();
 
         for (UnitTestResult testResult : results.getResults()) {
             if (testResult.getPassed()) {
@@ -103,7 +137,8 @@ public class GPFix extends GPSimple {
         this.multiplier = (failing > 0) ? passing * this.weight / failing : 0;
         Logger.info("Currently failing tests: " + failing);
         Logger.info("Currently passing tests (i.e., current fitness): " + passing);
-        Logger.info("Target fitness: " + (passing + this.multiplier * failing));
+        this.targetFitness = (double) (passing + (this.multiplier * failing));
+        Logger.info("Target fitness: " + this.targetFitness);
     }
 
         

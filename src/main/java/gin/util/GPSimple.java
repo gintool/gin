@@ -46,15 +46,15 @@ public abstract class GPSimple extends GP {
 
     // Calculate fitness
     @Override
-    protected abstract long fitness(UnitTestResultSet results);
+    protected abstract double fitness(UnitTestResultSet results);
 
     // Calculate fitness threshold, for selection to the next generation
     @Override
-    protected abstract boolean fitnessThreshold(UnitTestResultSet results, long orig);
+    protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
     
      // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
     @Override
-    protected abstract long compareFitness(long newFitness, long oldFitness);
+    protected abstract double compareFitness(double newFitness, double oldFitness);
 
     /*============== Implementation of abstract methods  ==============*/
 
@@ -71,14 +71,14 @@ public abstract class GPSimple extends GP {
         UnitTestResultSet results = initFitness(className, tests, origPatch);
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
-        long orig = fitness(results);
+        double orig = fitness(results);
         super.writePatch(results, methodName, orig, 0);
 
         // Keep best 
-        long best = orig;
+        double best = orig;
 
         // Generation 1
-        Map<Patch, Long> population = new HashMap<>();
+        Map<Patch, Double> population = new HashMap<>();
         population.put(origPatch, orig);
 
         for (int i = 1; i < indNumber; i++) {
@@ -101,7 +101,7 @@ public abstract class GPSimple extends GP {
             Logger.info("Creating generation: " + (g + 1));
 
             // Current generation
-            Map<Patch, Long> newPopulation = new HashMap<>();
+            Map<Patch, Double> newPopulation = new HashMap<>();
 
             // Select individuals for crossover
             List<Patch> selectedPatches = select(population, origPatch, orig);
@@ -124,7 +124,7 @@ public abstract class GPSimple extends GP {
 
                 // Test the patched source file
                 results = testPatch(className, tests, patch);
-                long newFitness = fitness(results);
+                double newFitness = fitness(results);
 
                 // If fitness threshold met, add patch to the mating population
                 if (fitnessThreshold(results, orig)) {
@@ -133,7 +133,7 @@ public abstract class GPSimple extends GP {
                 super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
             }
 
-            population = new HashMap<Patch, Long>(newPopulation);
+            population = new HashMap<Patch, Double>(newPopulation);
             if (population.isEmpty()) {
                 population.put(origPatch, orig);
             }
@@ -152,39 +152,38 @@ public abstract class GPSimple extends GP {
     }
 
     // Tournament selection for patches
-    protected List<Patch> select(Map<Patch, Long> population, Patch origPatch, long origFitness) {
+    protected List<Patch> select(Map<Patch, Double> population, Patch origPatch, double origFitness) {
 
         List<Patch> patches = new ArrayList(population.keySet());
-	if (patches.size() < super.indNumber) {
-	    population.put(origPatch, origFitness);
-	    while (patches.size() < super.indNumber) {
-	        patches.add(origPatch);
-	    }
-	}
-
+        if (patches.size() < super.indNumber) {
+            population.put(origPatch, origFitness);
+            while (patches.size() < super.indNumber) {
+                patches.add(origPatch);
+            }
+        }
         List<Patch> selectedPatches = new ArrayList<>();
 
-	// Pick half of the population size
-        for(int i = 0; i < super.indNumber / 2; i++) {
+        // Pick half of the population size
+        for (int i = 0; i < super.indNumber / 2; i++) {
 
             Collections.shuffle(patches, super.individualRng);
 
             // Best patch from x% randomly selected patches picked each time
             Patch bestPatch = patches.get(0);
-            long best = population.get(bestPatch);
-            for(int j = 1; j <  (population.size() * tournamentPercentage); j++ ) {
+            double best = population.get(bestPatch);
+            for (int j = 1; j < (super.indNumber * tournamentPercentage); j++) {
                 Patch patch = patches.get(j);
-                long fitness = population.get(patch);
+                double fitness = population.get(patch);
+
                 if (compareFitness(fitness, best) > 0) {
-                   bestPatch = patch;
-                   best = fitness;
+                    bestPatch = patch;
+                    best = fitness;
                 }
             }
 
             selectedPatches.add(bestPatch.clone());
 
         }
-
         return selectedPatches;
     }
 
@@ -206,28 +205,28 @@ public abstract class GPSimple extends GP {
             Patch child2 = origPatch.clone();
 
             for (int j = 0; j < list1.size(); j++) {
-		if (super.mutationRng.nextFloat() > mutateProbability) {
-		    child1.add(list1.get(j));
-		}
+                if (super.mutationRng.nextFloat() > mutateProbability) {
+                    child1.add(list1.get(j));
+                }
             }
             for (int j = 0; j < list2.size(); j++) {
-		if (super.mutationRng.nextFloat() > mutateProbability) {
-		    child1.add(list2.get(j));
-		}
-		if (super.mutationRng.nextFloat() > mutateProbability) {
+                if (super.mutationRng.nextFloat() > mutateProbability) {
+                    child1.add(list2.get(j));
+                }
+                if (super.mutationRng.nextFloat() > mutateProbability) {
                     child2.add(list2.get(j));
-		}
+                }
             }
             for (int j = 0; j < list1.size(); j++) {
-		if (super.mutationRng.nextFloat() > mutateProbability) {
-		    child2.add(list1.get(j));
-		}
+                if (super.mutationRng.nextFloat() > mutateProbability) {
+                    child2.add(list1.get(j));
+                }
             }
 
-	    crossedPatches.add(parent1);
-	    crossedPatches.add(parent2);
-	    crossedPatches.add(child1);
-	    crossedPatches.add(child2);
+            crossedPatches.add(parent1);
+            crossedPatches.add(parent2);
+            crossedPatches.add(child1);
+            crossedPatches.add(child2);
         }
 
         return crossedPatches;

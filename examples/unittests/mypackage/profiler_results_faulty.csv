@@ -1,0 +1,2 @@
+"Project","MethodIndex","Method","Count","Tests"
+"mypackage","1","mypackage.ExampleFaulty.returnTen()","5","mypackage.ExampleFaultyTest.testReturnTen [],mypackage.ExampleFaultyTest.testReturnOneHundred []"

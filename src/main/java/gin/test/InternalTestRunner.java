@@ -5,13 +5,11 @@ import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.TestClass;
 import org.mdkt.compiler.CompiledCode;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
+import java.io.IOException;
 
 /**
  * Runs tests internally, through CacheClassLoader
@@ -49,35 +47,43 @@ public class InternalTestRunner extends TestRunner {
 
         // Create a new class loader for every compilation, otherwise java will cache the modified class for us
         classLoader = new CacheClassLoader(this.getClassPath());
+        try {
+            // Apply the patch.
+            String patchedSource = patch.apply();
+            boolean patchValid = patch.lastApplyWasValid();
+            List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
 
-        // Apply the patch.
-        String patchedSource = patch.apply();
-        boolean patchValid = patch.lastApplyWasValid();
-        List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
-        
-        // Did the code change as a result of applying the patch?
-        boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
+            // Did the code change as a result of applying the patch?
+            boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
 
-        // Compile
-        CompiledCode code = null;
-        //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-             code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
-        //}
-        boolean compiledOK = (code != null);
+            // Compile
+            CompiledCode code = null;
+            //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
+                 code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
+            //}
+            boolean compiledOK = (code != null);
 
-        // Add to class loader and run tests
-        List<UnitTestResult> results = null;
-        if (compiledOK) {
-            classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
-            results = runTests(reps, classLoader);
+            // Add to class loader and run tests
+            List<UnitTestResult> results = null;
+            if (compiledOK) {
+                classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
+                results = runTests(reps, classLoader);
+            }
+
+            if (!patchValid || !compiledOK) {
+                results = emptyResults(reps);
+            }
+
+            return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+        } finally {
+            try {
+                if(this.classLoader != null) {
+                    this.classLoader.close();
+                }
+            } catch (IOException ex) {
+                Logger.error(ex, "Could not close CacheClassLoader.");
+            }
         }
-
-        if (!patchValid || !compiledOK) {
-            results = emptyResults(reps);
-        }
-
-        return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
-
     }
 
     /**

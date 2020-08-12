@@ -1,6 +1,7 @@
 package gin.test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,25 +60,27 @@ public class Compiler {
     public static boolean compileFile(File source, String classPath) {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        boolean compiled = false;
+        try(StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)){
+            List<String> options = new ArrayList<>();
+            options.add("-cp");
+            options.add(System.getProperty("java.class.path") + File.pathSeparator + classPath);
 
-        StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
+            Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(source));
 
-        List<String> options = new ArrayList<>();
-        options.add("-cp");
-        options.add(System.getProperty("java.class.path") + File.pathSeparator + classPath);
+            JavaCompiler.CompilationTask task;
+            task = compiler.getTask(null, fm, null, options, null, compilationUnit);
 
-        Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(source));
-
-        JavaCompiler.CompilationTask task;
-        task = compiler.getTask(null, fm, null, options, null, compilationUnit);
-
-        if (!task.call()) {
-            Logger.warn("Error during compilation of source on disk: " + source);
-            return false;
+            if (!task.call()) {
+                Logger.warn("Error during compilation of source on disk: " + source);
+                compiled = false;
+            } else {
+                compiled = true;
+            }
+        } catch (IOException ex) {
+            Logger.error(ex, "Error while trying to close the StandardJavaFileManager instance.");
         }
-
-        return true;
-
+        return compiled;
     }
 
 }

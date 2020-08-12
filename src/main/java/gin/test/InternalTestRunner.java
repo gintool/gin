@@ -141,10 +141,13 @@ public class InternalTestRunner extends TestRunner {
         Object result = null;
         try {
             result = method.invoke(runner, test, rep);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             Logger.trace(e);
-        } catch (InvocationTargetException e) {
-            Logger.trace(e);
+            UnitTestResult tempResult = new UnitTestResult(test, rep);
+            tempResult.setExceptionType(e.getClass().getName());
+            tempResult.setExceptionMessage(e.getMessage());
+            tempResult.setPassed(false);
+            result = tempResult;
         }
 
         int threadsAfter = getNumberOfThreads();

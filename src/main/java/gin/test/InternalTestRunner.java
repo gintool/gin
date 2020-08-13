@@ -142,12 +142,14 @@ public class InternalTestRunner extends TestRunner {
             System.exit(-1);
         }
 
+        // Save the Threads before executing the tests
         Set<Thread> threadsBefore = Thread.getAllStackTraces().keySet();
-
         try {
+            // Run the test
             UnitTestResult result = (UnitTestResult) method.invoke(runner, test, rep);
             return result;
         } catch (IllegalAccessException | InvocationTargetException e) {
+            // In case of any exception, saves the test result as failing
             Logger.trace(e);
             UnitTestResult result = new UnitTestResult(test, rep);
             result.setExceptionType(e.getClass().getName());
@@ -155,17 +157,30 @@ public class InternalTestRunner extends TestRunner {
             result.setPassed(false);
             return result;
         } finally {
+            // Finally, close the haging threads if any
             cleanupHangingThreads(threadsBefore);
         }
     }
         
+    /**
+     * Checks and stops (at least tries) any hanging thread after the execution
+     * of a test case. Any Thread that is not in {@code threadsBefore} will be
+     * queued up for interruption.
+     * 
+     * @param threadsBefore the set of Threads before the execution of the test
+     *                      case
+     */
     private void cleanupHangingThreads(Set<Thread> threadsBefore) {
+        // Get the current threads
         Set<Thread> threadsAfter = Thread.getAllStackTraces().keySet();
+        // If there is a mismatch between the two sets
         if (!threadsBefore.containsAll(threadsAfter)) {
             Logger.warn("Possible hanging threads remain after test: " + threadsBefore.size() + " -> " + threadsAfter.size());
             Logger.info("I'll try to kill them for you.");
+            // Find the thread that was not there before
             for (Thread thread : threadsAfter) {
                 if(!threadsBefore.contains(thread)) {
+                    // Logs in debug mode the thread info
                     Logger.debug("Found the following hanging thread:");
                     Logger.debug("\t|---> Thread hanging: " + thread.getName() + " (ID: " + thread.getId() + ")");
                     Logger.debug("\t|---> Group: " + thread.getThreadGroup().getName());
@@ -174,10 +189,14 @@ public class InternalTestRunner extends TestRunner {
                     Logger.debug("\t|---> Stacktrace:");
                     for (StackTraceElement stackTraceElement : thread.getStackTrace()) {
                         Logger.debug("\t\t|---> " + stackTraceElement);
-    }
+                    }
+                    // Calls stop. Notice that this does not guarantee that the
+                    // thread will be killed instantly. Most likely, the code
+                    // will keep executing and the thread will die later.
+                    // However, this actually interrupts it at some point.
                     thread.stop();
                     Logger.debug("Is it interrupted? " + thread.isInterrupted());
-    }
+                }
             }
         }
     }

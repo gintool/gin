@@ -10,6 +10,7 @@ import org.pmw.tinylog.Logger;
 
 import gin.Patch;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Runs tests internally, through CacheClassLoader
@@ -107,11 +108,13 @@ public class InternalTestRunner extends TestRunner {
     }
 
     /**
-     * Run the test class for a modified class.
-     * Loads JUnitBridge using a separate classloader and invokes jUnit using reflection.
-     * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
-     * class with the freshly compiled version.
-     * @return
+     * Runs the test class for a modified class. Loads {@link JUnitBridge} using
+     * a separate {@code ClassLoader} and invokes {@code JUnit} using
+     * reflection. This allows us to have {@code JUnit} load all classes from a
+     * isolated ClassLoader, enabling us to override the modified class with the
+     * freshly compiled version.
+     *
+     * @return the result of the single test run. See {@link UnitTest}
      */
     private UnitTestResult runSingleTest(UnitTest test, CacheClassLoader classLoader, int rep) {
 
@@ -119,18 +122,15 @@ public class InternalTestRunner extends TestRunner {
         try {
             runnerClass = classLoader.loadClass(JUnitBridge.class.getName());
         } catch (ClassNotFoundException e) {
-            Logger.error("Could not load isolated test runner - class not found.");
+            Logger.error(e, "Could not load isolated test runner - class not found.");
             System.exit(-1);
         }
 
         Object runner = null;
         try {
             runner = runnerClass.newInstance();
-        } catch (InstantiationException e) {
-            Logger.error("Could not instantiate isolated test runner: " + e);
-            System.exit(-1);
-        } catch (IllegalAccessException e) {
-            Logger.error("Could not instantiate isolated test runner: " + e);
+        } catch (InstantiationException | IllegalAccessException e) {
+            Logger.error(e, "Could not instantiate isolated test runner.");
             System.exit(-1);
         }
 
@@ -138,40 +138,48 @@ public class InternalTestRunner extends TestRunner {
         try {
             method = runner.getClass().getMethod(JUnitBridge.BRIDGE_METHOD_NAME, UnitTest.class, int.class);
         } catch (NoSuchMethodException e) {
-            Logger.error("Could not run isolated tests runner, can't find method: " + ISOLATED_TEST_RUNNER_METHOD_NAME);
+            Logger.error(e, "Could not run isolated tests runner, can't find method: " + ISOLATED_TEST_RUNNER_METHOD_NAME);
             System.exit(-1);
         }
 
-        int threadsBefore = getNumberOfThreads();
+        Set<Thread> threadsBefore = Thread.getAllStackTraces().keySet();
 
-        Object result = null;
         try {
-            result = method.invoke(runner, test, rep);
+            UnitTestResult res = (UnitTestResult) method.invoke(runner, test, rep);
+            return res;
         } catch (IllegalAccessException | InvocationTargetException e) {
             Logger.trace(e);
             UnitTestResult tempResult = new UnitTestResult(test, rep);
             tempResult.setExceptionType(e.getClass().getName());
             tempResult.setExceptionMessage(e.getMessage());
             tempResult.setPassed(false);
-            result = tempResult;
+            return tempResult;
+        } finally {
+            cleanupHangingThreads(threadsBefore);
         }
-
-        int threadsAfter = getNumberOfThreads();
-
-        if (threadsAfter != threadsBefore) {
-            Logger.warn("Possible hanging threads remain after test");
         }
         
-        UnitTestResult res = (UnitTestResult) result;
-
-        return res;
-
+    private void cleanupHangingThreads(Set<Thread> threadsBefore) {
+        Set<Thread> threadsAfter = Thread.getAllStackTraces().keySet();
+        if (!threadsBefore.containsAll(threadsAfter)) {
+            Logger.warn("Possible hanging threads remain after test: " + threadsBefore.size() + " -> " + threadsAfter.size());
+            Logger.info("I'll try to kill them for you.");
+            for (Thread thread : threadsAfter) {
+                if(!threadsBefore.contains(thread)) {
+                    Logger.debug("Found the following hanging thread:");
+                    Logger.debug("\t|---> Thread hanging: " + thread.getName() + " (ID: " + thread.getId() + ")");
+                    Logger.debug("\t|---> Group: " + thread.getThreadGroup().getName());
+                    Logger.debug("\t|---> State: " + thread.getState());
+                    Logger.debug("\t|---> Is Daemon? " + thread.isDaemon());
+                    Logger.debug("\t|---> Stacktrace:");
+                    for (StackTraceElement stackTraceElement : thread.getStackTrace()) {
+                        Logger.debug("\t\t|---> " + stackTraceElement);
     }
-
-    // Separated out so we can modify.
-    private static int getNumberOfThreads() {
-        return java.lang.Thread.activeCount();
+                    thread.stop();
+                    Logger.debug("Is it interrupted? " + thread.isInterrupted());
     }
-
+            }
+        }
+    }
 
 }

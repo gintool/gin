@@ -96,7 +96,7 @@ public class Profiler {
         Logger.info("Profiling project: " + this.project);
 
         if (!this.skipInitialRun) {
-            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile);
+            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, null);
         }
 
         Set<UnitTest> tests = project.parseTestReports();

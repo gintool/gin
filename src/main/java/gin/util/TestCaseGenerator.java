@@ -18,10 +18,10 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import java.lang.InterruptedException;
+import java.util.Properties;
 
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 
 import org.apache.maven.model.Build;
@@ -389,7 +389,7 @@ public class TestCaseGenerator {
     protected void runAllUnitTests() {
 
                 if (project != null) {
-                        project.runAllUnitTests("clean test", "");
+                        project.runAllUnitTests("clean test", "", new Properties());
                 } else {
                         Logger.error("Cannot run tests on a null project.");
                 }

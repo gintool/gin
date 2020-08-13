@@ -44,7 +44,6 @@ public class Project {
 
     public enum BuildType {
         GRADLE, MAVEN
-
     }
 
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
@@ -54,31 +53,11 @@ public class Project {
     private String projectName;
     private BuildType buildType;
 
-    private List<File> moduleDirs = new LinkedList<>();
-
-    public List<File> getMainSourceDirs() {
-        return mainSourceDirs;
-    }
-
     private List<File> mainSourceDirs = new LinkedList<>();
-
-    public List<File> getTestSourceDirs() {
-        return testSourceDirs;
-    }
-
-    public List<File> getMainClassDirs() {
-        return mainClassDirs;
-    }
-
-    public List<File> getTestClassDirs() {
-        return testClassDirs;
-    }
-
     private List<File> testSourceDirs = new LinkedList<>();
-
     private List<File> mainClassDirs = new LinkedList<>();
     private List<File> testClassDirs = new LinkedList<>();
-
+    private List<File> moduleDirs = new LinkedList<>();
 
     // Only constructor
     public Project(File directory, String name) {
@@ -88,11 +67,11 @@ public class Project {
         detectDirs();
     }
 
+    // Getters/Setters
     public File getProjectDir() {
         return projectDir;
     }
 
-    // Getters/Setters
     public File getMavenHome() {
         return mavenHome;
     }
@@ -117,10 +96,26 @@ public class Project {
         return buildType;
     }
 
+    public List<File> getMainSourceDirs() {
+        return mainSourceDirs;
+    }
+
+    public List<File> getTestSourceDirs() {
+        return testSourceDirs;
+    }
+
+    public List<File> getMainClassDirs() {
+        return mainClassDirs;
+    }
+
+    public List<File> getTestClassDirs() {
+        return testClassDirs;
+    }
+
     // Calculate classpath for project
     public String classpath() {
         List<String> classDirNames = new LinkedList<>();
-        for (File classDir: this.allClassDirs()) {
+        for (File classDir : this.allClassDirs()) {
             classDirNames.add(classDir.getAbsolutePath());
         }
         String[] classDirNamesArray = classDirNames.toArray(new String[0]);
@@ -155,7 +150,7 @@ public class Project {
 
         String pathToSource = className.replace(".", File.separator) + ".java";
 
-        for (File dir: mainSourceDirs) {
+        for (File dir : mainSourceDirs) {
             File sourceFile = new File(dir, pathToSource);
             if (sourceFile.exists()) {
                 return sourceFile;
@@ -207,7 +202,7 @@ public class Project {
         IdeaProject project = connection.getModel(IdeaProject.class);
         GradleProject gradleProject = connection.getModel(GradleProject.class);
 
-        for(IdeaModule module : project.getModules()) {
+        for (IdeaModule module : project.getModules()) {
 
             File outputDir = module.getCompilerOutput().getOutputDir();
             if (outputDir != null) {
@@ -219,7 +214,7 @@ public class Project {
                 this.testClassDirs.add(testDir);
             }
 
-            for(IdeaContentRoot root:   module.getContentRoots()) {
+            for (IdeaContentRoot root : module.getContentRoots()) {
 
                 File moduleDir = root.getRootDirectory();
                 this.moduleDirs.add(moduleDir);
@@ -232,11 +227,11 @@ public class Project {
                 this.mainClassDirs.add(mainDir);
                 this.testClassDirs.add(testDir);
 
-                for (IdeaSourceDirectory dir: root.getSourceDirectories()) {
+                for (IdeaSourceDirectory dir : root.getSourceDirectories()) {
                     this.mainSourceDirs.add(dir.getDirectory());
                 }
 
-                for (IdeaSourceDirectory dir: root.getTestDirectories()) {
+                for (IdeaSourceDirectory dir : root.getTestDirectories()) {
                     this.testSourceDirs.add(dir.getDirectory());
                 }
             }
@@ -292,7 +287,7 @@ public class Project {
         }
 
         if (source == null) {
-            source = "src"+ File.separator +"main"+ File.separator +"java";
+            source = "src" + File.separator + "main" + File.separator + "java";
         }
 
         File sourceDir = new File(dir, source);
@@ -305,7 +300,7 @@ public class Project {
             test = model.getBuild().getTestSourceDirectory();
         }
         if (test == null) {
-            test = "src"+ File.separator +"test"+ File.separator +"java";
+            test = "src" + File.separator + "test" + File.separator + "java";
         }
         File testDir = new File(dir, test);
         if (testDir.exists()) {
@@ -317,7 +312,7 @@ public class Project {
             output = model.getBuild().getOutputDirectory();
         }
         if (output == null) {
-            output = "target"+ File.separator +"classes";
+            output = "target" + File.separator + "classes";
         }
         File mainClassDir = new File(dir, output);
         this.mainClassDirs.add(mainClassDir);
@@ -327,18 +322,16 @@ public class Project {
             model.getBuild().getTestOutputDirectory();
         }
         if (outputTest == null) {
-            outputTest = "target"+ File.separator +"test-classes";
+            outputTest = "target" + File.separator + "test-classes";
         }
         File testClassDir = new File(dir, outputTest);
         this.testClassDirs.add(testClassDir);
 
         // Now any modules
-        for (String module: model.getModules()) {
+        for (String module : model.getModules()) {
             File subdir = new File(dir, module);
             this.addDirMaven(subdir);
         }
-
-
 
     }
 
@@ -374,7 +367,7 @@ public class Project {
                     Logger.info(line);
                 }
             });
-        } 
+        }
 
         request.setOutputHandler(new InvocationOutputHandler() {
             @Override
@@ -399,9 +392,9 @@ public class Project {
         List<String> output = new LinkedList<String>();
 
         try {
-                Path path = Paths.get(depOutput);
-                output = Files.readAllLines(path);
-                Files.deleteIfExists(Paths.get(depOutput));
+            Path path = Paths.get(depOutput);
+            output = Files.readAllLines(path);
+            Files.deleteIfExists(Paths.get(depOutput));
         } catch (IOException e) {
             Logger.error("Error reading dependencies classpath file: " + depOutput);
             System.exit(-1);
@@ -421,10 +414,10 @@ public class Project {
     }
 
     // Get the names of all unit tests in the project
-    public void runAllUnitTests(String task, String mavenProfile) {
+    public void runAllUnitTests(String task, String mavenProfile, Properties properties) {
 
         if (buildType == Project.BuildType.MAVEN) {
-            runAllUnitTestsMaven(task, mavenProfile);
+            runAllUnitTestsMaven(task, mavenProfile, properties);
         } else {
             runAllUnitTestsGradle();
         }
@@ -440,7 +433,7 @@ public class Project {
     }
 
     // Maven
-    private void runAllUnitTestsMaven(String task, String profile) {
+    private void runAllUnitTestsMaven(String task, String profile, Properties properties) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -452,8 +445,10 @@ public class Project {
         }
 
         request.setGoals(Collections.singletonList(task));
-
-        Properties properties = new Properties();
+        
+        request.setThreads(properties.getProperty("THREADS", "1"));
+        properties.remove("THREADS");
+        
         request.setProperties(properties);
 
         Invoker invoker = new DefaultInvoker();
@@ -483,8 +478,6 @@ public class Project {
             Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
             System.exit(-1);
         }
-
-
 
     }
 
@@ -558,12 +551,11 @@ public class Project {
 
                 // Get classname from filename
                 // Format: package.Class[$InternalClass].html
-
                 String className = StringUtils.substringBefore(classFile.getName(), ".html");
                 String innerClassName = "";
 
                 if (className.contains("$")) {
-                    innerClassName = StringUtils.substringAfter(className,"$");
+                    innerClassName = StringUtils.substringAfter(className, "$");
                     className = StringUtils.substringBefore(className, "$");
                 }
 
@@ -647,7 +639,6 @@ public class Project {
 
         if (reportFilenames != null) {
 
-
             for (String filename : reportFilenames) {
 
                 File reportFile = new File(surefireReportsDir, filename);
@@ -679,7 +670,7 @@ public class Project {
 
                     if (skipped.size() != 0) {
                         Logger.warn("Test skipped so excluded by profiler: " + test);
-                    } else if (failure.size() !=0) {
+                    } else if (failure.size() != 0) {
                         Logger.warn("Test case failed, excluded by profiler: " + test);
                     } else {
                         tests.add(test);
@@ -714,7 +705,6 @@ public class Project {
         }
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
-
 
         if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
@@ -755,7 +745,6 @@ public class Project {
         connection.close();
 
     }
-
 
     public void runUnitTestMaven(UnitTest test, String args, String taskName, String profile)
             throws FailedToExecuteTestException {
@@ -807,12 +796,11 @@ public class Project {
 
     }
 
-
     public Set<String> allMainClasses() {
 
         Set<String> mainClasses = new HashSet<>();
 
-        for (File classDir: this.mainClassDirs) {
+        for (File classDir : this.mainClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             mainClasses.addAll(classes);
         }
@@ -821,12 +809,11 @@ public class Project {
 
     }
 
-
     public Set<String> allTestClasses() {
 
         Set<String> testClasses = new HashSet<>();
 
-        for (File classDir: this.testClassDirs) {
+        for (File classDir : this.testClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             testClasses.addAll(classes);
         }
@@ -859,7 +846,7 @@ public class Project {
 
         ImmutableSet<ClassPath.ClassInfo> classes = guavaClassPathUtility.getAllClasses();
 
-        for (ClassPath.ClassInfo classInfo: classes) {
+        for (ClassPath.ClassInfo classInfo : classes) {
             classNames.add(classInfo.getName());
         }
 
@@ -945,5 +932,3 @@ public class Project {
     }
 
 }
-
-

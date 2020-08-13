@@ -26,50 +26,53 @@ import gin.test.InternalTestRunner;
 import gin.test.UnitTest;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.StopWatch;
 
 /**
  * Handy class for mutating and running tests on mutated code.
- *
+ * <p>
  * Each subclass can access project data through the methodData structure.
- *
- * Required input: projectDirectory, methodFile, projectName (Gradle)
- * Required input: projectDirectory, methodFile, projectName, mavenHome (Maven)
- * Required input: projectDirectory, methodFile, classPath (otherwise)
- * methodFile is assumed to be the output file of gin.util.Profiler, though only Method and Tests columns are required
- * Contains an option of running tests in a separate jvm. 
- *
+ * <p>
+ * Required input: projectDirectory, methodFile, projectName (Gradle) Required
+ * input: projectDirectory, methodFile, projectName, mavenHome (Maven) Required
+ * input: projectDirectory, methodFile, classPath (otherwise) methodFile is
+ * assumed to be the output file of gin.util.Profiler, though only Method and
+ * Tests columns are required Contains an option of running tests in a separate
+ * jvm.
+ * <p>
  */
 public abstract class Sampler {
 
     /*============== Required  ==============*/
-
     @Argument(alias = "d", description = "Project directory, required", required = true)
     protected File projectDirectory;
-    
+
     @Argument(alias = "m", description = "Method file, required", required = true)
     protected File methodFile;
-    
-    /*============== Optional (required only for certain types of projects, ignored otherwise)  ==============*/
 
+    /*============== Optional (required only for certain types of projects, ignored otherwise)  ==============*/
     @Argument(alias = "p", description = "Project name, required for maven and gradle projects")
     protected String projectName = null;
-    
+
     @Argument(alias = "c", description = "Classpath, required for non-maven and non-gradle projects")
     protected String classPath = null;
-    
+
     // Only needed for extracting dependencies using mvn in Project class
     @Argument(alias = "h", description = "Path to maven bin directory, e.g. /usr/local, required for maven projects")
     protected File mavenHome = null;
 
     /*============== Optional (setup)  ==============*/
-
     @Argument(alias = "o", description = "Output CSV file")
-    protected File outputFile = new File("sampler_results.csv");
+    protected File outputFile = new File("./sampler_results.csv");
     protected CSVWriter outputFileWriter;
+
+    @Argument(alias = "to", description = "Output file for storing the execution time")
+    protected File timingOutputFile = new File("./sampler_timing.csv");
 
     @Argument(alias = "x", description = "Timeout in milliseconds")
     protected Long timeoutMS = 10000L;
@@ -78,42 +81,39 @@ public abstract class Sampler {
     protected Integer reps = 1;
 
     @Argument(alias = "j", description = "Run tests in a separate jvm")
-    protected Boolean inSubprocess = false;  
-    
+    protected Boolean inSubprocess = false;
+
     @Argument(alias = "J", description = "Run every test in a new jvm")
-    protected Boolean inNewSubprocess = false;  
-    
+    protected Boolean inNewSubprocess = false;
+
     // Unused at the moment, thus commented out
     //@Argument(alias = "b", description = "Buffer time for test cases to be run on modified code, set only if > -1 and when -inSubprocess is false")
     //private Integer bufferTimeMS = -1;  // test case timeout: timeout on unmodified code + bufferTime
 
     /*============== Other  ==============*/
-
     // This will only be instantiated with Gradle and Maven projects, used for getting classpath
-    protected Project project = null; 
+    protected Project project = null;
 
     // Arguments used in the method file
     private static final String TEST_SEPARATOR = ",";
     private static final String METHOD_SEPARATOR = ".";
-        
+
     // Used for writing data to outputFile
     private static final String[] OUT_HEADER = {"PatchIndex", "PatchSize", "Patch", "MethodIndex", "TestIndex", "UnitTest", "RepNumber",
-            "PatchValid", "PatchCompiled", "TestPassed", "TestExecutionTime(ns)", "TestCPUTime(ns)",
-            "TestTimedOut", "TestExceptionType", "TestExceptionMessage", "AssertionExpectedValue", 
-            "AssertionActualValue", "NoOp", "EditsValid"};
+        "PatchValid", "PatchCompiled", "TestPassed", "TestExecutionTime(ns)", "TestCPUTime(ns)",
+        "TestTimedOut", "TestExceptionType", "TestExceptionMessage", "AssertionExpectedValue",
+        "AssertionActualValue", "NoOp", "EditsValid"};
     private static final Integer DEFAULT_ID = 0; // default id for MethodIndex
 
     private int patchCount = 0;
 
     /*============== Structures holding all project data  ==============*/
-
     protected List<TargetMethod> methodData = new ArrayList<>();
-    
+
     protected Set<UnitTest> testData = new LinkedHashSet<>();
 
 
     /*============== Constructors ==============*/
-
     public Sampler(String[] args) {
 
         Args.parseOrExit(this, args);
@@ -122,13 +122,13 @@ public abstract class Sampler {
     }
 
     public Sampler(File projectDir, File methodFile) {
-        
+
         this.projectDirectory = projectDir;
         this.methodFile = methodFile;
     }
 
     protected void setUp() {
-        
+
         if (this.classPath == null) {
             this.project = new Project(projectDirectory, projectName);
             if (mavenHome != null) {
@@ -148,12 +148,11 @@ public abstract class Sampler {
     }
 
     /*============== the following is used to store method information  ==============*/
-
     protected static class TargetMethod {
 
         private File source;
         private String className;
-        
+
         private String methodName;
         private List<UnitTest> tests;
 
@@ -191,38 +190,41 @@ public abstract class Sampler {
         public String toString() {
             return className + "." + methodName;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
-                return ( (obj instanceof TargetMethod) && methodID.equals(((TargetMethod)obj).methodID) );
+            return ((obj instanceof TargetMethod) && methodID.equals(((TargetMethod) obj).methodID));
         }
-        
+
         @Override
         public int hashCode() {
             return methodID.hashCode();
         }
     }
-    
+
     /*============== sampleMethods calls the hook abstract method  ==============*/
-    protected final void sampleMethods(){
+    protected final void sampleMethods() {
         try {
+            final StopWatch stopWatch = StopWatch.createStarted();
             this.sampleMethodsHook();
+            stopWatch.stop();
+            FileUtils.writeStringToFile(timingOutputFile, String.valueOf(stopWatch.getTime()), Charset.defaultCharset());
+        } catch (IOException ex) {
+            Logger.error(ex, "Error outputing execution time to: " + timingOutputFile);
         } finally {
             this.close();
         }
     }
 
     /*============== sampleMethodsHook should be overriden in each subclass of Sampler  ==============*/
-
-    protected abstract void sampleMethodsHook(); 
+    protected abstract void sampleMethodsHook();
 
     /*============== methods for running tests  ==============*/
-    
     protected UnitTestResultSet testEmptyPatch(String targetClass, Collection<UnitTest> tests, SourceFile sourceFile) {
 
         Logger.debug("Testing the empty patch..");
 
-        patchCount ++;
+        patchCount++;
 
         UnitTestResultSet resultSet = null;
 
@@ -243,7 +245,7 @@ public abstract class Sampler {
                 List<UnitTestResult> failingTests = resultSet.getResults().stream()
                         .filter(res -> !res.getPassed())
                         .collect(Collectors.toList());
-                for (UnitTestResult failedResult: failingTests) {
+                for (UnitTestResult failedResult : failingTests) {
                     Logger.error(failedResult);
                 }
             }
@@ -270,15 +272,14 @@ public abstract class Sampler {
         //        System.exit(-1);
         //    }
         //}
-
         return resultSet;
     }
 
     protected UnitTestResultSet testPatch(String targetClass, List<UnitTest> tests, Patch patch) {
-        
+
         Logger.debug("Testing patch: " + patch);
 
-        patchCount ++;
+        patchCount++;
 
         UnitTestResultSet resultSet = null;
 
@@ -287,7 +288,7 @@ public abstract class Sampler {
         } else {
             resultSet = testPatchInSubprocess(targetClass, tests, patch);
         }
-        
+
         return resultSet;
 
     }
@@ -319,7 +320,6 @@ public abstract class Sampler {
     }
 
     /*============== the following process input arguments  ==============*/
-
     private void printCommandlineArguments() {
 
         try {
@@ -352,7 +352,7 @@ public abstract class Sampler {
         try {
             CSVReaderHeaderAware reader = new CSVReaderHeaderAware(new FileReader(methodFile));
             Map<String, String> data = reader.readMap();
-            if ( (!data.containsKey("Method")) || (!data.containsKey("Tests")) ) {
+            if ((!data.containsKey("Method")) || (!data.containsKey("Tests"))) {
                 throw new ParseException("Both \"Method\" and \"Tests\" fields are required in the method file.", 0);
             }
 
@@ -363,9 +363,9 @@ public abstract class Sampler {
             while (data != null) {
 
                 String[] tests = data.get("Tests").split(TEST_SEPARATOR);
-                List<UnitTest> ginTests = new ArrayList();        
+                List<UnitTest> ginTests = new ArrayList();
                 for (String test : tests) {
-                    UnitTest ginTest = null;        
+                    UnitTest ginTest = null;
                     ginTest = UnitTest.fromString(test);
                     ginTest.setTimeoutMS(timeoutMS);
                     ginTests.add(ginTest);
@@ -376,15 +376,14 @@ public abstract class Sampler {
 
                 String className = StringUtils.substringBefore(method, "("); // method arguments can have dots, so need to get data without arguments first
                 className = StringUtils.substringBeforeLast(className, METHOD_SEPARATOR);
-                
+
                 File source = (project != null) ? project.findSourceFile(className) : findSourceFile(className);
-                if ( (source == null) || (!source.isFile()) ) {
+                if ((source == null) || (!source.isFile())) {
                     throw new FileNotFoundException("Cannot find source for class: " + className);
                 }
 
                 // now using fully qualified names...
                 //String methodName = StringUtils.substringAfterLast(method, className + METHOD_SEPARATOR);
-                
                 idx++;
                 Integer methodID = (data.containsKey("MethodIndex")) ? Integer.valueOf(data.get("MethodIndex")) : idx;
 
@@ -396,7 +395,7 @@ public abstract class Sampler {
                 methods.add(targetMethod);
 
                 data = reader.readMap();
-            }        
+            }
             reader.close();
 
             return methods;
@@ -430,7 +429,7 @@ public abstract class Sampler {
         }
         if (!moduleDir.isDirectory()) {
             return null;
-        }        
+        }
         File[] files = moduleDir.listFiles((dir, name) -> name.equals(filename));
         if (files.length == 0) {
             return null;
@@ -444,13 +443,11 @@ public abstract class Sampler {
     }
 
     /*============== the following write results to the output file ==============*/
-
-
     protected void writeHeader() {
 
         String parentDirName = outputFile.getParent();
         if (parentDirName == null) {
-                parentDirName = "."; // assume outputFile is in the current directory
+            parentDirName = "."; // assume outputFile is in the current directory
         }
         File parentDir = new File(parentDirName);
         if (!parentDir.exists()) {
@@ -468,12 +465,12 @@ public abstract class Sampler {
     }
 
     protected void writeResults(UnitTestResultSet resultSet) {
-        
+
         writeResults(resultSet, patchCount, DEFAULT_ID);
     }
 
     protected void writeResults(UnitTestResultSet resultSet, Integer methodID) {
-        
+
         writeResults(resultSet, patchCount, methodID);
     }
 
@@ -510,25 +507,25 @@ public abstract class Sampler {
         }
 
         String[] entry = {
-                patchIndex,
-                patchSize,
-                patchDetails,
-                methodIndex,
-                testIndex,
-                testName,
-                rep,
-                valid,
-                cleanCompile,
-                testPassed,
-                testExecutionTime,
-                testCPUTime,
-                testTimedOut,
-                testExceptionType,
-                testExceptionMessage,
-                testAssertionExpectedValue,
-                testAssertionActualValue,
-                noOp,
-                editsValidStr
+            patchIndex,
+            patchSize,
+            patchDetails,
+            methodIndex,
+            testIndex,
+            testName,
+            rep,
+            valid,
+            cleanCompile,
+            testPassed,
+            testExecutionTime,
+            testCPUTime,
+            testTimedOut,
+            testExceptionType,
+            testExceptionMessage,
+            testAssertionExpectedValue,
+            testAssertionActualValue,
+            noOp,
+            editsValidStr
         };
 
         outputFileWriter.writeNext(entry);
@@ -536,10 +533,10 @@ public abstract class Sampler {
 
     protected void close() {
         try {
-            if(this.outputFileWriter != null){
+            if (this.outputFileWriter != null) {
                 this.outputFileWriter.close();
             }
-        } catch(IOException ex){
+        } catch (IOException ex) {
             Logger.error(ex, "Exception closing the output file: " + outputFile.getAbsolutePath());
             Logger.trace(ex);
             System.exit(-1);

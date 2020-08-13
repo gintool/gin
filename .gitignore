@@ -40,5 +40,14 @@ examples/unittests/ExampleTest.class
 examples/unittests/ExampleWithInnerClass$MyInner.class
 examples/unittests/ExampleWithInnerClass.class
 examples/unittests/ExampleWithInnerClassTest.class
+/nb-configuration.xml
+/nbproject/
 /.classpath
 /.project
+/.settings
+/examples/unittests/ekstazi/target/
+/examples/unittests/ekstazi_mvn/target/
+/examples/unittests/ekstazi_mvn/.ekstazi/
+/examples/unittests/ekstazi_mvn/.starts/
+/examples/unittests/ekstazi_mvn/jdeps-cache/
+/examples/unittests/ekstazi_mvn/output_file.csv

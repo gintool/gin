@@ -1,5 +1,6 @@
 package gin.test;
 
+import gin.test.classloader.CacheClassLoader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -235,7 +236,7 @@ public class TestRunnerTest {
         loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
 
         try {
-            Class example = loader.findClass("mypackage.NewExample");
+            Class example = loader.loadClass("mypackage.NewExample");
         } catch (ClassNotFoundException e) {
             fail("Could not load NewExample class.");
         }

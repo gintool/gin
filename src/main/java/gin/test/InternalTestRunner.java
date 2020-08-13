@@ -145,15 +145,15 @@ public class InternalTestRunner extends TestRunner {
         Set<Thread> threadsBefore = Thread.getAllStackTraces().keySet();
 
         try {
-            UnitTestResult res = (UnitTestResult) method.invoke(runner, test, rep);
-            return res;
+            UnitTestResult result = (UnitTestResult) method.invoke(runner, test, rep);
+            return result;
         } catch (IllegalAccessException | InvocationTargetException e) {
             Logger.trace(e);
-            UnitTestResult tempResult = new UnitTestResult(test, rep);
-            tempResult.setExceptionType(e.getClass().getName());
-            tempResult.setExceptionMessage(e.getMessage());
-            tempResult.setPassed(false);
-            return tempResult;
+            UnitTestResult result = new UnitTestResult(test, rep);
+            result.setExceptionType(e.getClass().getName());
+            result.setExceptionMessage(e.getMessage());
+            result.setPassed(false);
+            return result;
         } finally {
             cleanupHangingThreads(threadsBefore);
         }

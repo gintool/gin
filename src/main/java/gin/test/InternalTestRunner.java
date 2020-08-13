@@ -11,6 +11,8 @@ import org.pmw.tinylog.Logger;
 
 import gin.Patch;
 import gin.test.classloader.ClassLoaderFactory;
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * Runs tests internally, through {@link CacheClassLoader} (default
@@ -19,6 +21,7 @@ import gin.test.classloader.ClassLoaderFactory;
  */
 public class InternalTestRunner extends TestRunner {
 
+    public static int count = 0;
     public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
 
     protected ClassLoaderFactory classLoaderFactory;
@@ -106,39 +109,48 @@ public class InternalTestRunner extends TestRunner {
      */
     @Override
     public UnitTestResultSet runTests(Patch patch, int reps) {
+        try {
+            Logger.info("Preparing to run patch #" + (++count) + ": " + patch.toString());
+            // Create a new class loader for every compilation, otherwise java will
+            // cache the modified class for us
+            this.classLoader = classLoaderFactory.createClassLoader(this.getClassPath());
 
-        // Create a new class loader for every compilation, otherwise java will
-        // cache the modified class for us
-        this.classLoader = classLoaderFactory.createClassLoader(this.getClassPath());
+            // Apply the patch.
+            String patchedSource = patch.apply();
+            boolean patchValid = patch.lastApplyWasValid();
+            List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
 
-        // Apply the patch.
-        String patchedSource = patch.apply();
-        boolean patchValid = patch.lastApplyWasValid();
-        List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
+            // Did the code change as a result of applying the patch?
+            boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
 
-        // Did the code change as a result of applying the patch?
-        boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
+            // Compile
+            //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
+            CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
+            //}
+            boolean compiledOK = (code != null);
 
-        // Compile
-        //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-        CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
-        //}
-        boolean compiledOK = (code != null);
+            // Add to class loader and run tests
+            List<UnitTestResult> results = null;
+            if (compiledOK) {
+                byte[] byteCodeArray = code.getByteCode();
+                this.classLoader.setCustomCompiledCode(this.getClassName(), byteCodeArray);
+                results = runTests(reps, this.classLoader);
+            }
 
-        // Add to class loader and run tests
-        List<UnitTestResult> results = null;
-        if (compiledOK) {
-            byte[] byteCodeArray = code.getByteCode();
-            this.classLoader.setCustomCompiledCode(this.getClassName(), byteCodeArray);
-            results = runTests(reps, this.classLoader);
+            if (!patchValid || !compiledOK) {
+                results = emptyResults(reps);
+            }
+            UnitTestResultSet unitTestResultSet = new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+            Logger.info("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
+            Logger.info("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
+            return unitTestResultSet;
+        } finally {
+            try {
+                this.classLoader.close();
+            } catch (IOException ex) {
+                Logger.error(ex, "Could not close CacheClassLoader.");
+            }
         }
-
-        if (!patchValid || !compiledOK) {
-            results = emptyResults(reps);
-        }
-
-        return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
-
     }
 
     /**
@@ -179,7 +191,7 @@ public class InternalTestRunner extends TestRunner {
         try {
             runnerClass = classLoader.loadClass(JUnitBridge.class.getName());
         } catch (ClassNotFoundException e) {
-            Logger.error("Could not load isolated test runner - class not found.");
+            Logger.error(e, "Could not load isolated test runner - class not found.");
             System.exit(-1);
         }
 
@@ -187,7 +199,7 @@ public class InternalTestRunner extends TestRunner {
         try {
             runner = runnerClass.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
-            Logger.error("Could not instantiate isolated test runner: " + e);
+            Logger.error(e, "Could not instantiate isolated test runner.");
             System.exit(-1);
         }
 
@@ -195,39 +207,47 @@ public class InternalTestRunner extends TestRunner {
         try {
             method = runner.getClass().getMethod(JUnitBridge.BRIDGE_METHOD_NAME, UnitTest.class, int.class);
         } catch (NoSuchMethodException e) {
-            Logger.error("Could not run isolated tests runner, can't find method: " + ISOLATED_TEST_RUNNER_METHOD_NAME);
+            Logger.error(e, "Could not run isolated tests runner, can't find method: " + ISOLATED_TEST_RUNNER_METHOD_NAME);
             System.exit(-1);
         }
 
-        int threadsBefore = getNumberOfThreads();
-
-        Object result = null;
+        Set<Thread> threadsBefore = Thread.getAllStackTraces().keySet();
         try {
-            result = method.invoke(runner, test, rep);
+            UnitTestResult res = (UnitTestResult) method.invoke(runner, test, rep);
+            return res;
         } catch (IllegalAccessException | InvocationTargetException e) {
             Logger.trace(e);
             UnitTestResult tempResult = new UnitTestResult(test, rep);
             tempResult.setExceptionType(e.getClass().getName());
             tempResult.setExceptionMessage(e.getMessage());
             tempResult.setPassed(false);
-            result = tempResult;
+            return tempResult;
+        } finally {
+            cleanupHangingThreads(threadsBefore);
         }
-
-        int threadsAfter = getNumberOfThreads();
-
-        if (threadsAfter != threadsBefore) {
-            Logger.warn("Possible hanging threads remain after test");
-        }
-
-        UnitTestResult res = (UnitTestResult) result;
-
-        return res;
-
     }
 
-    // Separated out so we can modify.
-    private static int getNumberOfThreads() {
-        return java.lang.Thread.activeCount();
+    private void cleanupHangingThreads(Set<Thread> threadsBefore) {
+        Set<Thread> threadsAfter = Thread.getAllStackTraces().keySet();
+        if (!threadsBefore.containsAll(threadsAfter)) {
+            Logger.warn("Possible hanging threads remain after test: " + threadsBefore.size() + " -> " + threadsAfter.size());
+            Logger.info("I'll try to kill them for you.");
+            for (Thread thread : threadsAfter) {
+                if (!threadsBefore.contains(thread)) {
+                    Logger.debug("Found the following hanging thread:");
+                    Logger.debug("\t|---> Thread hanging: " + thread.getName() + " (ID: " + thread.getId() + ")");
+                    Logger.debug("\t|---> Group: " + thread.getThreadGroup().getName());
+                    Logger.debug("\t|---> State: " + thread.getState());
+                    Logger.debug("\t|---> Is Daemon? " + thread.isDaemon());
+                    Logger.debug("\t|---> Stacktrace:");
+                    for (StackTraceElement stackTraceElement : thread.getStackTrace()) {
+                        Logger.debug("\t\t|---> " + stackTraceElement);
+                    }
+                    thread.stop();
+                    Logger.debug("Is it interrupted? " + thread.isInterrupted());
+                }
+            }
+        }
     }
 
 }

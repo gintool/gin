@@ -135,6 +135,8 @@ public abstract class Sampler {
                 this.project.setMavenHome(mavenHome);
             } else {
                 Logger.info("Make sure to set mavenHome for maven projects.");
+                mavenHome = FileUtils.getFile(MavenUtils.findMavenHomePath());
+                this.project.setMavenHome(mavenHome);
             }
             Logger.info("Calculating classpath..");
             this.classPath = project.classpath();

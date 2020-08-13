@@ -51,3 +51,5 @@ examples/unittests/ExampleWithInnerClassTest.class
 /examples/unittests/ekstazi_mvn/.starts/
 /examples/unittests/ekstazi_mvn/jdeps-cache/
 /examples/unittests/ekstazi_mvn/output_file.csv
+/profile_timing.csv
+/sampler_timing.csv

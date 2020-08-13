@@ -22,14 +22,11 @@ import gin.edit.Edit.EditType;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
 
-
 /**
  * Method-based General GP search.
- *
  */
-
 public abstract class GP extends Sampler {
-    
+
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.STATEMENT.toString();
 
@@ -37,15 +34,20 @@ public abstract class GP extends Sampler {
     protected Integer genNumber = 1;
 
     @Argument(alias = "in", description = "Number of individuals")
-    protected Integer indNumber = 10; 
+    protected Integer indNumber = 10;
 
     @Argument(alias = "ms", description = "Random seed for mutation operator selection")
     protected Integer mutationSeed = 123;
 
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
-    
-    // Allowed edit types for sampling: parsed from editType
+
+    @Argument(alias = "nm", description = "Number of methods to optmise. Use 0 for all. Negative for skipping.")
+    protected Integer numberOfMethods = 0;
+
+    /**
+     * allowed edit types for sampling: parsed from editType
+     */
     protected List<Class<? extends Edit>> editTypes;
 
     protected Random mutationRng;
@@ -65,11 +67,11 @@ public abstract class GP extends Sampler {
     }
 
     private void printAdditionalArguments() {
-        Logger.info("Edit types: "+ editTypes);
-        Logger.info("Number of generations: "+ genNumber);
-        Logger.info("Number of individuals: "+ indNumber);
-        Logger.info("Random seed for mutation operator selection: "+ mutationSeed);
-        Logger.info("Random seed for individual selection: "+ individualSeed);
+        Logger.info("Edit types: " + editTypes);
+        Logger.info("Number of generations: " + genNumber);
+        Logger.info("Number of individuals: " + indNumber);
+        Logger.info("Random seed for mutation operator selection: " + mutationSeed);
+        Logger.info("Random seed for individual selection: " + individualSeed);
     }
 
     private void setup() {
@@ -80,15 +82,13 @@ public abstract class GP extends Sampler {
 
     // Implementation of gin.util.Sampler's abstract method
     protected void sampleMethodsHook() {
-
         if ((indNumber < 1) || (genNumber < 1)) {
             Logger.info("Please enter a positive number of generations and individuals.");
         } else {
-
             writeNewHeader();
 
-            for (TargetMethod method : methodData) {
-
+            for (int i = 0; (numberOfMethods == 0 || i < numberOfMethods) && i < methodData.size(); i++) {
+                final TargetMethod method = methodData.get(i);
                 Logger.info("Running GP on method " + method);
 
                 // Setup SourceFile for patching
@@ -97,12 +97,11 @@ public abstract class GP extends Sampler {
                 search(method, new Patch(sourceFile));
 
             }
-        }
 
+        }
     }
 
-       /*============== Abstract methods  ==============*/
-
+    /*============== Abstract methods  ==============*/
     // GP search strategy
     protected abstract void search(TargetMethod method, Patch origPatch);
 
@@ -128,17 +127,17 @@ public abstract class GP extends Sampler {
     protected abstract double compareFitness(double newFitness, double oldFitness);
 
     /*============== Helper methods  ==============*/
-
     protected void writeNewHeader() {
-        String[] entry = {"MethodName"
-                        , "Patch"
-                        , "Compiled"
-                        , "AllTestsPassed"
-                        , "TotalExecutionTime(ms)"
-                        , "Fitness"
-                        , "FitnessImprovement"
-                        };
+        String[] entry = {"MethodName",
+             "Patch",
+             "Compiled",
+             "AllTestsPassed",
+             "TotalExecutionTime(ms)",
+             "Fitness",
+             "FitnessImprovement"
+        };
         try {
+            this.outputFile.getParentFile().mkdirs();
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
         } catch (IOException e) {
@@ -149,14 +148,14 @@ public abstract class GP extends Sampler {
     }
 
     protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
-        String[] entry = {methodName
-                        , results.getPatch().toString()
-                        , Boolean.toString(results.getCleanCompile())
-                        , Boolean.toString(results.allTestsSuccessful())
-                        , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                        , Double.toString(fitness)
-                        , Double.toString(improvement)
-                        };
+        String[] entry = {methodName,
+             results.getPatch().toString(),
+             Boolean.toString(results.getCleanCompile()),
+             Boolean.toString(results.allTestsSuccessful()),
+             Float.toString(results.totalExecutionTime() / 1000000.0f),
+             Double.toString(fitness),
+             Double.toString(improvement)
+        };
         outputFileWriter.writeNext(entry);
     }
 

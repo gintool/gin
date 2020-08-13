@@ -157,7 +157,7 @@ public class InternalTestRunner extends TestRunner {
         } finally {
             cleanupHangingThreads(threadsBefore);
         }
-        }
+    }
         
     private void cleanupHangingThreads(Set<Thread> threadsBefore) {
         Set<Thread> threadsAfter = Thread.getAllStackTraces().keySet();

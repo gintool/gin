@@ -13,8 +13,9 @@ import org.pmw.tinylog.Logger;
 import gin.Patch;
 
 /**
- * A TestRunner is defined by a class name, a class path, and a set of tests to run.
- * Once instantiated for a set of tests, it can be repeatedly invoked to run tests against new patches.
+ * A TestRunner is defined by a class name, a class path, and a set of tests to
+ * run. Once instantiated for a set of tests, it can be repeatedly invoked to
+ * run tests against new patches.
  */
 public abstract class TestRunner {
 
@@ -66,29 +67,29 @@ public abstract class TestRunner {
 
     public List<UnitTest> testsForClass(String testClassName) {
 
-        CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath());
-
-        // Set up list of tests based on the class name
         List<UnitTest> tests = new LinkedList<>();
+        try(CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath())){
+            // Set up list of tests based on the class name
+            Class clazz = null;
 
-        Class clazz = null;
+            try {
+                clazz = classLoader.loadClass(testClassName);
+            } catch (ClassNotFoundException e) {
+                Logger.error("Failed to find test class: ");
+            }
 
-        try {
-            clazz = classLoader.loadClass(testClassName);
-        } catch (ClassNotFoundException e) {
-            Logger.error("Failed to find test class: ");
+            List<FrameworkMethod> methods = new TestClass(clazz).getAnnotatedMethods(Test.class);
+
+            for (FrameworkMethod eachTestMethod : methods){
+
+                String methodName = eachTestMethod.getName();
+                UnitTest test = new UnitTest(testClassName, methodName);
+                tests.add(test);
+
+            }
+        } catch (IOException ex){
+            Logger.error(ex, "Error while closing the ClassLoader.");
         }
-
-        List<FrameworkMethod> methods = new TestClass(clazz).getAnnotatedMethods(Test.class);
-
-        for (FrameworkMethod eachTestMethod : methods){
-
-            String methodName = eachTestMethod.getName();
-            UnitTest test = new UnitTest(testClassName, methodName);
-            tests.add(test);
-
-        }
-
         return tests;
 
     }

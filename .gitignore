@@ -42,3 +42,4 @@ examples/unittests/ExampleWithInnerClass.class
 examples/unittests/ExampleWithInnerClassTest.class
 /.classpath
 /.project
+nbproject/

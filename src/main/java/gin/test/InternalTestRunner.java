@@ -234,17 +234,7 @@ public class InternalTestRunner extends TestRunner {
             Logger.info("I'll try to kill them for you.");
             for (Thread thread : threadsAfter) {
                 if (!threadsBefore.contains(thread)) {
-                    Logger.debug("Found the following hanging thread:");
-                    Logger.debug("\t|---> Thread hanging: " + thread.getName() + " (ID: " + thread.getId() + ")");
-                    Logger.debug("\t|---> Group: " + thread.getThreadGroup().getName());
-                    Logger.debug("\t|---> State: " + thread.getState());
-                    Logger.debug("\t|---> Is Daemon? " + thread.isDaemon());
-                    Logger.debug("\t|---> Stacktrace:");
-                    for (StackTraceElement stackTraceElement : thread.getStackTrace()) {
-                        Logger.debug("\t\t|---> " + stackTraceElement);
-                    }
                     thread.stop();
-                    Logger.debug("Is it interrupted? " + thread.isInterrupted());
                 }
             }
         }

@@ -9,13 +9,17 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import static org.junit.Assert.*;
+import org.junit.Assume;
 
 public class ProjectTest {
 
-    private static final File GRADLE_MULTI_DIR = new File(TestConfiguration.GRADLE_SUBPROJECTS_DIR); 
-    private static final File GRADLE_SIMPLE = new File(TestConfiguration.GRADLE_SIMPLE_DIR); 
+    private static final File GRADLE_MULTI_DIR = new File(TestConfiguration.GRADLE_SUBPROJECTS_DIR);
+    private static final File GRADLE_SIMPLE = new File(TestConfiguration.GRADLE_SIMPLE_DIR);
+    private static final File MAVEN_SIMPLE = new File(TestConfiguration.MAVEN_SIMPLE_DIR);
 
     Project simpleProject = new Project(GRADLE_SIMPLE, "simple");
 
@@ -97,6 +101,32 @@ public class ProjectTest {
         assertEquals(exampleDir, simpleProject.getMavenHome());
     }
 
+    /**
+     * Tests the classpath retrieval in case Maven is configured in the System's
+     * path. If it is the case, it should be able to create a temp file
+     * containing the dependencies and retrieve the classpath. If Maven is not
+     * configured, skip the test.
+     */
+    @Test
+    public void classpath() {
+        Project simpleProject = new Project(MAVEN_SIMPLE, "simple");
+        String mavenHome = MavenUtils.findMavenHomePath();
+        Assume.assumeTrue(FileUtils.getFile(mavenHome, "bin/mvn").exists()
+                || FileUtils.getFile(mavenHome, "mvn").exists()
+                || FileUtils.getFile(mavenHome, "bin/mvn.cmd").exists()
+                || FileUtils.getFile(mavenHome, "mvn.cmd").exists());
+        simpleProject.setMavenHome(FileUtils.getFile(mavenHome));
+        String classpath = simpleProject.classpath();
+        assertNotNull(classpath);
+        String[] classPathItems = StringUtils.split(classpath, File.pathSeparator);
+        assertEquals(5, classPathItems.length);
+        assertTrue(StringUtils.endsWith(classPathItems[0], "target" + File.separator + "classes"));
+        assertTrue(StringUtils.endsWith(classPathItems[1], "target" + File.separator + "test-classes"));
+        assertTrue(StringUtils.endsWith(classPathItems[2], "junit-4.11.jar"));
+        assertTrue(StringUtils.endsWith(classPathItems[3], "hamcrest-core-1.3.jar"));
+        assertTrue(StringUtils.endsWith(classPathItems[4], "evosuite-standalone-runtime-1.0.6.jar"));
+    }
+
     @Test
     public void getProjectName() {
     }
@@ -111,10 +141,6 @@ public class ProjectTest {
 
     @Test
     public void getBuildType() {
-    }
-
-    @Test
-    public void classpath() {
     }
 
     @Test

@@ -49,7 +49,7 @@ public class GPFix extends GPSimple {
 
     // Arguments used in fitness calculation
     private static int weight = 2;
-    private int multiplier = 0;
+    private double multiplier = 0;
     private double targetFitness = -1;
     private Map<UnitTest, Boolean> testResults = new HashMap<>();
     private Map<Patch, Double> recordedFitness = new HashMap<>();

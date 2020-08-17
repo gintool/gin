@@ -12,14 +12,13 @@ import org.apache.commons.lang3.StringUtils;
 public class MavenUtils {
 
     /**
-     * Finds the path to the maven home in the System variables, if any. This is
-     * the order of preference when searching for it:
-     * <p>
+     * Finds the path to maven home in the System variables, if any. This is the
+     * order of preference when searching for it:
      * <ol>
      * <li>{@code MAVEN_HOME}</li>
      * <li>{@code MVN_HOME}</li>
-     * <li>The parent directory of a directory with a {@code mvn} executable in
-     * {@code PATH}</li>
+     * <li>The parent directory of a directory (presumably {@code bin}) with a
+     * {@code mvn} executable in {@code PATH}</li>
      * <li>{@code /usr/local/}</li>
      * </ol>
      *
@@ -45,6 +44,24 @@ public class MavenUtils {
             }
         }
         return "/usr/local/";
+    }
+
+    /**
+     * Finds the {@link File} to maven home in the System variables, if any.
+     * This is the order of preference when searching for it:
+     * <ol>
+     * <li>{@code MAVEN_HOME}</li>
+     * <li>{@code MVN_HOME}</li>
+     * <li>The parent directory of a directory (presumably {@code bin}) with a
+     * {@code mvn} executable in {@code PATH}</li>
+     * <li>{@code /usr/local/}</li>
+     * </ol>
+     *
+     * @return the File to maven home, or {@code /usr/local/} if not found
+     *
+     */
+    public static File findMavenHomeFile() {
+        return FileUtils.getFile(findMavenHomePath());
     }
 
 }

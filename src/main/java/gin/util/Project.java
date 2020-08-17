@@ -28,7 +28,6 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
 
-import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -124,7 +123,7 @@ public class Project {
             classDirNames.add(classDir.getAbsolutePath());
         }
         String[] classDirNamesArray = classDirNames.toArray(new String[0]);
-        if (buildType == BuildType.MAVEN) {
+        if (isMavenProject()) {
             return String.join(File.pathSeparator, classDirNamesArray) + getDependenciesClasspath();
         } else {
             return String.join(File.pathSeparator, classDirNamesArray);
@@ -186,12 +185,20 @@ public class Project {
     // Find source directories
     private void detectDirs() {
 
-        if (buildType == BuildType.GRADLE) {
+        if (isGradleProject()) {
             detectDirsGradle();
-        } else if (buildType == BuildType.MAVEN) {
+        } else if (isMavenProject()) {
             detectDirsMaven();
         }
 
+    }
+
+    public boolean isGradleProject() {
+        return buildType == BuildType.GRADLE;
+    }
+
+    public boolean isMavenProject() {
+        return buildType == BuildType.MAVEN;
     }
 
     private void detectDirsGradle() {
@@ -345,85 +352,81 @@ public class Project {
     public String getDependenciesClasspath() {
 
         String dependencies = "";
-
-        InvocationRequest request = new DefaultInvocationRequest();
-
-        File pomFile = new File(projectDir, "pom.xml");
-        request.setPomFile(pomFile);
-
-        request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
-
-        String depOutput = projectDir.getAbsolutePath() + File.separator + "dependencies.txt";
-
-        Properties properties = new Properties();
-        properties.setProperty("outputFile", depOutput);
-        properties.setProperty("appendOutput", "true");
-        properties.setProperty("outputAbsoluteArtifactFilename", "true");
-        request.setProperties(properties);
-
-        Invoker invoker = new DefaultInvoker();
-        invoker.setMavenHome(mavenHome);
-
-        InvocationResult result = null;
-
-        // Extremely detailed debug output.
-        if (this.DEBUG) {
-            request.setErrorHandler(new InvocationOutputHandler() {
+        try {
+            InvocationRequest request = new DefaultInvocationRequest();
+            
+            File pomFile = new File(projectDir, "pom.xml");
+            request.setPomFile(pomFile);
+            
+            request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
+            
+            File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
+            
+            Properties properties = new Properties();
+            properties.setProperty("outputFile", depOutput.getCanonicalPath());
+            properties.setProperty("appendOutput", "true");
+            properties.setProperty("outputAbsoluteArtifactFilename", "true");
+            request.setProperties(properties);
+            
+            Invoker invoker = new DefaultInvoker();
+            invoker.setMavenHome(mavenHome);
+            
+            InvocationResult result = null;
+            
+            // Extremely detailed debug output.
+            if (this.DEBUG) {
+                request.setErrorHandler(new InvocationOutputHandler() {
+                    @Override
+                    public void consumeLine(String line) throws IOException {
+                        Logger.info(line);
+                    }
+                });
+            }
+            
+            request.setOutputHandler(new InvocationOutputHandler() {
                 @Override
                 public void consumeLine(String line) throws IOException {
-                    Logger.info(line);
+                    // silent output on stdout
                 }
             });
-        } 
-
-        request.setOutputHandler(new InvocationOutputHandler() {
-            @Override
-            public void consumeLine(String line) throws IOException {
-                // silent output on stdout
+            
+            try {
+                result = invoker.execute(request);
+            } catch (MavenInvocationException e) {
+                Logger.error(e, "Error invoking maven.");
+                System.exit(-1);
             }
-        });
-
-        try {
-            result = invoker.execute(request);
-        } catch (MavenInvocationException e) {
-            Logger.error("Error invoking maven.");
-            Logger.trace(e);
-            System.exit(-1);
-        }
-
-        if (result.getExitCode() != 0) {
-            Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
-            System.exit(-1);
-        }
-
-        List<String> output = new LinkedList<String>();
-
-        try {
-                Path path = Paths.get(depOutput);
-                output = Files.readAllLines(path);
-                Files.deleteIfExists(Paths.get(depOutput));
-        } catch (IOException e) {
-            Logger.error("Error reading dependencies classpath file: " + depOutput);
-            System.exit(-1);
-        }
-
-        if (output.size() > 0) {
-            for (String jar : output) {
-                Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
-                Matcher matcher = pattern.matcher(jar);
-                if (matcher.find()) {
-                    dependencies = dependencies + File.pathSeparator + matcher.group(1);
+            
+            if (result.getExitCode() != 0) {
+                Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
+                System.exit(-1);
+            }
+            
+            List<String> output = new LinkedList<String>();
+            Path path = depOutput.toPath();
+            output = Files.readAllLines(path);
+            Files.deleteIfExists(depOutput.toPath());
+            
+            if (output.size() > 0) {
+                for (String jar : output) {
+                    Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
+                    Matcher matcher = pattern.matcher(jar);
+                    if (matcher.find()) {
+                        dependencies = dependencies + File.pathSeparator + matcher.group(1);
+                    }
                 }
             }
+        } catch (IOException ex) {
+            Logger.error(ex, "Error reading dependencies classpath file");
+            System.exit(-1);
         }
-
         return dependencies;
     }
 
     // Get the names of all unit tests in the project
     public void runAllUnitTests(String task, String mavenProfile) {
 
-        if (buildType == Project.BuildType.MAVEN) {
+        if (isMavenProject()) {
             runAllUnitTestsMaven(task, mavenProfile);
         } else {
             runAllUnitTestsGradle();
@@ -432,7 +435,7 @@ public class Project {
     }
 
     public Set<UnitTest> parseTestReports() {
-        if (buildType == BuildType.MAVEN) {
+        if (isMavenProject()) {
             return parseMavenTestReport();
         } else {
             return parseGradleTestReport();
@@ -697,7 +700,7 @@ public class Project {
     public void runUnitTest(UnitTest test, String args, String task, String mavenProfile) throws
             FailedToExecuteTestException {
 
-        if (buildType == Project.BuildType.MAVEN) {
+        if (isMavenProject()) {
             runUnitTestMaven(test, args, task, mavenProfile);
         } else {
             runUnitTestGradle(test, args);

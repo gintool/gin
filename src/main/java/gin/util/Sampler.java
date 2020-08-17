@@ -29,7 +29,6 @@ import gin.test.UnitTestResultSet;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Handy class for mutating and running tests on mutated code.
@@ -133,8 +132,11 @@ public abstract class Sampler {
             this.project = new Project(projectDirectory, projectName);
             if (mavenHome != null) {
                 this.project.setMavenHome(mavenHome);
-            } else {
-                Logger.info("Make sure to set mavenHome for maven projects.");
+            } else if(this.project.isMavenProject()) {
+                // In case it is indeed a Maven project, tries to find maven in
+                // the System's evironment variables and set the path to it.
+                Logger.info("I'm going to try and find your maven home, but make sure to set mavenHome for maven projects in the future.");
+                this.project.setMavenHome(MavenUtils.findMavenHomeFile());
             }
             Logger.info("Calculating classpath..");
             this.classPath = project.classpath();

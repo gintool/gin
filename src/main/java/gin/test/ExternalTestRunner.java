@@ -38,6 +38,7 @@ import gin.Patch;
 public class ExternalTestRunner extends TestRunner {
 
     public static final String HARNESS_CLASS = "gin.test.TestHarness";
+    public static int count = 0;
 
     private Path temporaryDirectory;
     private Path temporaryPackageDirectory;
@@ -102,7 +103,7 @@ public class ExternalTestRunner extends TestRunner {
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException {
-
+        Logger.info("Preparing to run patch #" + (++count) + ": " + patch.toString());
         createTempDirectory();
 
         // Apply the patch.
@@ -129,7 +130,10 @@ public class ExternalTestRunner extends TestRunner {
 
         deleteTempDirectory();
         
-        return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+        UnitTestResultSet unitTestResultSet = new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+        Logger.info("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
+        Logger.info("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
+        return unitTestResultSet;
 
     }
 

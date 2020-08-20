@@ -70,7 +70,7 @@ public class RTSProfiler {
     @Argument(description = "The Regression Test Selection (RTS) mechanism used to collect test cases for each method. "
             + "WARNING: starts does not work on Windows. "
             + "Use 'none' for avoiding RTS altogether. "
-            + "Available: 'none', 'ekstazi', 'starts'. "
+            + "Available: 'none', 'ekstazi', 'starts', 'random'. "
             + "Default: 'ekstazi'.")
     protected String rts = "ekstazi";
 

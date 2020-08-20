@@ -2,6 +2,7 @@ package gin.test.regression.impl;
 
 import gin.base.HotMethod;
 import gin.test.UnitTest;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,18 @@ public class NoneRTSTest {
     @BeforeClass
     public static void beforeClass() {
         noneRTS = new NoneRTS();
+    }
+    
+    @Test
+    public void testGetGoal() {
+        assertEquals("test", this.noneRTS.getTestGoal());
+    }
+
+    @Test
+    public void testGetArgumentLine() throws IOException {
+        String argLine = this.noneRTS.getArgumentLine();
+        assertNotNull(argLine);
+        assertTrue(argLine.trim().isEmpty());
     }
 
     /**

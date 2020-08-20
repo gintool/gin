@@ -134,7 +134,8 @@ public abstract class GP extends Sampler {
              "AllTestsPassed",
              "TotalExecutionTime(ms)",
              "Fitness",
-             "FitnessImprovement"
+             "FitnessImprovement",
+             "TimeStamp"
         };
         try {
             this.outputFile.getParentFile().mkdirs();
@@ -154,7 +155,8 @@ public abstract class GP extends Sampler {
              Boolean.toString(results.allTestsSuccessful()),
              Float.toString(results.totalExecutionTime() / 1000000.0f),
              Double.toString(fitness),
-             Double.toString(improvement)
+             Double.toString(improvement),
+             Long.toString(System.currentTimeMillis())
         };
         outputFileWriter.writeNext(entry);
     }

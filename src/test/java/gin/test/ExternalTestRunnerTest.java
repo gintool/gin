@@ -9,22 +9,25 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import org.junit.AfterClass;
 
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 
 public class ExternalTestRunnerTest {
 
     ExternalTestRunner runnerReuse;
     ExternalTestRunner runnerMakeNew;
-    String packageName = "mypackage";
-    String className = "Simple";
+    static String packageName = "mypackage";
+    static String className = "Simple";
     String fullClassName = packageName + "." + className;
     String methodName = "returnsTrue()";
     String classPath = TestConfiguration.EXAMPLE_DIR_NAME;
-    String testClassname = "myPackage.SimpleTest";
+    static String testClassname = "myPackage.SimpleTest";
     String testMethodName = "testReturnsTrue";
     String sourceFilename;
 
@@ -39,6 +42,30 @@ public class ExternalTestRunnerTest {
         tests.add(test);
         runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
         runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+    }
+    
+    @BeforeClass
+    // Compile source files
+    public static void beforeClass()  {
+
+        String[] sourceFilenames = new String[]{
+                className + ".java",
+                testClassname + ".java",
+                "Example.java",
+                "ExampleTest.java",
+                "ExampleInterface.java",
+                "ExampleBase.java",
+                "ExampleWithInnerClass.java",
+                "ExampleWithInnerClassTest.java",
+                "ExampleFaulty.java",
+                "ExampleFaultyTest.java"};
+
+        for (String sourceFilename: sourceFilenames) {
+            File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
+            File sourceFile = new File(packageDir, sourceFilename);
+            Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
+        }
+
     }
 
     @Test
@@ -71,8 +98,140 @@ public class ExternalTestRunnerTest {
         assertTrue(expectedClassPath.toFile().exists());
 
     }
-
+    
     @Test
-    public void runTests() {
+    public void testRunTests() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
+        runnerReuse.setFailFast(false);
+        
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(3, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+        result = results.get(2);
+        assertTrue(result.getPassed());
+
     }
+    
+    @Test
+    public void testRunTestsFailFast() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
+        runnerReuse.setFailFast(true);
+        
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(2, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+
+    }
+    
+    @Test
+    public void testRunTestsNewSubProcess() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+        runnerMakeNew.setFailFast(false);
+        
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(3, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+        result = results.get(2);
+        assertTrue(result.getPassed());
+
+    }
+    
+    @Test
+    public void testRunTestsNewSubProcessFailFast() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+        runnerMakeNew.setFailFast(true);
+        
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(2, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+            File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+            resourcesDir = new File(resourcesDir, "mypackage");
+            Files.deleteIfExists(new File(resourcesDir, "ExampleInterface.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+    }
+    
 }

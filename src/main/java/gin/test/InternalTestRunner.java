@@ -26,6 +26,7 @@ public class InternalTestRunner extends TestRunner {
 
     protected ClassLoaderFactory classLoaderFactory;
     private CacheClassLoader classLoader;
+    private boolean failFast;
 
     /**
      * Creates an InternalTestRunner given a {@code package.ClassName}, a
@@ -100,6 +101,14 @@ public class InternalTestRunner extends TestRunner {
         this.classLoaderFactory = classLoaderFactory;
     }
 
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
+    }
+    
     /**
      * Applies and compile the given patch, then run all unit tests against it.
      *
@@ -171,6 +180,9 @@ public class InternalTestRunner extends TestRunner {
                 UnitTestResult testResult = runSingleTest(testToRun, classLoader, r);
                 // Save results.
                 results.add(testResult);
+                if(failFast && !testResult.getPassed()) {
+                    return results;
+                }
             }
         }
         return results;

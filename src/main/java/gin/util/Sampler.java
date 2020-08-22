@@ -85,6 +85,11 @@ public abstract class Sampler {
 
     @Argument(alias = "J", description = "Run every test in a new jvm")
     protected Boolean inNewSubprocess = false;
+    
+    @Argument(alias = "ff", description = "Fail fast. "
+            + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
+            + "You probably don't want to set this to true for Automatic Program Repair.")
+    protected Boolean failFast = false;
 
     // Unused at the moment, thus commented out
     //@Argument(alias = "b", description = "Buffer time for test cases to be run on modified code, set only if > -1 and when -inSubprocess is false")
@@ -297,17 +302,16 @@ public abstract class Sampler {
     }
 
     private UnitTestResultSet testPatchInternally(String targetClass, List<UnitTest> tests, Patch patch) {
-
         InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests);
+        testRunner.setFailFast(failFast);
         return testRunner.runTests(patch, reps);
     }
 
     private UnitTestResultSet testPatchInSubprocess(String targetClass, List<UnitTest> tests, Patch patch) {
-
         ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, inNewSubprocess);
-
+        testRunner.setFailFast(failFast);
+        
         UnitTestResultSet results = null;
-
         try {
             results = testRunner.runTests(patch, reps);
         } catch (IOException e) {
@@ -317,9 +321,7 @@ public abstract class Sampler {
             Logger.error(e);
             System.exit(-1);
         }
-
         return results;
-
     }
 
     /*============== the following process input arguments  ==============*/

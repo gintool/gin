@@ -42,6 +42,7 @@ public class ExternalTestRunner extends TestRunner {
 
     private Path temporaryDirectory;
     private Path temporaryPackageDirectory;
+    private boolean failFast;
     
     private boolean inNewSubprocess;
 
@@ -56,6 +57,7 @@ public class ExternalTestRunner extends TestRunner {
     public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean inNewSubprocess) {
         super(fullyQualifiedClassName, classPath, unitTests);
         this.inNewSubprocess = inNewSubprocess;
+        this.failFast = false;
     }
 
     public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean inNewSubprocess) {
@@ -63,6 +65,14 @@ public class ExternalTestRunner extends TestRunner {
         this.setTests(testsForClass(testClassName));
     }
 
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
+    }
+    
     class TestClient {
         
         private Socket clientSocket;
@@ -282,7 +292,7 @@ public class ExternalTestRunner extends TestRunner {
                             if (resp != null) {
                                 UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
                                 results.add(result);
-                                if (inNewSubprocess) {
+                                if (inNewSubprocess || (failFast && !result.getPassed())) {
                                     keepConnection = false; // process is closed after each test
                                     break inner; // process is closed after each test
                                 }
@@ -323,6 +333,10 @@ public class ExternalTestRunner extends TestRunner {
 
             Thread.sleep(500); // cleanup time
 
+            if (failFast && results.stream()
+                    .anyMatch(result -> !result.getPassed())){
+                break;
+            }
         } // end of outer
 
         return results;

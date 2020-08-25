@@ -27,6 +27,7 @@ import gin.SourceFileLine;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
+import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 import java.io.FileWriter;
 import org.apache.commons.lang3.SystemUtils;
@@ -285,7 +286,10 @@ public class PatchTesterNew extends Sampler {
             "TotalExecutionTime(ms)",
             "Fitness",
             "FitnessImprovement",
-            "TimeStamp"
+            "TimeStamp",
+            "NTests",
+            "NPassed",
+            "NFailed"
         };
         try {
             File parentFile = this.outputFile.getParentFile();
@@ -302,6 +306,13 @@ public class PatchTesterNew extends Sampler {
     }
 
     protected void writePatch(UnitTestResultSet results, String methodName, String methodIndex, double fitness, double improvement) {
+        List<UnitTestResult> testResults = results.getResults();
+        long nTests = testResults.size();
+        long nPassed = testResults.stream()
+                .filter(test -> test.getPassed())
+                .count();
+        long nFailed = nTests - nPassed;
+        
         String[] entry = {methodName,
             methodIndex,
             results.getPatch().toString(),
@@ -310,7 +321,10 @@ public class PatchTesterNew extends Sampler {
             Float.toString(results.totalExecutionTime() / 1000000.0f),
             Double.toString(fitness),
             Double.toString(improvement),
-            Long.toString(System.currentTimeMillis())
+            Long.toString(System.currentTimeMillis()),
+            Long.toString(nTests),
+            Long.toString(nPassed),
+            Long.toString(nFailed)
         };
         outputFileWriter.writeNext(entry);
     }

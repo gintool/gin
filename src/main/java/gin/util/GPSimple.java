@@ -64,7 +64,7 @@ public abstract class GPSimple extends GP {
     protected void search(TargetMethod method, Patch origPatch) {
 
         String className = method.getClassName();
-        String methodName = method.toString();
+        String methodName = method.getMethodName();
         List<UnitTest> tests = method.getGinTests();
 
         // Run original code

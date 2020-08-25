@@ -138,7 +138,10 @@ public abstract class GP extends Sampler {
              "TimeStamp"
         };
         try {
-            this.outputFile.getParentFile().mkdirs();
+            File parentFile = this.outputFile.getParentFile();
+            if(parentFile != null) {
+                parentFile.mkdirs();
+            }
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
         } catch (IOException e) {

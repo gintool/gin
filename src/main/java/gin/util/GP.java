@@ -129,6 +129,7 @@ public abstract class GP extends Sampler {
     /*============== Helper methods  ==============*/
     protected void writeNewHeader() {
         String[] entry = {"MethodName",
+             "MethodIndex",
              "Patch",
              "Compiled",
              "AllTestsPassed",
@@ -151,8 +152,9 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
+    protected void writePatch(UnitTestResultSet results, String methodName, int methodIndex, double fitness, double improvement) {
         String[] entry = {methodName,
+             Integer.toString(methodIndex),
              results.getPatch().toString(),
              Boolean.toString(results.getCleanCompile()),
              Boolean.toString(results.allTestsSuccessful()),

@@ -108,7 +108,7 @@ public class InternalTestRunner extends TestRunner {
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
     }
-    
+
     /**
      * Applies and compile the given patch, then run all unit tests against it.
      *
@@ -180,7 +180,7 @@ public class InternalTestRunner extends TestRunner {
                 UnitTestResult testResult = runSingleTest(testToRun, classLoader, r);
                 // Save results.
                 results.add(testResult);
-                if(failFast && !testResult.getPassed()) {
+                if (failFast && !testResult.getPassed()) {
                     return results;
                 }
             }

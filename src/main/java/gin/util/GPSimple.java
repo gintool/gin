@@ -72,7 +72,7 @@ public abstract class GPSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(results, methodName, orig, 0);
+        super.writePatch(results, methodName, method.getMethodID(), orig, 0);
 
         // Keep best 
         double best = orig;
@@ -130,7 +130,7 @@ public abstract class GPSimple extends GP {
                 if (fitnessThreshold(results, orig)) {
                     newPopulation.put(patch, newFitness);
                 }
-                super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+                super.writePatch(results, methodName, method.getMethodID(), newFitness, compareFitness(newFitness, orig));
             }
 
             population = new HashMap<Patch, Double>(newPopulation);

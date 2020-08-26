@@ -3,31 +3,20 @@ package gin.test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.ProcessBuilder.Redirect;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.LinkedList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -273,7 +262,7 @@ public class ExternalTestRunner extends TestRunner {
                         int testIndex = index % this.getTests().size();
                         int rep = index / this.getTests().size();
                         UnitTest test = this.getTests().get(testIndex);
-                        Logger.debug("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep+1 + "/"+reps+", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
+                        Logger.debug("Running test " + (index + 1) + "/" + maxIndex + ": " + "rep=" + (rep+1) + "/"+reps+", " + "testIndex=" + (testIndex+1) + "/" + this.getTests().size() + ": " + test);
                         
                         long timeoutMS = test.getTimeoutMS();
                         String testName = test.toString();
@@ -292,9 +281,18 @@ public class ExternalTestRunner extends TestRunner {
                             if (resp != null) {
                                 UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
                                 results.add(result);
-                                if (inNewSubprocess || (failFast && !result.getPassed())) {
-                                    keepConnection = false; // process is closed after each test
-                                    break inner; // process is closed after each test
+                                // closes the connection and creates a new sub-
+                                // process if:
+                                // 1) new subprocess for each test
+                                if (inNewSubprocess
+                                        // 2) it is fail fast and the test failed
+                                        || (failFast && !result.getPassed())
+                                        // 3) it is the last test. This is
+                                        // needed to avoid test poisoning from
+                                        // one repetition to another
+                                        || testIndex == this.getTests().size() - 1) {
+                                    keepConnection = false; 
+                                    break inner;
                                 }
                             } else {
                                 // connection timed out

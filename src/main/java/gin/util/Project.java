@@ -775,6 +775,7 @@ public class Project {
         request.setProperties(properties);
         properties.setProperty("argLine", args);
         properties.setProperty("test", testName);
+        properties.setProperty("rat.skip", "true");
 
         if (!test.getModuleName().isEmpty()) {
             List<String> moduleList = new LinkedList<>();

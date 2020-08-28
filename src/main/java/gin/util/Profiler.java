@@ -13,14 +13,21 @@ import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
 
 import gin.test.UnitTest;
+import java.nio.charset.Charset;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
 
+// TODO: Giovani, revert it back before commiting.
 /**
- * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof.
- *
+ * Simple profiler for mvn/gradle projects to find the "hot" methods of a test
+ * suite using hprof.
+ * <p>
  * Run directly from the commandline.
- *
- * You provide the project directory, output file, number of reps.... the Profiler does the rest.
+ * <p>
+ * You provide the project directory, output file, number of reps.... the
+ * Profiler does the rest.
  */
 public class Profiler {
 
@@ -38,7 +45,7 @@ public class Profiler {
     protected Integer reps = 1;
 
     @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
-    protected File mavenHome = new File("/usr/local/");  // default on OS X
+    protected File mavenHome;  // default on OS X
 
     @Argument(alias = "v", description = "Set Gradle version")
     protected String gradleVersion;
@@ -55,30 +62,45 @@ public class Profiler {
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
 
-    @Argument(alias = "m", description="Maven mavenProfile to use, e.g. light-test")
+    @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
     protected String mavenProfile = "";
 
+    @Argument(alias = "to", description = "Output file for storing the execution time")
+    protected File timingOutputFile = new File("profile_timing.csv");
 
+    @Argument(alias = "threads", description = "Number of threads to be used by Maven.")
+    protected String threads = "1";
+
+    @Argument(alias = "prop", description = "Additional properties to pass to maven. Properties are divided by comma on a 'key=value' format."
+            + "For example: \"property1=true,property2=false\"."
+            + "If you are using Apache Commons projects, add the \"rat.skip=true\" property, otherwise the projects won't work with Gin.")
+    protected String[] additionalProperties = new String[]{};
+
+    @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
+    private String hprofFileName = "java.hprof.txt";
 
     // Constants
-
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String WORKING_DIR = "hprof";
-    private static final String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,file=";
+    private static final String HPROF_DIR = "hprof";
+    private static final String HPROF_ARG = "-agentlib:hprof=cpu=samples,interval=1,lineno=y,depth=1,file=";
 
     // Instance Members
-    private File workingDir;
+    private File hprofDir;
     private Project project;
 
     public static void main(String args[]) {
+        args = new String[]{"-d", "../commons-codec", "-p", "commons-codec", "-prop", "rat.skip=true", "-threads", "1"};
+        StopWatch watch = StopWatch.createStarted();
         Profiler profiler = new Profiler(args);
         profiler.profile();
+        watch.stop();
+        profiler.writeTimingResults(watch);
     }
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
 
-        this.workingDir = new File(projectDir, WORKING_DIR);
+        this.hprofDir = new File(projectDir, HPROF_DIR);
 
         project = new Project(projectDir, projectName);
         if (this.gradleVersion != null) {
@@ -86,18 +108,52 @@ public class Profiler {
         }
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
+        } else {
+            // If maven home is not set manually, tries to find a home dir in
+            // the system variables
+            String mavenHomePath = MavenUtils.findMavenHomePath();
+            if (mavenHomePath != null) {
+                this.mavenHome = FileUtils.getFile(mavenHomePath);
+                project.setMavenHome(this.mavenHome);
+            }
         }
     }
 
     // Main Profile Method
-
     public void profile() {
 
         Logger.info("Profiling project: " + this.project);
 
-        if (!this.skipInitialRun) {
-            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, null);
+        Properties properties = new Properties();
+        File hprofFile = FileUtils.getFile(hprofDir, hprofFileName);
+        try {
+            FileUtils.forceMkdir(hprofDir);
+        } catch (IOException ex) {
+            Logger.error(ex, "Unable to create hprof folder " + hprofDir.getAbsolutePath());
+            System.exit(-1);
         }
+        StringBuilder argLine = new StringBuilder();
+        // Inject hprof agent
+        argLine.append(HPROF_ARG)
+                .append(FilenameUtils.normalize(hprofFile.getAbsolutePath()));
+
+        // Set the argument line witht he agents
+        properties.put("argLine", argLine.toString().trim());
+
+        // Set the additional properties
+        for (String additionalProperty : additionalProperties) {
+            final String[] split = additionalProperty.split("=");
+            // If format is valid
+            if (split.length == 2) {
+                properties.put(split[0].trim(), split[1].trim());
+            }
+        }
+
+        // Set the number of threads to be used by Maven
+        properties.setProperty("THREADS", threads);
+
+        // Run all test cases
+        project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, properties);
 
         Set<UnitTest> tests = project.parseTestReports();
 
@@ -114,8 +170,8 @@ public class Profiler {
         if (!this.excludeProfiler) {
             results = profileTestSuite(tests);
             tests = tests.stream()
-                        .filter(test -> results.keySet().contains(test) && results.get(test).success)
-                        .collect(Collectors.toSet());
+                    .filter(test -> results.keySet().contains(test) && results.get(test).success)
+                    .collect(Collectors.toSet());
             reportSummary(results);
         }
 
@@ -126,7 +182,6 @@ public class Profiler {
         Collections.sort(hotMethods, Collections.reverseOrder());
 
         writeResults(hotMethods);
-
 
     }
 
@@ -141,7 +196,7 @@ public class Profiler {
         if (failures.size() != 0) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
-            for (ProfileResult result: failures) {
+            for (ProfileResult result : failures) {
                 Logger.warn("Failed to run test: " + result.test + " due to exception: " + result.exception);
             }
         } else {
@@ -150,9 +205,7 @@ public class Profiler {
 
     }
 
-
     // Run entire test suite, one test at a time, with hprof enabled
-
     protected Map<UnitTest, ProfileResult> profileTestSuite(Set<UnitTest> tests) {
 
         Map<UnitTest, ProfileResult> results = new HashMap<>();
@@ -165,11 +218,11 @@ public class Profiler {
         List<UnitTest> sortedTests = new LinkedList(tests);
         Collections.sort(sortedTests);
 
-        for (UnitTest test: sortedTests) {
+        for (UnitTest test : sortedTests) {
 
             if (isParameterizedTest(test)) {
-                Logger.warn("Ignoring parameterized test, as jUnit does not support running individual " +
-                        "parameterized tests.");
+                Logger.warn("Ignoring parameterized test, as jUnit does not support running individual "
+                        + "parameterized tests.");
                 Logger.warn("See https://github.com/junit-team/junit4/issues/664");
                 Logger.warn("Test was: " + test);
                 continue;
@@ -177,12 +230,12 @@ public class Profiler {
 
             testCount++;
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 String args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
-                                                        test, testCount, tests.size(), rep, this.reps);
+                        test, testCount, tests.size(), rep, this.reps);
 
                 Logger.info(progressMessage);
 
@@ -207,9 +260,11 @@ public class Profiler {
     }
 
     static class ProfileResult {
+
         UnitTest test;
         boolean success;
         Exception exception;
+
         ProfileResult(UnitTest test, boolean success, Exception exception) {
             this.test = test;
             this.success = success;
@@ -222,12 +277,11 @@ public class Profiler {
     }
 
     // Parse traces from test suite
-
     protected List<Trace> parseTraces(Set<UnitTest> tests) {
 
         List<Trace> allTraces = new LinkedList<>();
 
-        for (UnitTest test: tests) {
+        for (UnitTest test : tests) {
 
             List<Trace> testTraces = new LinkedList<>();
 
@@ -235,7 +289,7 @@ public class Profiler {
                 continue;
             }
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 Logger.info("Parsing trace for test: " + test);
 
@@ -263,7 +317,7 @@ public class Profiler {
 
         Trace entireTestSuiteTrace = Trace.mergeTraces(traces);
 
-        for (String hotMethod: entireTestSuiteTrace.allMethods()) {
+        for (String hotMethod : entireTestSuiteTrace.allMethods()) {
 
             Set<UnitTest> callingTests = findTestsCallingMethod(hotMethod, traces);
 
@@ -281,7 +335,7 @@ public class Profiler {
 
         Set<UnitTest> tests = new HashSet<>();
 
-        for (Trace trace: traces) {
+        for (Trace trace : traces) {
 
             if (trace.allMethods().contains(method)) {
                 tests.add(trace.getTest());
@@ -310,20 +364,20 @@ public class Profiler {
 
         int hotMethodIndex = 1;
 
-        for (HotMethod method: hotMethods) {
+        for (HotMethod method : hotMethods) {
 
             List<String> testNames = new LinkedList<>();
-            for (UnitTest test: method.tests) {
+            for (UnitTest test : method.tests) {
                 testNames.add(test.toString());
             }
             String allTestNames = String.join(",", testNames);
 
             String[] row = {this.projectName,
-                            Integer.toString(hotMethodIndex),
-                            method.methodName,
-                            Integer.toString(method.count),
-                            allTestNames
-                            };
+                Integer.toString(hotMethodIndex),
+                method.methodName,
+                Integer.toString(method.count),
+                allTestNames
+            };
 
             writer.writeNext(row);
 
@@ -349,7 +403,6 @@ public class Profiler {
             this.tests = tests;
         }
 
-
         String methodName;
         int count;
         Set<UnitTest> tests;
@@ -366,16 +419,24 @@ public class Profiler {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
-        File hprof = new File(workingDir, filenameNoBrackets);
-        return  hprof;
+        File hprof = new File(hprofDir, filenameNoBrackets);
+        return hprof;
     }
 
     private void ensureWorkingDirectory() {
 
-        if (!workingDir.exists()) {
-            workingDir.mkdirs();
+        if (!hprofDir.exists()) {
+            hprofDir.mkdirs();
         }
 
+    }
+
+    private void writeTimingResults(StopWatch watch) {
+        try {
+            FileUtils.writeStringToFile(timingOutputFile, String.valueOf(watch.getTime()) + "\n", Charset.defaultCharset());
+        } catch (IOException ex) {
+            Logger.error(ex, "Error outputing execution time to: " + timingOutputFile);
+        }
     }
 
 }

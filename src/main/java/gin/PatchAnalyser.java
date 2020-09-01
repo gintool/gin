@@ -167,11 +167,11 @@ public class PatchAnalyser {
 
     private static Patch parsePatch(String patchText, SourceFileLine sourceFileLine, SourceFileTree sourceFileTree) {
 
-	if (patchText.equals("|")) {
-	    Logger.info("No edits to be applied. Running original code.");
-	    Patch patch = new Patch(sourceFileTree);
-	    return patch;
-	}
+        if (patchText.equals("|")) {
+            Logger.info("No edits to be applied. Running original code.");
+            Patch patch = new Patch(sourceFileTree);
+            return patch;
+        }
 
         List<Edit> editInstances = new ArrayList<>();
         

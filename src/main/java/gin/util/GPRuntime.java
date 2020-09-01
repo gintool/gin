@@ -41,11 +41,11 @@ public class GPRuntime extends GPSimple {
     // Calculate fitness
     protected double fitness(UnitTestResultSet results) {
    
-	double fitness = Double.MAX_VALUE;
-	if (results.getCleanCompile() && results.allTestsSuccessful()) {
+        double fitness = Double.MAX_VALUE;
+        if (results.getCleanCompile() && results.allTestsSuccessful()) {
             return (double) (results.totalExecutionTime() / 1000000);
-	}
-	return fitness;
+        }
+        return fitness;
     }   
 
     // Calculate fitness threshold, for selection to the next generation

@@ -26,7 +26,7 @@ import gin.edit.Edit;
 
 /**
  * The R_{if} operator from this paper: 
- * Brownlee AEI, Petke J & Rasburn AF (2020)
+ * Brownlee AEI, Petke J and Rasburn AF (2020)
  * Injecting Shortcuts for Faster Running Java Code
  * In: IEEE World Congress on Computational Intelligence, Glasgow, 19.07.2020-24.07.2020
  * Piscataway, NJ, USA: IEEE. https://wcci2020.org/
@@ -60,39 +60,39 @@ public class InsertReturnWithIf extends InsertStatementEdit {
         // get vars in scope
         List<VariableTypeAndName> vds = sf.getPrimitiveVariablesInScopeForStatement(insertStatementID);
         if (!vds.isEmpty()) {
-	        // choose one
-        	VariableTypeAndName v = vds.get(rng.nextInt(vds.size()));
-	        // build a comparison
-	        Expression condition;
-	        if (v.getType().asPrimitiveType().getType() == Primitive.BOOLEAN) {
-	        	// if a boolean, decide whether we want true or false
-	        	if (rng.nextBoolean()) {
-	        		condition = new NameExpr(v.getName());
-	        	} else {
-	        		condition = new UnaryExpr(new NameExpr(v.getName()), com.github.javaparser.ast.expr.UnaryExpr.Operator.LOGICAL_COMPLEMENT);
-	        	}
-	        } else {
-	        	// otherwise, for now, we just want to compare to zero
-	        	Operator operator = new Operator[]{Operator.LESS,
-	        				Operator.LESS_EQUALS,
-	        				Operator.EQUALS,
-	        				Operator.GREATER_EQUALS,
-	        				Operator.GREATER,
-	        			}[rng.nextInt(5)];
-	        	condition = new BinaryExpr(new NameExpr(v.getName()), new IntegerLiteralExpr(0), operator);
-	        }
-	        
-	        IfStmt ifs = new IfStmt();
-	        ifs.setCondition(condition);
-	        ifs.setThenStmt(new ReturnStmt());
-	        toInsert = ifs;
+                // choose one
+                VariableTypeAndName v = vds.get(rng.nextInt(vds.size()));
+                // build a comparison
+                Expression condition;
+                if (v.getType().asPrimitiveType().getType() == Primitive.BOOLEAN) {
+                        // if a boolean, decide whether we want true or false
+                        if (rng.nextBoolean()) {
+                                condition = new NameExpr(v.getName());
+                        } else {
+                                condition = new UnaryExpr(new NameExpr(v.getName()), com.github.javaparser.ast.expr.UnaryExpr.Operator.LOGICAL_COMPLEMENT);
+                        }
+                } else {
+                        // otherwise, for now, we just want to compare to zero
+                        Operator operator = new Operator[]{Operator.LESS,
+                                                Operator.LESS_EQUALS,
+                                                Operator.EQUALS,
+                                                Operator.GREATER_EQUALS,
+                                                Operator.GREATER,
+                                        }[rng.nextInt(5)];
+                        condition = new BinaryExpr(new NameExpr(v.getName()), new IntegerLiteralExpr(0), operator);
+                }
+                
+                IfStmt ifs = new IfStmt();
+                ifs.setCondition(condition);
+                ifs.setThenStmt(new ReturnStmt());
+                toInsert = ifs;
         } else {
-        	toInsert = new ReturnStmt(); // no vars in scope? add a plain return.
+                toInsert = new ReturnStmt(); // no vars in scope? add a plain return.
         }
     }
     
     /**
-     * @param sourceFile - filename containing source statement
+     * @param stmt - statement to insert
      * @param destinationFile - filename containing destination statement
      * @param destinationBlockID - ID of destination block
      * @param destinationChildInBlockID - ID of child in destination block (the 
@@ -104,7 +104,7 @@ public class InsertReturnWithIf extends InsertStatementEdit {
      *          if multiple statements are inserted here, they will be inserted in order)
      */
     public InsertReturnWithIf(Statement stmt, String destinationFile, int destinationBlockID, int destinationChildInBlockID) {
-    	this.toInsert = stmt;
+            this.toInsert = stmt;
         this.destinationFilename = destinationFile;
         this.destinationBlock = destinationBlockID;
         this.destinationChildInBlock = destinationChildInBlockID;
@@ -130,37 +130,37 @@ public class InsertReturnWithIf extends InsertStatementEdit {
 
     static Pattern p = Pattern.compile("\\[if \\((.*)\\)\\s+return;\\]");
     public static Edit fromString(String description) {
-    	Statement stmt;
-    	
-    	Matcher m = p.matcher(description);
-    	    	
-    	if (m.find()) { // i.e. an "if", not a plain return;
-    		String strStatement = m.group(1);
-    	
-	    	Expression condition;
-	    	// if the statement starts with !, we've got a if (!var)
-	    	if (strStatement.startsWith("!")) {
-	    		strStatement.substring(1);
-	    		condition = new UnaryExpr(new NameExpr(strStatement), com.github.javaparser.ast.expr.UnaryExpr.Operator.LOGICAL_COMPLEMENT);
-	    	} else if (!strStatement.matches("\\s+")) { // no whitespace
-	    		// if the statement contains only a variable name, we've got a if (var)
-	    		condition = new NameExpr(strStatement);
-	    	} else {
-	    		// otherwise it's if (var ?? 0)
-	    		String[] condSplit = strStatement.split("\\s+");
-	    		Operator o = Operator.valueOf(condSplit[1]);
-	    		condition = new BinaryExpr(new NameExpr(condSplit[0]), new IntegerLiteralExpr(0), o);
-	    	}
-	    	
-	    	ReturnStmt rstmt = new ReturnStmt();
-	    	IfStmt ifs = new IfStmt();
-	        ifs.setCondition(condition);
-	        ifs.setThenStmt(rstmt);
-	        stmt = ifs;
-    	} else {
-    		stmt = new ReturnStmt();
-    	}
-    	
+            Statement stmt;
+            
+            Matcher m = p.matcher(description);
+                        
+            if (m.find()) { // i.e. an "if", not a plain return;
+                    String strStatement = m.group(1);
+            
+                    Expression condition;
+                    // if the statement starts with !, we've got a if (!var)
+                    if (strStatement.startsWith("!")) {
+                            strStatement.substring(1);
+                            condition = new UnaryExpr(new NameExpr(strStatement), com.github.javaparser.ast.expr.UnaryExpr.Operator.LOGICAL_COMPLEMENT);
+                    } else if (!strStatement.matches("\\s+")) { // no whitespace
+                            // if the statement contains only a variable name, we've got a if (var)
+                            condition = new NameExpr(strStatement);
+                    } else {
+                            // otherwise it's if (var ?? 0)
+                            String[] condSplit = strStatement.split("\\s+");
+                            Operator o = Operator.valueOf(condSplit[1]);
+                            condition = new BinaryExpr(new NameExpr(condSplit[0]), new IntegerLiteralExpr(0), o);
+                    }
+                    
+                    ReturnStmt rstmt = new ReturnStmt();
+                    IfStmt ifs = new IfStmt();
+                ifs.setCondition(condition);
+                ifs.setThenStmt(rstmt);
+                stmt = ifs;
+            } else {
+                    stmt = new ReturnStmt();
+            }
+            
         String tokens[] = description.split("\\s+");
         String destination = tokens[1];
         String destTokens[] = destination.split(":");

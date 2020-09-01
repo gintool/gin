@@ -11,7 +11,7 @@ import gin.edit.Edit;
 
 /**
  * The R operator from this paper: 
- * Brownlee AEI, Petke J & Rasburn AF (2020)
+ * Brownlee AEI, Petke J and Rasburn AF (2020)
  * Injecting Shortcuts for Faster Running Java Code
  * In: IEEE World Congress on Computational Intelligence, Glasgow, 19.07.2020-24.07.2020
  * Piscataway, NJ, USA: IEEE. https://wcci2020.org/
@@ -42,7 +42,6 @@ public class InsertReturn extends InsertStatementEdit {
     }
     
     /**
-     * @param sourceFile - filename containing source statement
      * @param destinationFile - filename containing destination statement
      * @param destinationBlockID - ID of destination block
      * @param destinationChildInBlockID - ID of child in destination block (the 

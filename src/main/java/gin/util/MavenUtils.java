@@ -24,7 +24,7 @@ public class MavenUtils {
      *
      * @return the path to maven home, or {@code /usr/local/} if not found
      *
-     * @api I really don't know how to write tests for this because it can
+     * Note: I really don't know how to write tests for this because it can
      * change from one environment to another. Let's just assume it's working :)
      */
     public static String findMavenHomePath() {

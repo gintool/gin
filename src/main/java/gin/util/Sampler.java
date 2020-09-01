@@ -82,7 +82,7 @@ public abstract class Sampler {
     @Argument(alias = "jj", description = "Run every repetition in a new jvm. Includes option '-j'")
     protected Boolean eachRepetitionInNewSubprocess = false; 
     
-    @Argument(alias = "J", description = "Run every test in a new jvm. Includes option '-j' and '-jj'")
+    @Argument(alias = "J", description = "Run every test in a new jvm. Includes options '-j' and '-jj'")
     protected Boolean eachTestInNewSubprocess = false;  
     
     // Unused at the moment, thus commented out

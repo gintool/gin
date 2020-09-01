@@ -9,17 +9,20 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import org.junit.AfterClass;
 
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 
 public class ExternalTestRunnerTest {
 
     ExternalTestRunner runnerReuse;
     ExternalTestRunner runnerMakeNew;
-    String packageName = "mypackage";
+    static String packageName = "mypackage";
     String className = "Simple";
     String fullClassName = packageName + "." + className;
     String methodName = "returnsTrue()";
@@ -31,14 +34,25 @@ public class ExternalTestRunnerTest {
     File packageDirectory = new File(TestConfiguration.EXAMPLE_DIR, packageName);
     File sourceFile = new File(packageDirectory, className + ".java");
 
+    @BeforeClass
+    public static void setUpClass() {
+        String[] sourceFilenames = new String[]{
+            "Poison.java"};
+
+        for (String sourceFilename : sourceFilenames) {
+            File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
+            File sourceFile = new File(packageDir, sourceFilename);
+            Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
+        }
+    }
 
     @Before
     public void setUp() {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest(testClassname, testMethodName);
         tests.add(test);
-        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
-        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false);
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, false, true);
     }
 
     @Test
@@ -73,6 +87,43 @@ public class ExternalTestRunnerTest {
     }
 
     @Test
-    public void runTests() {
+    public void testPoisonShouldFail() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, false);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        // The second repetition fails
+        assertFalse(results.getResults().get(1).getPassed());
+    }
+    
+    @Test
+    public void testPoisonShouldPass() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, true, false);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        assertTrue(results.getResults().get(1).getPassed());
+    }
+    
+    @Test
+    public void testPoisonShouldPassWithJ() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, true);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        assertTrue(results.getResults().get(1).getPassed());
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+        resourcesDir = new File(resourcesDir, "mypackage");
+        Files.deleteIfExists(new File(resourcesDir, "Poison.class").toPath());
     }
 }

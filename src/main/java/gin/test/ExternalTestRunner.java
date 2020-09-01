@@ -3,31 +3,20 @@ package gin.test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.ProcessBuilder.Redirect;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.LinkedList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -42,7 +31,15 @@ public class ExternalTestRunner extends TestRunner {
     private Path temporaryDirectory;
     private Path temporaryPackageDirectory;
     
-    private boolean inNewSubprocess;
+    /**
+     * If true, each test is run in a new JVM.
+     */
+    private boolean eachTestInNewSubProcess;
+    
+    /**
+     * If true, each repetition of the full test suite is run in a new JVM.
+     */
+    private boolean eachRepetitionInNewSubProcess;
 
     /**
      * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
@@ -50,15 +47,24 @@ public class ExternalTestRunner extends TestRunner {
      * @param fullyQualifiedClassName Class name including full package name.
      * @param classPath Standard Java classpath format.
      * @param unitTests List of unit tests to be run against each patch.
-     * @param inNewSubprocess Make a new JVM for every test?
+     * @param eachTestInNewSubprocess Make a new JVM for every test?
      */
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean inNewSubprocess) {
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess) {
         super(fullyQualifiedClassName, classPath, unitTests);
-        this.inNewSubprocess = inNewSubprocess;
+        this.eachTestInNewSubProcess = eachTestInNewSubprocess;
+        this.eachRepetitionInNewSubProcess = eachRepetitionInNewSubProcess;
     }
 
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean inNewSubprocess) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), inNewSubprocess);
+    /**
+     * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
+     * and a test class that will be used to test patches.
+     * @param fullyQualifiedClassName Class name including full package name.
+     * @param classPath Standard Java classpath format.
+     * @param testClassName Test class used to test the patches.
+     * @param eachTestInNewSubprocess Make a new JVM for every test?
+     */
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess);
         this.setTests(testsForClass(testClassName));
     }
 
@@ -278,9 +284,17 @@ public class ExternalTestRunner extends TestRunner {
                             if (resp != null) {
                                 UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
                                 results.add(result);
-                                if (inNewSubprocess) {
-                                    keepConnection = false; // process is closed after each test
-                                    break inner; // process is closed after each test
+                                // closes the connection and creates a new sub-
+                                // process if:
+                                // 1) new subprocess for each test
+                                if (eachTestInNewSubProcess
+                                        // 2) it is the last test of the
+                                        // repetition. This is needed to avoid
+                                        // test poisoning from one repetition to
+                                        // another
+                                        || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)) {
+                                    keepConnection = false; 
+                                    break inner;
                                 }
                             } else {
                                 // connection timed out

@@ -16,7 +16,7 @@ The goal of Gin is to stimulate development in GI tooling, and to lower the barr
 
 With this in mind, it was written in Java and targets Java, a language almost universally familiar to GI researchers. It also mostly avoids functional constructs and similar in Java. In fact, the code is in parts stupidly simple, in that design patterns and good practice are sacrificed in the name of brevity, simplicity, and readability. It is not designed to be an elegant or general solution, but to be easily understood and modified. The second release of Gin largely shares the same philosophy, while providing utilities to handle large Maven and Gradle projects, that bring additional complexity in parts of the codebase.
 
-In order to reduce Gin's footprint, we rely on several Java libraries, e.g., JavaParser and JUnit to parse and test the code under optimisation, respectively.
+In order to reduce Gin's footprint, we rely on several Java libraries, e.g., JavaParser and JUnit to parse and test the code under optimisation, respectively. Consequently, operations on statements are done on anything that extends the com.github.javaparser.ast.stmt.Statement class (including blocks).
 
 ## Getting Started
 

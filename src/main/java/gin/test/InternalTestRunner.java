@@ -44,7 +44,7 @@ public class InternalTestRunner extends TestRunner {
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) {
-
+        List<UnitTestResult> results;
         // Create a new class loader for every compilation, otherwise java will cache the modified class for us
         classLoader = new CacheClassLoader(this.getClassPath());
         try {
@@ -52,22 +52,25 @@ public class InternalTestRunner extends TestRunner {
             String patchedSource = patch.apply();
             boolean patchValid = patch.lastApplyWasValid();
             List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
-
             // Did the code change as a result of applying the patch?
             boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
-
-            // Compile
-            CompiledCode code = null;
-            //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-                 code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
-            //}
-            boolean compiledOK = (code != null);
-
-            // Run tests
-            List<UnitTestResult> results;
-            if (compiledOK && patchValid) {
-                classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
-                results = runTests(reps, classLoader);
+            //Initialise with default value
+            boolean compiledOK = false;
+            // Only tries to compile and run when the patch is valid
+            // The patch might be invalid due to a couple of edits, which
+            // drop to being no-ops; remaining edits might be ok so still
+            // try compiling and then running in case of no-op
+            if(patchValid) {
+                // Compile
+                CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
+                compiledOK = (code != null);
+                // Run tests
+                if (compiledOK) {
+                    classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
+                    results = runTests(reps, classLoader);
+                } else {
+                    results = emptyResults(reps);
+                }
             } else {
                 results = emptyResults(reps);
             }

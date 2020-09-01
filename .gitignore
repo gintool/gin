@@ -43,3 +43,4 @@ examples/unittests/ExampleWithInnerClassTest.class
 /.classpath
 /.project
 nbproject/
+.settings

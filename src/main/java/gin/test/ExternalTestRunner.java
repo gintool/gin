@@ -102,7 +102,7 @@ public class ExternalTestRunner extends TestRunner {
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException {
-
+        
         createTempDirectory();
 
         // Apply the patch.
@@ -112,17 +112,22 @@ public class ExternalTestRunner extends TestRunner {
         
         // Did the code change as a result of applying the patch?
         boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
-
-        // Compile in temp dir
+        //Initialise with default value
         boolean compiledOK = false;
-        //if (patchValid) { // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-            compiledOK = compileClassToTempDir(patchedSource);
-        //}
-
-        // Run tests
         List<UnitTestResult> results;
-        if (compiledOK) {
-            results = runTests(reps);
+        // Only tries to compile and run when the patch is valid
+        // The patch might be invalid due to a couple of edits, which
+        // drop to being no-ops; remaining edits might be ok so still
+        // try compiling and then running in case of no-op
+        if(patchValid) {
+            // Compile
+            compiledOK = compileClassToTempDir(patchedSource);
+            // Run tests
+            if (compiledOK) {
+                results = runTests(reps);
+            } else {
+                results = emptyResults(reps);
+            }
         } else {
             results = emptyResults(reps);
         }

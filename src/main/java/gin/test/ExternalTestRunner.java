@@ -121,7 +121,7 @@ public class ExternalTestRunner extends TestRunner {
 
         // Run tests
         List<UnitTestResult> results;
-        if (compiledOK) {
+        if (compiledOK && patchValid) {
             results = runTests(reps);
         } else {
             results = emptyResults(reps);

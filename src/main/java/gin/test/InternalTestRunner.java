@@ -63,14 +63,12 @@ public class InternalTestRunner extends TestRunner {
             //}
             boolean compiledOK = (code != null);
 
-            // Add to class loader and run tests
-            List<UnitTestResult> results = null;
-            if (compiledOK) {
+            // Run tests
+            List<UnitTestResult> results;
+            if (compiledOK && patchValid) {
                 classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
                 results = runTests(reps, classLoader);
-            }
-
-            if (!patchValid || !compiledOK) {
+            } else {
                 results = emptyResults(reps);
             }
 

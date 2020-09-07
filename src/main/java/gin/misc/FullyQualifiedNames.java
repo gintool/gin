@@ -1,7 +1,10 @@
 package gin.misc;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.pmw.tinylog.Logger;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
@@ -43,6 +46,9 @@ public class FullyQualifiedNames {
         }
         }
         
+        /** see note in getFQName() about this regex */
+        final static Pattern methodSignaturePattern = Pattern.compile("[^\\s>]+\\(.*?\\)");
+        
         /**
          * @param m - MethodDeclaration
          * @return the fully qualified name and signature for the specified method;
@@ -55,11 +61,20 @@ public class FullyQualifiedNames {
                 // Get signature...
                 String signature = m.getDeclarationAsString(false, false, false); // we don't use getSignature() as that doesn't include generics; this does.
         // Strip out return type if provided
-        String prefix = signature.substring(0, signature.indexOf("("));
-        if (prefix.contains(" ")) {
-            String returnType = prefix.split("\\s")[0];
-            signature = StringUtils.replaceOnce(signature, returnType, "").trim();
+        // Note (Issue #52): return type might include spaces as part of a generic type.
+        // We want the method name, which is the string not containing whitespace or > symbols
+        // finishing before a (
+        // so, method name matches the regex "[^\s>]+\("
+        // of course we also want to keep the signature, which is everything else up to the )
+        // so the regex is actually "[^\s>]+\(.*?\)"
+        Matcher matcher = methodSignaturePattern.matcher(signature);
+        if (!matcher.find()) {
+        	Logger.error("Couldn't parse this method name: " + m.getDeclarationAsString());
+            System.exit(-1);
         }
+        signature = matcher.group();
+                
+                
         // Remove all spaces
         signature = signature.replaceAll("\\s", "");
 

@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
@@ -18,6 +19,8 @@ import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 
+import gin.SourceFile;
+import gin.SourceFileTree;
 import gin.TestConfiguration;
 
 public class FullyQualifiedNamesTest {
@@ -32,6 +35,8 @@ public class FullyQualifiedNamesTest {
     
     private final static String exampleSourceWithInnerClasses = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "TestInnerClasses.java";
 
+    private final static String exampleForIssue52 = "examples/unittests/Triangle_Issue52.java";
+    
     private final static String exampleSourceEnum = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "EnumTest.java";
 
     private final static Charset charSet = Charset.forName("UTF-8");
@@ -103,6 +108,34 @@ public class FullyQualifiedNamesTest {
         assertThat(methodNamesEnum, is(expectedEnum));
         
     }
+    
+    
+    @Test
+    public void testIssue52() {
+    	
+		// was buggy
+		SourceFile sfBug0 = new SourceFileTree(exampleForIssue52, 
+				Collections.singletonList("testMethodBug0(int,Map<List,Integer>)"));
+		
+		// was ok
+		SourceFile sfBug1 = new SourceFileTree(exampleForIssue52, 
+				Collections.singletonList("testMethodBug1(int,Map<List,Integer>)"));
+		
+		// was buggy
+		SourceFile sfBug2 = new SourceFileTree(exampleForIssue52, 
+				Collections.singletonList("testMethodBug2(int,List<Integer>)"));
+
+		
+		// was ok
+		SourceFile sfBug3 = new SourceFileTree(exampleForIssue52, 
+				Collections.singletonList("testMethodBug3(int,Map<List,Integer>)"));
+		
+		// was ok
+		SourceFile sfBug4 = new SourceFileTree(exampleForIssue52, 
+				Collections.singletonList("testMethodBug4(int,List<Integer>)"));
+				
+    }
+    
 
     public static void assertEqualsWithoutWhitespace(String s1, String s2) {
         String s1NoWhitespace = s1.replaceAll("\\s+", "");

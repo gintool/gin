@@ -169,8 +169,7 @@ public class PatchAnalyser {
 
         if (patchText.equals("|")) {
             Logger.info("No edits to be applied. Running original code.");
-            Patch patch = new Patch(sourceFileTree);
-            return patch;
+            return new Patch(sourceFileTree);
         }
 
         List<Edit> editInstances = new ArrayList<>();

@@ -9,6 +9,7 @@ import org.mdkt.compiler.CompiledCode;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
+
 import java.io.IOException;
 
 /**
@@ -23,9 +24,10 @@ public class InternalTestRunner extends TestRunner {
     /**
      * Create an InternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
      * and a list of unit tests that will be used to test patches.
+     *
      * @param fullyQualifiedClassName Class name including full package name.
-     * @param classPath Standard Java classpath format.
-     * @param unitTests List of unit tests to be run against each patch.
+     * @param classPath               Standard Java classpath format.
+     * @param unitTests               List of unit tests to be run against each patch.
      */
     public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests) {
         super(fullyQualifiedClassName, classPath, unitTests);
@@ -39,8 +41,9 @@ public class InternalTestRunner extends TestRunner {
 
     /**
      * Apply and compile the given patch, then run all unit tests against it.
+     *
      * @param patch Patch to apply.
-     * @param reps Number of times to run each test.
+     * @param reps  Number of times to run each test.
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) {
@@ -60,7 +63,7 @@ public class InternalTestRunner extends TestRunner {
             // The patch might be invalid due to a couple of edits, which
             // drop to being no-ops; remaining edits might be ok so still
             // try compiling and then running in case of no-op
-            if(patchValid) {
+            if (patchValid) {
                 // Compile
                 CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
                 compiledOK = (code != null);
@@ -78,7 +81,7 @@ public class InternalTestRunner extends TestRunner {
             return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
         } finally {
             try {
-                if(this.classLoader != null) {
+                if (this.classLoader != null) {
                     this.classLoader.close();
                 }
             } catch (IOException ex) {
@@ -89,7 +92,8 @@ public class InternalTestRunner extends TestRunner {
 
     /**
      * Run each of the tests against the modified class held in the class load, rep times.
-     * @param reps Number of times to run each test
+     *
+     * @param reps        Number of times to run each test
      * @param classLoader CacheClassLoader containing correct classpath and any modified classes.
      * @return
      */
@@ -97,8 +101,8 @@ public class InternalTestRunner extends TestRunner {
 
         LinkedList<UnitTestResult> results = new LinkedList<>();
 
-        for (int r=1; r <= reps; r++) {
-            for (UnitTest test: this.getTests()) {
+        for (int r = 1; r <= reps; r++) {
+            for (UnitTest test : this.getTests()) {
                 results.add(runSingleTest(test, classLoader, r));
             }
         }
@@ -112,6 +116,7 @@ public class InternalTestRunner extends TestRunner {
      * Loads JUnitBridge using a separate classloader and invokes jUnit using reflection.
      * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
      * class with the freshly compiled version.
+     *
      * @return
      */
     private UnitTestResult runSingleTest(UnitTest test, CacheClassLoader classLoader, int rep) {
@@ -126,13 +131,12 @@ public class InternalTestRunner extends TestRunner {
 
         Object runner = null;
         try {
-            runner = runnerClass.newInstance();
-        } catch (InstantiationException e) {
+            runner = runnerClass.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
             Logger.error("Could not instantiate isolated test runner: " + e);
             System.exit(-1);
-        } catch (IllegalAccessException e) {
-            Logger.error("Could not instantiate isolated test runner: " + e);
-            System.exit(-1);
+        } catch (NoSuchMethodException | InvocationTargetException e) {
+            e.printStackTrace();
         }
 
         Method method = null;
@@ -162,10 +166,8 @@ public class InternalTestRunner extends TestRunner {
         if (threadsAfter != threadsBefore) {
             Logger.warn("Possible hanging threads remain after test");
         }
-        
-        UnitTestResult res = (UnitTestResult) result;
 
-        return res;
+        return (UnitTestResult) result;
 
     }
 

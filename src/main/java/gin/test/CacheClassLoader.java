@@ -68,8 +68,7 @@ public class CacheClassLoader extends URLClassLoader {
         // Otherwise, try the system class loader. If not there, must be part of the project, so load ourselves.
         try {
             ClassLoader system = ClassLoader.getSystemClassLoader();
-            Class fromSystemCall = system.loadClass(name);
-            return fromSystemCall;
+           return system.loadClass(name);
         } catch (ClassNotFoundException e) {
             return super.findClass(name);
         }

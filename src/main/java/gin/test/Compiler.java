@@ -71,7 +71,7 @@ public class Compiler {
             JavaCompiler.CompilationTask task;
             task = compiler.getTask(null, fm, null, options, null, compilationUnit);
 
-            if (!task.call()) {
+            if (Boolean.TRUE.equals(!task.call())) {
                 Logger.warn("Error during compilation of source on disk: " + source);
                 compiled = false;
             } else {

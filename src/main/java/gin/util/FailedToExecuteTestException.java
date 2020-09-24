@@ -17,6 +17,7 @@ public class FailedToExecuteTestException extends Exception {
         this.test = test;
     }
 
+    @Override
     public String toString() {
         return this.getClass().getSimpleName() + " " + reason + " for test " + this.test;
     }

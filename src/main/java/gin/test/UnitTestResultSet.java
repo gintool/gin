@@ -3,9 +3,6 @@ package gin.test;
 import java.util.ArrayList;
 import java.util.List;
 
-//import java.util.HashMap;
-//import java.util.Map;
-//import java.util.stream.Collectors;
 
 import gin.Patch;
 
@@ -22,9 +19,11 @@ public class UnitTestResultSet {
     private boolean patchValid;
     private boolean compiledOK;
     private List<Boolean> editsValid;
-    
-    /**was the patch effectively a no-op? i.e. was there some difference between
-     * input and output source?*/
+
+    /**
+     * was the patch effectively a no-op? i.e. was there some difference between
+     * input and output source?
+     */
     private boolean noOp;
 
     public UnitTestResultSet(Patch patch, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, boolean noOp, List<UnitTestResult> results) {
@@ -43,7 +42,7 @@ public class UnitTestResultSet {
     public boolean getValidPatch() {
         return patchValid;
     }
-    
+
     public List<Boolean> getEditsValid() {
         return editsValid;
     }
@@ -51,7 +50,7 @@ public class UnitTestResultSet {
     public boolean getCleanCompile() {
         return compiledOK;
     }
-    
+
     public boolean getNoOp() {
         return noOp;
     }
@@ -94,7 +93,7 @@ public class UnitTestResultSet {
     public String toString() {
         String myrep = String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
                 patch, patchValid, compiledOK, noOp);
-        if (results.size() > 0) {
+        if (!results.isEmpty()) {
             myrep += " Results follow: ";
         }
         for (UnitTestResult result : results) {

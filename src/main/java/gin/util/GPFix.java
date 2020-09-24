@@ -77,7 +77,7 @@ public class GPFix extends GPSimple {
         }
 
         if (!results.getCleanCompile()) {
-            if (record) {
+            if (Boolean.TRUE.equals(record)) {
                 recordedFitness.put(patch, fitness);
             }
             return fitness;
@@ -93,7 +93,7 @@ public class GPFix extends GPSimple {
                 }
             }
         }   
-        if (record) {
+        if (Boolean.TRUE.equals(record)) {
             recordedFitness.put(patch, fitness);
         }
         if (fitness == this.targetFitness) {

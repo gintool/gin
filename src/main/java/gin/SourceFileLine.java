@@ -113,11 +113,11 @@ public class SourceFileLine extends SourceFile {
     private void populateIDLists() {
 
         // A JavaParser CU is used to find the lines for the methods
-        CompilationUnit compilationUnit = JavaParser.parse(this.getSource().toString());
+        CompilationUnit compilationUnit = JavaParser.parse(this.getSource());
         
         this.lineIDsInTargetMethod = new ArrayList<>();
 
-        if (this.targetMethods == null || targetMethods.size() == 0) {
+        if (this.targetMethods == null || targetMethods.isEmpty()) {
             if (this.lines != null) {
                 this.lineIDsInTargetMethod.addAll(this.lines.keySet());
             }

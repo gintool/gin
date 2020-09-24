@@ -5,7 +5,6 @@ import java.util.List;
 
 import gin.Patch;
 import gin.test.UnitTest;
-import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 
 
@@ -34,8 +33,7 @@ public class GPRuntime extends GPSimple {
 
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
 
-        UnitTestResultSet results = testPatch(className, tests, origPatch);
-        return results;
+        return testPatch(className, tests, origPatch);
     }
 
     // Calculate fitness
@@ -43,7 +41,7 @@ public class GPRuntime extends GPSimple {
    
         double fitness = Double.MAX_VALUE;
         if (results.getCleanCompile() && results.allTestsSuccessful()) {
-            return (double) (results.totalExecutionTime() / 1000000);
+            return results.totalExecutionTime() / 1000000.0;
         }
         return fitness;
     }   

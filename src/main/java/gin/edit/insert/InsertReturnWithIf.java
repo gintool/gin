@@ -1,28 +1,20 @@
 package gin.edit.insert;
 
-import java.util.List;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.expr.BinaryExpr.Operator;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
-import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.expr.UnaryExpr;
-import com.github.javaparser.ast.stmt.BreakStmt;
-import com.github.javaparser.ast.stmt.EmptyStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.PrimitiveType.Primitive;
-
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.SourceFileTree.VariableTypeAndName;
 import gin.edit.Edit;
+
+import java.util.List;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The R_{if} operator from this paper: 
@@ -161,9 +153,9 @@ public class InsertReturnWithIf extends InsertStatementEdit {
                     stmt = new ReturnStmt();
             }
             
-        String tokens[] = description.split("\\s+");
+        String[] tokens = description.split("\\s+");
         String destination = tokens[1];
-        String destTokens[] = destination.split(":");
+        String[] destTokens = destination.split(":");
         String destFile = destTokens[0];
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);

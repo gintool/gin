@@ -13,11 +13,10 @@ import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
-import gin.edit.statement.CopyStatement;
 
 public class BinaryOperatorReplacement extends ModifyNodeEdit {
     
-    public String targetFilename;
+    private String targetFilename;
     private final int targetNode;
     private final Operator source;
     private final Operator replacement;
@@ -119,8 +118,8 @@ public class BinaryOperatorReplacement extends ModifyNodeEdit {
     }
     
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
-        String sourceTokens[] = tokens[1].split(":");
+        String[] tokens = description.split("\\s+");
+        String[] sourceTokens = tokens[1].split(":");
         String sourceFile = sourceTokens[0];
         int targetNodeID = Integer.parseInt(sourceTokens[1]);
         Operator sourceOperator = Operator.valueOf(tokens[2]);

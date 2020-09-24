@@ -1,10 +1,9 @@
 package gin.test;
 
-import java.lang.Throwable;
-import java.text.ParseException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.runner.notification.Failure;
+
+import java.text.ParseException;
 
 /**
  * Represents a result of repNumber run of UnitTest
@@ -131,11 +130,11 @@ public class UnitTestResult {
                 // 'expected:<EXPECTED> but was:<ACTUAL>'
                 if ( s.contains("expected:<") && s.contains(" but was:<") ) {
                     s = s.substring(s.lastIndexOf("expected:<")+10);
-                    s = s.substring(0, s.indexOf(">"));
+                    s = s.substring(0, s.indexOf('>'));
                     this.expectedValue = s;
                     s = this.exceptionMessage;
                     s = s.substring(s.lastIndexOf(" but was:<")+10);
-                    s = s.substring(0, s.indexOf(">"));
+                    s = s.substring(0, s.indexOf('>'));
                     this.actualValue = s;
                 }
                 // 'expected: EXPECTED but was: ACTUAL'
@@ -150,11 +149,11 @@ public class UnitTestResult {
                 // 'expected same:<EXPECTED> was not:<ACTUAL>
                 else if ( s.contains("expected same:<") && s.contains(" was not:<") ) {
                     s = s.substring(s.lastIndexOf("expected same:<")+15);
-                    s = s.substring(0, s.indexOf(">"));
+                    s = s.substring(0, s.indexOf('>'));
                     this.expectedValue = s;
                     s = this.exceptionMessage;
                     s = s.substring(s.lastIndexOf(" was not:<")+10);
-                    s = s.substring(0, s.indexOf(">"));
+                    s = s.substring(0, s.indexOf('>'));
                     this.actualValue = s;
                 }
                 // 'expected null, but was:<ACTUAL>'

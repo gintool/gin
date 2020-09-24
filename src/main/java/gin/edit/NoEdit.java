@@ -17,7 +17,7 @@ public class NoEdit extends Edit {
         return sourceFile;
     }
 
-    public static Edit fromString(String description) {
+    public static Edit fromString() {
         return new NoEdit();
     }
 

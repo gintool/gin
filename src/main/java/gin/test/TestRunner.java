@@ -1,16 +1,15 @@
 package gin.test;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
+import gin.Patch;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.TestClass;
 import org.pmw.tinylog.Logger;
 
-import gin.Patch;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A TestRunner is defined by a class name, a class path, and a set of tests to
@@ -68,7 +67,7 @@ public abstract class TestRunner {
     public List<UnitTest> testsForClass(String testClassName) {
 
         List<UnitTest> tests = new LinkedList<>();
-        try(CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath())){
+        try (CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath())) {
             // Set up list of tests based on the class name
             Class clazz = null;
 
@@ -80,23 +79,23 @@ public abstract class TestRunner {
 
             List<FrameworkMethod> methods = new TestClass(clazz).getAnnotatedMethods(Test.class);
 
-            for (FrameworkMethod eachTestMethod : methods){
+            for (FrameworkMethod eachTestMethod : methods) {
 
                 String methodName = eachTestMethod.getName();
                 UnitTest test = new UnitTest(testClassName, methodName);
                 tests.add(test);
 
             }
-        } catch (IOException ex){
+        } catch (IOException ex) {
             Logger.error(ex, "Error while closing the ClassLoader.");
         }
         return tests;
 
     }
 
-    public LinkedList<UnitTestResult> emptyResults(int reps) {
+    public List<UnitTestResult> emptyResults(int reps) {
         LinkedList<UnitTestResult> results = new LinkedList<>();
-        for (int rep=1; rep<=reps; rep++) {
+        for (int rep = 1; rep <= reps; rep++) {
             for (UnitTest test : this.getTests()) {
                 UnitTestResult result = new UnitTestResult(test, rep);
                 results.add(result);
@@ -104,22 +103,22 @@ public abstract class TestRunner {
         }
         return results;
     }
-    
+
     /**
      * tests for a no-op patch
-     * @param original - the original source
-     * @param patchedSource - the patched source 
-     * @return true if these are the "same" (i.e. patch was a no-op) 
+     *
+     * @param original      - the original source
+     * @param patchedSource - the patched source
+     * @return true if these are the "same" (i.e. patch was a no-op)
      * - ignoring whitespace and line comments (JavaParser drops some line comments!)
      */
     protected boolean isPatchedSourceSame(String original, String patchedSource) {
         String normalisedPatched = patchedSource.replaceAll("//.*\\n", "");
         String normalisedOriginal = original.replaceAll("//.*\\n", "");
         normalisedPatched = normalisedPatched.replaceAll("\\s+", " ");
-        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
-        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
-        boolean noOp = normalisedPatched.equals(normalisedOriginal);
-        return noOp;
+        normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
+        normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
+        return normalisedPatched.equals(normalisedOriginal);
     }
 
 }

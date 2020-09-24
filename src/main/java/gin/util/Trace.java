@@ -1,4 +1,5 @@
 package gin.util;
+
 import gin.test.UnitTest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +24,7 @@ public class Trace {
         this.methodCounts = methodCounts;
     }
 
-    public Set<String> allMethods () {
+    public Set<String> allMethods() {
         return methodCounts.keySet();
     }
 
@@ -47,7 +48,7 @@ public class Trace {
 
         Map<String, Integer> allSamples = new HashMap<>();
 
-        for (Trace trace: traces) {
+        for (Trace trace : traces) {
             trace.methodCounts.forEach((k, v) -> allSamples.merge(k, v, (v1, v2) -> v1 + v2));
         }
 
@@ -124,7 +125,7 @@ public class Trace {
         String method;
         int lineNumber;  // -1 = unknown
 
-        public TracePoint (String method, int line) {
+        public TracePoint(String method, int line) {
             this.method = method;
             this.lineNumber = line;
         }
@@ -155,7 +156,8 @@ public class Trace {
         String footer = "CPU SAMPLES END";
         String tableRegex = header + "(.*?)" + footer;
 
-        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);;
+        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
+        ;
         Matcher m = p.matcher(hprof);
 
         m.find();
@@ -199,10 +201,10 @@ public class Trace {
         Set<String> mainClasses = project.allMainClasses();
         Set<String> testClasses = project.allTestClasses();
 
-        for (Map.Entry<String, Integer> entry: methodCounts.entrySet()) {
+        for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
 
             String method = entry.getKey();
-            String className = StringUtils.substringBeforeLast(method,".");
+            String className = StringUtils.substringBeforeLast(method, ".");
 
             boolean includeMethod = shouldIncludeMethod(method);
 
@@ -277,11 +279,7 @@ public class Trace {
             return false;
         }
 
-        if (method.contains("clinit")) {
-            return false;
-        }
-
-        return true;
+        return !method.contains("clinit");
 
     }
 

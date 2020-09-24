@@ -225,7 +225,7 @@ public class ExternalTestRunner extends TestRunner {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.startsWith(TestHarness.PORT_PREFIX)) {
-                    port = Integer.parseInt(line.substring(line.indexOf("=") + 1));
+                    port = Integer.parseInt(line.substring(line.indexOf('=') + 1));
                     break;
                 }
             }
@@ -241,7 +241,8 @@ public class ExternalTestRunner extends TestRunner {
                     scanner.close();
                 }
             }).start();
-            
+
+
             // we're spawning a separate process, and if our JVM
             // dies we'll want to kill the other process too,
             // otherwise it'll be left open keeping file and port
@@ -250,6 +251,7 @@ public class ExternalTestRunner extends TestRunner {
             // kills the JVM so this doesn't fire in that situation;
             // apparently nothing can be done about that)
             Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
                 public void run() {
                     if (process.isAlive()) {
                         process.destroyForcibly();
@@ -280,7 +282,7 @@ public class ExternalTestRunner extends TestRunner {
 
                         client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
 
-                        String message = testName + "," + String.valueOf(rep+1) + "," + String.valueOf(timeoutMS);
+                        String message = testName + "," + rep + 1 + "," + timeoutMS;
                         String resp;
                         try {
                             resp = client.sendMessage(message);
@@ -373,7 +375,8 @@ public class ExternalTestRunner extends TestRunner {
     }
 
     public void deleteTempDirectory() throws IOException {
-        if ( (temporaryDirectory != null) && (Files.exists(temporaryDirectory)) && (Files.isDirectory(temporaryDirectory)) ) {
+        if ( (temporaryDirectory != null) && (temporaryDirectory.toFile().exists())
+                && (temporaryDirectory.toFile().isDirectory())) {
             FileUtils.deleteDirectory(temporaryDirectory.toFile());
             Logger.info("Deleted temp dir: " + temporaryDirectory);
         } else {

@@ -74,9 +74,6 @@ public abstract class GPSimple extends GP {
         double orig = fitness(results);
         super.writePatch(results, methodName, orig, 0);
 
-        // Keep best 
-        double best = orig;
-
         // Generation 1
         Map<Patch, Double> population = new HashMap<>();
         population.put(origPatch, orig);

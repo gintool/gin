@@ -119,7 +119,7 @@ public class Project {
     // Calculate classpath for project
     public String classpath() {
         List<String> classDirNames = new LinkedList<>();
-        for (File classDir: this.allClassDirs()) {
+        for (File classDir : this.allClassDirs()) {
             classDirNames.add(classDir.getAbsolutePath());
         }
         String[] classDirNamesArray = classDirNames.toArray(new String[0]);
@@ -154,7 +154,7 @@ public class Project {
 
         String pathToSource = className.replace(".", File.separator) + ".java";
 
-        for (File dir: mainSourceDirs) {
+        for (File dir : mainSourceDirs) {
             File sourceFile = new File(dir, pathToSource);
             if (sourceFile.exists()) {
                 return sourceFile;
@@ -214,7 +214,7 @@ public class Project {
         IdeaProject project = connection.getModel(IdeaProject.class);
         GradleProject gradleProject = connection.getModel(GradleProject.class);
 
-        for(IdeaModule module : project.getModules()) {
+        for (IdeaModule module : project.getModules()) {
 
             File outputDir = module.getCompilerOutput().getOutputDir();
             if (outputDir != null) {
@@ -226,7 +226,7 @@ public class Project {
                 this.testClassDirs.add(testDir);
             }
 
-            for(IdeaContentRoot root:   module.getContentRoots()) {
+            for (IdeaContentRoot root : module.getContentRoots()) {
 
                 File moduleDir = root.getRootDirectory();
                 this.moduleDirs.add(moduleDir);
@@ -239,11 +239,11 @@ public class Project {
                 this.mainClassDirs.add(mainDir);
                 this.testClassDirs.add(testDir);
 
-                for (IdeaSourceDirectory dir: root.getSourceDirectories()) {
+                for (IdeaSourceDirectory dir : root.getSourceDirectories()) {
                     this.mainSourceDirs.add(dir.getDirectory());
                 }
 
-                for (IdeaSourceDirectory dir: root.getTestDirectories()) {
+                for (IdeaSourceDirectory dir : root.getTestDirectories()) {
                     this.testSourceDirs.add(dir.getDirectory());
                 }
             }
@@ -280,11 +280,7 @@ public class Project {
         try {
             model = reader.read(new FileReader(pomFile));
             model.setPomFile(pomFile);
-        } catch (IOException e) {
-            Logger.error("Error creating maven model from pom.xml");
-            Logger.error(e);
-            System.exit(-1);
-        } catch (XmlPullParserException e) {
+        } catch (IOException | XmlPullParserException e) {
             Logger.error("Error creating maven model from pom.xml");
             Logger.error(e);
             System.exit(-1);
@@ -299,7 +295,7 @@ public class Project {
         }
 
         if (source == null) {
-            source = "src"+ File.separator +"main"+ File.separator +"java";
+            source = "src" + File.separator + "main" + File.separator + "java";
         }
 
         File sourceDir = new File(dir, source);
@@ -312,7 +308,7 @@ public class Project {
             test = model.getBuild().getTestSourceDirectory();
         }
         if (test == null) {
-            test = "src"+ File.separator +"test"+ File.separator +"java";
+            test = "src" + File.separator + "test" + File.separator + "java";
         }
         File testDir = new File(dir, test);
         if (testDir.exists()) {
@@ -324,7 +320,7 @@ public class Project {
             output = model.getBuild().getOutputDirectory();
         }
         if (output == null) {
-            output = "target"+ File.separator +"classes";
+            output = "target" + File.separator + "classes";
         }
         File mainClassDir = new File(dir, output);
         this.mainClassDirs.add(mainClassDir);
@@ -333,18 +329,17 @@ public class Project {
         if (build != null) {
             model.getBuild().getTestOutputDirectory();
         }
-        if (outputTest == null) {
-            outputTest = "target"+ File.separator +"test-classes";
-        }
+
+        outputTest = "target" + File.separator + "test-classes";
+
         File testClassDir = new File(dir, outputTest);
         this.testClassDirs.add(testClassDir);
 
         // Now any modules
-        for (String module: model.getModules()) {
+        for (String module : model.getModules()) {
             File subdir = new File(dir, module);
             this.addDirMaven(subdir);
         }
-
 
 
     }
@@ -354,25 +349,25 @@ public class Project {
         String dependencies = "";
         try {
             InvocationRequest request = new DefaultInvocationRequest();
-            
+
             File pomFile = new File(projectDir, "pom.xml");
             request.setPomFile(pomFile);
-            
+
             request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
-            
+
             File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
-            
+
             Properties properties = new Properties();
             properties.setProperty("outputFile", depOutput.getCanonicalPath());
             properties.setProperty("appendOutput", "true");
             properties.setProperty("outputAbsoluteArtifactFilename", "true");
             request.setProperties(properties);
-            
+
             Invoker invoker = new DefaultInvoker();
             invoker.setMavenHome(mavenHome);
-            
+
             InvocationResult result = null;
-            
+
             // Extremely detailed debug output.
             if (this.DEBUG) {
                 request.setErrorHandler(new InvocationOutputHandler() {
@@ -382,32 +377,32 @@ public class Project {
                     }
                 });
             }
-            
+
             request.setOutputHandler(new InvocationOutputHandler() {
                 @Override
                 public void consumeLine(String line) throws IOException {
                     // silent output on stdout
                 }
             });
-            
+
             try {
                 result = invoker.execute(request);
             } catch (MavenInvocationException e) {
                 Logger.error(e, "Error invoking maven.");
                 System.exit(-1);
             }
-            
+
             if (result.getExitCode() != 0) {
                 Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
                 System.exit(-1);
             }
-            
-            List<String> output = new LinkedList<String>();
+
+            List<String> output;
             Path path = depOutput.toPath();
             output = Files.readAllLines(path);
             Files.deleteIfExists(depOutput.toPath());
-            
-            if (output.size() > 0) {
+
+            if (!output.isEmpty()) {
                 for (String jar : output) {
                     Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
                     Matcher matcher = pattern.matcher(jar);
@@ -488,7 +483,6 @@ public class Project {
         }
 
 
-
     }
 
     // Gradle
@@ -566,7 +560,7 @@ public class Project {
                 String innerClassName = "";
 
                 if (className.contains("$")) {
-                    innerClassName = StringUtils.substringAfter(className,"$");
+                    innerClassName = StringUtils.substringAfter(className, "$");
                     className = StringUtils.substringBefore(className, "$");
                 }
 
@@ -601,7 +595,7 @@ public class Project {
                         }
 
                         Boolean success = rowEntries.get(2).text().equals("passed");
-                        if (!success) {
+                        if (Boolean.TRUE.equals(!success)) {
                             Logger.warn("Excluding ignored or failed test case: " + test);
                         } else {
                             tests.add(test);
@@ -680,9 +674,9 @@ public class Project {
 
                     UnitTest test = new UnitTest(className, methodName, moduleName);
 
-                    if (skipped.size() != 0) {
+                    if (!skipped.isEmpty()) {
                         Logger.warn("Test skipped so excluded by profiler: " + test);
-                    } else if (failure.size() !=0) {
+                    } else if (!failure.isEmpty()) {
                         Logger.warn("Test case failed, excluded by profiler: " + test);
                     } else {
                         tests.add(test);
@@ -815,7 +809,7 @@ public class Project {
 
         Set<String> mainClasses = new HashSet<>();
 
-        for (File classDir: this.mainClassDirs) {
+        for (File classDir : this.mainClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             mainClasses.addAll(classes);
         }
@@ -829,7 +823,7 @@ public class Project {
 
         Set<String> testClasses = new HashSet<>();
 
-        for (File classDir: this.testClassDirs) {
+        for (File classDir : this.testClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             testClasses.addAll(classes);
         }
@@ -862,7 +856,7 @@ public class Project {
 
         ImmutableSet<ClassPath.ClassInfo> classes = guavaClassPathUtility.getAllClasses();
 
-        for (ClassPath.ClassInfo classInfo: classes) {
+        for (ClassPath.ClassInfo classInfo : classes) {
             classNames.add(classInfo.getName());
         }
 
@@ -924,7 +918,7 @@ public class Project {
                 methodSignature = m.getDeclarationAsString(false, false, false);
 
                 // Strip out return type if provided
-                String prefix = methodSignature.substring(0, methodSignature.indexOf("("));
+                String prefix = methodSignature.substring(0, methodSignature.indexOf('('));
                 if (prefix.contains(" ")) {
                     String returnType = prefix.split("\\s")[0];
                     methodSignature = StringUtils.replaceOnce(methodSignature, returnType, "").trim();

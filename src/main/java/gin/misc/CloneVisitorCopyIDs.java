@@ -3,7 +3,6 @@ package gin.misc;
 
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.collections4.map.HashedMap;
 
@@ -453,8 +452,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
     public Visitable visit(final BinaryExpr n, final Object arg) {
         Integer id = n.getData(SourceFileTree.NODEKEY_ID);
         if (nodesToReplace.containsKey(id)) {
-            Node r = nodesToReplace.get(id);
-            return r;
+            return nodesToReplace.get(id);
         }
 
         Visitable r = checkForReplacement(n);
@@ -1026,7 +1024,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
     @Override
     public Node visit(final ImportDeclaration n, final Object arg) {
         Node r = super.visit(n, arg);
-        ((ImportDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.getData(SourceFileTree.NODEKEY_ID));
+        r.setData(SourceFileTree.NODEKEY_ID, n.getData(SourceFileTree.NODEKEY_ID));
         return r;
     }
 
@@ -1052,15 +1050,6 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
         return r;
     }
 
-    @Override
-    protected <T extends Node> T cloneNode(Optional<T> node, Object arg) {
-        return super.cloneNode(node, arg);
-    }
-
-    @Override
-    protected <T extends Node> T cloneNode(T node, Object arg) {
-        return super.cloneNode(node, arg);
-    }
 
     @Override
     public Visitable visit(final ModuleExportsStmt n, final Object arg) {
@@ -1119,12 +1108,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
 
     private Node checkForReplacement(Node n) {
         Integer id = n.getData(SourceFileTree.NODEKEY_ID);
-        if (nodesToReplace.containsKey(id)) {
-            Node r = nodesToReplace.get(id);
-            return r;
-        } else {
-            return null;
-        }
+        return nodesToReplace.getOrDefault(id, null);
     }
 
 }

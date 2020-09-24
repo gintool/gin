@@ -84,7 +84,7 @@ public class RandomSampler extends Sampler {
             Logger.info("Start applying and testing random patches..");
 
             for (int i = 0; i < patchNumber; i++) {
-                Random prng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(patchSeed + (100000 * i)));
+                Random prng = new JDKRandomBridge(RandomSource.MT, patchSeed + (100000L * i));
                 
                 // Pick a random method
                 TargetMethod method = methodData.get(mrng.nextInt(size));

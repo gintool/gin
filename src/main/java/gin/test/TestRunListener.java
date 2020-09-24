@@ -1,14 +1,13 @@
 package gin.test;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.List;
-
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.pmw.tinylog.Logger;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 
 /**
  * Saves result of a UnitTest run into UnitTestResult.

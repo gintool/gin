@@ -70,7 +70,7 @@ public class Profiler {
     private File workingDir;
     private Project project;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Profiler profiler = new Profiler(args);
         profiler.profile();
     }
@@ -97,7 +97,7 @@ public class Profiler {
 
         Logger.info("Profiling project: " + this.project);
 
-        if (!this.skipInitialRun) {
+        if (Boolean.TRUE.equals(!this.skipInitialRun)) {
             project.runAllUnitTests(this.mavenTaskName, this.mavenProfile);
         }
 
@@ -113,7 +113,7 @@ public class Profiler {
         }
 
         Map<UnitTest, ProfileResult> results;
-        if (!this.excludeProfiler) {
+        if (Boolean.TRUE.equals(!this.excludeProfiler)) {
             results = profileTestSuite(tests);
             tests = tests.stream()
                         .filter(test -> results.keySet().contains(test) && results.get(test).success)
@@ -140,7 +140,7 @@ public class Profiler {
         List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
                 .collect(Collectors.toList());
 
-        if (failures.size() != 0) {
+        if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
             for (ProfileResult result: failures) {
@@ -368,8 +368,7 @@ public class Profiler {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
-        File hprof = new File(workingDir, filenameNoBrackets);
-        return  hprof;
+        return new File(workingDir, filenameNoBrackets);
     }
 
     private void ensureWorkingDirectory() {

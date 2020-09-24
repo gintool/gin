@@ -1,16 +1,10 @@
 package gin.util;
 
-import java.io.File;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map.Entry;
-
-import com.sampullara.cli.Args;
-import org.pmw.tinylog.Logger;
-
-import gin.Patch;
 import gin.SourceFileLine;
 import gin.test.UnitTestResultSet;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
 
 /**
  * Runs all tests found in the methodFile for a given project through Gin. 

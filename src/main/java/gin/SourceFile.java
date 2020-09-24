@@ -94,8 +94,7 @@ public abstract class SourceFile {
         String base = (new File(".")).getAbsolutePath();
         base = StringUtils.chop(base);
         String filePath = (new File(this.filename)).getAbsolutePath();        
-        String result = StringUtils.substringAfter(filePath, base);
-        return result;        
+        return StringUtils.substringAfter(filePath, base);
     }
     
     /**
@@ -111,7 +110,7 @@ public abstract class SourceFile {
     /*============== the following are some helper methods and classes ==============*/
     
     private static Set<TargetMethod> parseTargetMethods(List<String> targetMethodNames) {
-        Set<TargetMethod> methods = new HashSet<TargetMethod>();
+        Set<TargetMethod> methods = new HashSet<>();
         for (String method : targetMethodNames) {
             // Remove all spaces
             method = method.replaceAll("\\s", "");
@@ -159,7 +158,7 @@ public abstract class SourceFile {
      */
     protected static List<Node> getTargetMethodRootNodesFromCU(CompilationUnit cu, Set<TargetMethod> targetMethods) {
 
-        if (targetMethods == null || targetMethods.size() == 0 ||
+        if (targetMethods == null || targetMethods.isEmpty() ||
                 (targetMethods.size() == 1 && targetMethods.contains(new TargetMethod("")))) {
             return Collections.singletonList(cu);
         }

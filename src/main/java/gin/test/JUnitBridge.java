@@ -1,23 +1,19 @@
 package gin.test;
 
-import java.lang.IllegalAccessException;
-import java.lang.NoSuchFieldException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Executable;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
 import org.pmw.tinylog.Logger;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Map;
+
 // see https://stackoverflow.com/questions/24319697/java-lang-exception-no-runnable-methods-exception-in-running-junits/24319836
 // timeout annotation based on: https://gist.github.com/henrrich/185503f10cbb2499a0dc75ec4c29c8f2 and https://www.baeldung.com/java-reflection-change-annotation-params
 
-/** 
+/**
  * Runs a given test in the same JVM as this class.
  */
 public class JUnitBridge {
@@ -27,8 +23,9 @@ public class JUnitBridge {
     /**
      * This method is called using reflection to ensure tests are run in an environment that employs a separate
      * classloader.
+     *
      * @param test the unit test to run
-     * @param rep the number of times to repeat the test
+     * @param rep  the number of times to repeat the test
      * @return the test results
      */
     public UnitTestResult runTest(UnitTest test, int rep) {
@@ -58,7 +55,7 @@ public class JUnitBridge {
             result.setExceptionMessage(e.getMessage());
             return result;
 
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             Logger.error("Exception when instrumenting tests with a timeout: " + e);
             Logger.error(e.getMessage());
             Logger.trace(e);
@@ -66,15 +63,7 @@ public class JUnitBridge {
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
-        
-        } catch (IllegalAccessException e) {
-            Logger.error("Exception when instrumenting tests with a timeout: " + e);
-            Logger.error(e.getMessage());
-            Logger.trace(e);
 
-            result.setExceptionType(e.getClass().getName());
-            result.setExceptionMessage(e.getMessage());
-            return result;
         }
 
         JUnitCore jUnitCore = new JUnitCore();
@@ -112,8 +101,8 @@ public class JUnitBridge {
 
     }
 
-     // A hack to add a timeout to the method using Java reflection.
-     // It also checks that a given test method exists. Parametirised test methods are not allowed (following JUnit standard).
+    // A hack to add a timeout to the method using Java reflection.
+    // It also checks that a given test method exists. Parametirised test methods are not allowed (following JUnit standard).
     protected static void annotateTestWithTimeout(Class<?> clazz, String methodName, long timeout) throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
 
         Field annotations = Executable.class.getDeclaredField("declaredAnnotations");
@@ -124,7 +113,7 @@ public class JUnitBridge {
         boolean methodFound = false;
 
         while ((!methodFound) && (clazzCopy != java.lang.Object.class)) {
-       
+
             try {
                 Method m = clazzCopy.getDeclaredMethod(methodName);
                 methodFound = true;
@@ -138,15 +127,15 @@ public class JUnitBridge {
                 }
 
             } catch (NoSuchMethodException e) {
-            
+
                 clazzCopy = clazzCopy.getSuperclass();
-            
+
             }
         }
 
         if (!methodFound) {
             throw new NoSuchMethodException("Test method " + methodName + " not found in " + clazz.getName());
-        }        
+        }
 
     }
 

@@ -1,35 +1,24 @@
 package gin.util;
 
-import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
-
-import org.pmw.tinylog.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.concurrent.TimeoutException;
-
-import java.lang.InterruptedException;
-
-import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
-import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.ProcessResult;
-import org.zeroturnaround.exec.stream.LogOutputStream;
-
+import com.sampullara.cli.Argument;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.apache.maven.model.Dependency;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.pmw.tinylog.Logger;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.stream.LogOutputStream;
+import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 /**
  * EvoSuite test generator.
@@ -180,7 +169,7 @@ public class TestCaseGenerator {
         
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         TestCaseGenerator evotestgen = new TestCaseGenerator(args);
         
@@ -221,7 +210,7 @@ public class TestCaseGenerator {
 
     private String[] gatherAllClasses() {
 
-                List<String> allClasses = new ArrayList<String>(); 
+                List<String> allClasses = new ArrayList<>();
 
                 String[] cmd = {"java", "-jar", evosuiteCP.getAbsolutePath() 
                                     , "-listClasses" 
@@ -250,9 +239,7 @@ public class TestCaseGenerator {
 
                 allClasses.removeIf(Objects::isNull);
 
-                String[] allClassNames = allClasses.toArray(new String[0]);
-
-                return allClassNames;
+               return allClasses.toArray(new String[0]);
 
         }
 

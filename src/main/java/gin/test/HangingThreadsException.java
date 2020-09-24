@@ -13,6 +13,7 @@ public class HangingThreadsException extends RuntimeException {
         this.threadsAfter = threadsAfter;
     }
 
+    @Override
     public String toString() {
         return "Threads before: " + threadsBefore + " != threads after: " + threadsAfter;
     }

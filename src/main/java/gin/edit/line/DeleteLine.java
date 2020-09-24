@@ -44,9 +44,9 @@ public class DeleteLine extends LineEdit {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
+        String[] tokens = description.split("\\s+");
         String source = tokens[1];
-        String sourceTokens[] = source.split(":");
+        String[] sourceTokens = source.split(":");
         String sourceFile = sourceTokens[0];
         int sourceLine = Integer.parseInt(sourceTokens[1]);
         return new DeleteLine(sourceFile, sourceLine);

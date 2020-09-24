@@ -3,7 +3,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
 import com.github.javaparser.ast.CompilationUnit;
@@ -47,7 +46,7 @@ public class FullyQualifiedNames {
         }
         
         /** see note in getFQName() about this regex */
-        final static Pattern methodSignaturePattern = Pattern.compile("[^\\s>]+\\(.*?\\)");
+         static final Pattern methodSignaturePattern = Pattern.compile("[^\\s>]+\\(.*?\\)");
         
         /**
          * @param m - MethodDeclaration
@@ -103,7 +102,7 @@ public class FullyQualifiedNames {
                                 String curName = ((ClassOrInterfaceDeclaration)current).getNameAsString();
                                 name = "$" + curName + name;
                         } else if ((current instanceof ObjectCreationExpr) && ((ObjectCreationExpr)current).getAnonymousClassBody().isPresent()) { // what we've seen so far is contained in an object creation expression, so an anonymous inner class
-                                int num = ((ObjectCreationExpr)current).getData(NODEKEY_ANON_INNER_CLASS_NUM);
+                                int num = current.getData(NODEKEY_ANON_INNER_CLASS_NUM);
                                 name = "$" + num + name;
                         }
 

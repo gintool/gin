@@ -186,11 +186,20 @@ public class FullyQualifiedNames {
         private static String getClassName(CompilationUnit cu) {
             List<ClassOrInterfaceDeclaration> l = cu.getChildNodesByType(ClassOrInterfaceDeclaration.class);
             if (!l.isEmpty()) {  
-                return l.get(0).getNameAsString() + ".";
+            	// find public class!
+            	for (ClassOrInterfaceDeclaration cd : l) {
+            		if (cd.isPublic()) {
+            			return cd.getNameAsString() + ".";
+            		}
+            	}
             } else { // no top level class; maybe an enum instead?
                 List<EnumDeclaration> l2 = cu.getChildNodesByType(EnumDeclaration.class);
                 if (!l2.isEmpty()) {
-                    return l2.get(0).getNameAsString() + ".";
+                	for (EnumDeclaration ed : l2) {
+                		if (ed.isPublic()) {
+                			return ed.getNameAsString() + ".";
+                		}
+                	}
                 }
             }
             

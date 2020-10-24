@@ -34,8 +34,8 @@ public class MatchedDeleteStatement extends DeleteStatement {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
-        String tokens2[] = tokens[1].split(":");
+        String[] tokens = description.split("\\s+");
+        String[] tokens2 = tokens[1].split(":");
         String filename = tokens2[0];
         int statement = Integer.parseInt(tokens2[1]);
         return new MatchedDeleteStatement(filename, statement);

@@ -138,7 +138,7 @@ public class InsertBreakWithIf extends InsertStatementEdit {
                     Expression condition;
                     // if the statement starts with !, we've got a if (!var)
                     if (strStatement.startsWith("!")) {
-                            strStatement.substring(1);
+                            strStatement = strStatement.substring(1);
                             condition = new UnaryExpr(new NameExpr(strStatement), com.github.javaparser.ast.expr.UnaryExpr.Operator.LOGICAL_COMPLEMENT);
                     } else if (!strStatement.matches("\\s+")) { // no whitespace
                             // if the statement contains only a variable name, we've got a if (var)

@@ -79,7 +79,7 @@ public class FullyQualifiedNames {
         signature = signature.replaceAll("\\s", "");
 
                 
-                String name = "." + signature;
+                StringBuilder name = new StringBuilder("." + signature);
 
                 while ((parent = current.getParentNode().orElse(null)) != null) {
 
@@ -87,24 +87,24 @@ public class FullyQualifiedNames {
                 PackageDeclaration p = ((CompilationUnit)parent).getPackageDeclaration().orElse(null);
                                 
                 if (p != null) {
-                    name = p.getNameAsString() + "." + ((ClassOrInterfaceDeclaration)current).getNameAsString() + name;
+                    name.insert(0, p.getNameAsString() + "." + ((ClassOrInterfaceDeclaration) current).getNameAsString());
                 } else {
-                    name = ((ClassOrInterfaceDeclaration)current).getNameAsString() + name;
+                    name.insert(0, ((ClassOrInterfaceDeclaration) current).getNameAsString());
                 }
             } else if ((current instanceof EnumDeclaration) && (parent instanceof CompilationUnit)) { // top level enum
                 PackageDeclaration p = ((CompilationUnit)parent).getPackageDeclaration().orElse(null);
                                 
                 if (p != null) {
-                    name = p.getNameAsString() + "." + ((EnumDeclaration)current).getNameAsString() + name;
+                    name.insert(0, p.getNameAsString() + "." + ((EnumDeclaration) current).getNameAsString());
                 } else {
-                    name = ((EnumDeclaration)current).getNameAsString() + name;
+                    name.insert(0, ((EnumDeclaration) current).getNameAsString());
                 }
             } else if (current instanceof ClassOrInterfaceDeclaration) { // non-top-level class with a name
                                 String curName = ((ClassOrInterfaceDeclaration)current).getNameAsString();
-                                name = "$" + curName + name;
+                                name.insert(0, "$" + curName);
                         } else if ((current instanceof ObjectCreationExpr) && ((ObjectCreationExpr)current).getAnonymousClassBody().isPresent()) { // what we've seen so far is contained in an object creation expression, so an anonymous inner class
                                 int num = ((ObjectCreationExpr)current).getData(NODEKEY_ANON_INNER_CLASS_NUM);
-                                name = "$" + num + name;
+                                name.insert(0, "$" + num);
                         }
 
                         // ignore any methods other than the bottom-level one!
@@ -112,7 +112,7 @@ public class FullyQualifiedNames {
                         
                 }
                 
-                return name;
+                return name.toString();
         }
         
         /**

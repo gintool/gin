@@ -92,14 +92,14 @@ public class UnitTestResultSet {
 
     @Override
     public String toString() {
-        String myrep = String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
-                patch, patchValid, compiledOK, noOp);
+        StringBuilder myrep = new StringBuilder(String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
+                patch, patchValid, compiledOK, noOp));
         if (results.size() > 0) {
-            myrep += " Results follow: ";
+            myrep.append(" Results follow: ");
         }
         for (UnitTestResult result : results) {
-            myrep += " [" + result.toString() + "]";
+            myrep.append(" [").append(result.toString()).append("]");
         }
-        return myrep;
+        return myrep.toString();
     }
 }

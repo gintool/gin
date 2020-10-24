@@ -509,9 +509,9 @@ public abstract class Sampler {
         String testAssertionExpectedValue = testResult.getAssertionExpectedValue();
         String testAssertionActualValue = testResult.getAssertionActualValue();
         String noOp = Boolean.toString(patchNoOp);
-        String editsValidStr = "";
+        StringBuilder editsValidStr = new StringBuilder();
         for (Boolean b : editsValid) {
-            editsValidStr += (b ? 1 : 0);
+            editsValidStr.append(b ? 1 : 0);
         }
 
         String[] entry = {
@@ -533,7 +533,7 @@ public abstract class Sampler {
                 testAssertionExpectedValue,
                 testAssertionActualValue,
                 noOp,
-                editsValidStr
+                editsValidStr.toString()
         };
 
         outputFileWriter.writeNext(entry);

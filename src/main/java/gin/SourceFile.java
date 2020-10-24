@@ -159,7 +159,7 @@ public abstract class SourceFile {
      */
     protected static List<Node> getTargetMethodRootNodesFromCU(CompilationUnit cu, Set<TargetMethod> targetMethods) {
 
-        if (targetMethods == null || targetMethods.size() == 0 ||
+        if (targetMethods == null || targetMethods.isEmpty() ||
                 (targetMethods.size() == 1 && targetMethods.contains(new TargetMethod("")))) {
             return Collections.singletonList(cu);
         }

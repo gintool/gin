@@ -117,7 +117,7 @@ public class SourceFileLine extends SourceFile {
         
         this.lineIDsInTargetMethod = new ArrayList<>();
 
-        if (this.targetMethods == null || targetMethods.size() == 0) {
+        if (this.targetMethods == null || targetMethods.isEmpty()) {
             if (this.lines != null) {
                 this.lineIDsInTargetMethod.addAll(this.lines.keySet());
             }

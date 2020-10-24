@@ -1,4 +1,5 @@
 package gin.misc;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,11 +23,17 @@ import com.github.javaparser.ast.expr.ObjectCreationExpr;
  */
 public class FullyQualifiedNames {
 
-    /**the key used to track fully qualified names for methods in JavaParser nodes*/
-    public static final DataKey<String> NODEKEY_FQ_METHOD_NAME = new DataKey<String>() { };
+    /**
+     * the key used to track fully qualified names for methods in JavaParser nodes
+     */
+    public static final DataKey<String> NODEKEY_FQ_METHOD_NAME = new DataKey<String>() {
+    };
 
-    /**the key used to track numbers of anon inner classes in JavaParser nodes*/
-    public static final DataKey<Integer> NODEKEY_ANON_INNER_CLASS_NUM = new DataKey<Integer>() { };
+    /**
+     * the key used to track numbers of anon inner classes in JavaParser nodes
+     */
+    public static final DataKey<Integer> NODEKEY_ANON_INNER_CLASS_NUM = new DataKey<Integer>() {
+    };
 
     // general approach was suggested here:
     // https://github.com/javaparser/javaparser/issues/222
@@ -41,18 +48,20 @@ public class FullyQualifiedNames {
         // now, for every node in the CU, annotate with fully qualified name
         List<MethodDeclaration> nodes = cu.getChildNodesByType(MethodDeclaration.class);
 
-        for(MethodDeclaration m : nodes) {
+        for (MethodDeclaration m : nodes) {
             m.setData(NODEKEY_FQ_METHOD_NAME, getFQName(m));
         }
     }
 
-    /** see note in getFQName() about this regex */
+    /**
+     * see note in getFQName() about this regex
+     */
     final static Pattern methodSignaturePattern = Pattern.compile("[^\\s>]+\\(.*?\\)");
 
     /**
      * @param m - MethodDeclaration
      * @return the fully qualified name and signature for the specified method;
-     *    e.g. containing.package.TopLevelClass$InnerClass.myMethod(Foo,Bar)
+     * e.g. containing.package.TopLevelClass$InnerClass.myMethod(Foo,Bar)
      */
     public static String getFQName(MethodDeclaration m) {
         Node current = m;
@@ -84,26 +93,26 @@ public class FullyQualifiedNames {
         while ((parent = current.getParentNode().orElse(null)) != null) {
 
             if ((current instanceof ClassOrInterfaceDeclaration) && (parent instanceof CompilationUnit)) { // top level class
-                PackageDeclaration p = ((CompilationUnit)parent).getPackageDeclaration().orElse(null);
+                PackageDeclaration p = ((CompilationUnit) parent).getPackageDeclaration().orElse(null);
 
                 if (p != null) {
-                    name = p.getNameAsString() + "." + ((ClassOrInterfaceDeclaration)current).getNameAsString() + name;
+                    name = p.getNameAsString() + "." + ((ClassOrInterfaceDeclaration) current).getNameAsString() + name;
                 } else {
-                    name = ((ClassOrInterfaceDeclaration)current).getNameAsString() + name;
+                    name = ((ClassOrInterfaceDeclaration) current).getNameAsString() + name;
                 }
             } else if ((current instanceof EnumDeclaration) && (parent instanceof CompilationUnit)) { // top level enum
-                PackageDeclaration p = ((CompilationUnit)parent).getPackageDeclaration().orElse(null);
+                PackageDeclaration p = ((CompilationUnit) parent).getPackageDeclaration().orElse(null);
 
                 if (p != null) {
-                    name = p.getNameAsString() + "." + ((EnumDeclaration)current).getNameAsString() + name;
+                    name = p.getNameAsString() + "." + ((EnumDeclaration) current).getNameAsString() + name;
                 } else {
-                    name = ((EnumDeclaration)current).getNameAsString() + name;
+                    name = ((EnumDeclaration) current).getNameAsString() + name;
                 }
             } else if (current instanceof ClassOrInterfaceDeclaration) { // non-top-level class with a name
-                String curName = ((ClassOrInterfaceDeclaration)current).getNameAsString();
+                String curName = ((ClassOrInterfaceDeclaration) current).getNameAsString();
                 name = "$" + curName + name;
-            } else if ((current instanceof ObjectCreationExpr) && ((ObjectCreationExpr)current).getAnonymousClassBody().isPresent()) { // what we've seen so far is contained in an object creation expression, so an anonymous inner class
-                int num = ((ObjectCreationExpr)current).getData(NODEKEY_ANON_INNER_CLASS_NUM);
+            } else if ((current instanceof ObjectCreationExpr) && ((ObjectCreationExpr) current).getAnonymousClassBody().isPresent()) { // what we've seen so far is contained in an object creation expression, so an anonymous inner class
+                int num = ((ObjectCreationExpr) current).getData(NODEKEY_ANON_INNER_CLASS_NUM);
                 name = "$" + num + name;
             }
 
@@ -118,6 +127,7 @@ public class FullyQualifiedNames {
     /**
      * Annotate all anon inner classes with a number like javac would allocate
      * https://github.com/javaparser/javaparser/issues/138
+     *
      * @param root - CompilationUnit
      */
     public static void preProcessAnonInnerClasses(CompilationUnit root) {
@@ -133,14 +143,14 @@ public class FullyQualifiedNames {
             // is the child an anon inner class?
             // (ObjectCreationExpr with an anon class body)
             // if so, annotate with a number
-            if ((childNode instanceof ObjectCreationExpr) && (((ObjectCreationExpr)childNode).getAnonymousClassBody().isPresent())) {
+            if ((childNode instanceof ObjectCreationExpr) && (((ObjectCreationExpr) childNode).getAnonymousClassBody().isPresent())) {
                 childNode.setData(NODEKEY_ANON_INNER_CLASS_NUM, nextNumberAtThisLevel);
                 nextNumberAtThisLevel++;
             }
 
             // recursive call to look at the child nodes of this child
             if ((childNode instanceof ClassOrInterfaceDeclaration) || // named inner class
-                    ((childNode instanceof ObjectCreationExpr) && (((ObjectCreationExpr)childNode).getAnonymousClassBody().isPresent()))) {   // anon inner class
+                    ((childNode instanceof ObjectCreationExpr) && (((ObjectCreationExpr) childNode).getAnonymousClassBody().isPresent()))) {   // anon inner class
 
                 // if we're exploring child nodes of an inner class - any type -
                 // then increment level and reset counter to 1
@@ -159,18 +169,19 @@ public class FullyQualifiedNames {
 
     /**
      * This will take the supplied method name, and:
-     *  if it appears to be fully qualified, return it unchanged
-     *  if it appears to be missing the package or top-level class name, it will add those, retrieved from the supplied CompilationUnit
-     *
+     * if it appears to be fully qualified, return it unchanged
+     * if it appears to be missing the package or top-level class name, it will add those, retrieved from the supplied CompilationUnit
+     * <p>
      * This will not make any assumptions about inner classes:
      * the supplied method name must be relative to the top-level class
+     *
      * @param methodName - String
-     * @param cu - CompilationUnit
+     * @param cu         - CompilationUnit
      * @return methodName
      */
     public static String makeMethodNameFullyQualified(String methodName, CompilationUnit cu) {
         String className = getClassName(cu);
-        PackageDeclaration p = ((CompilationUnit)cu).getPackageDeclaration().orElse(null);
+        PackageDeclaration p = ((CompilationUnit) cu).getPackageDeclaration().orElse(null);
         String packageName = p != null ? p.getNameAsString() + "." : "";
 
         if (!methodName.startsWith(packageName) || packageName.isEmpty()) {

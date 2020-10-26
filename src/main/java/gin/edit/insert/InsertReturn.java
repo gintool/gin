@@ -77,9 +77,9 @@ public class InsertReturn extends InsertStatementEdit {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
+        String[] tokens = description.split("\\s+");
         String destination = tokens[1];
-        String destTokens[] = destination.split(":");
+        String[] destTokens = destination.split(":");
         String destFile = destTokens[0];
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);

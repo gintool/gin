@@ -119,8 +119,8 @@ public class BinaryOperatorReplacement extends ModifyNodeEdit {
     }
     
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
-        String sourceTokens[] = tokens[1].split(":");
+        String[] tokens = description.split("\\s+");
+        String[] sourceTokens = tokens[1].split(":");
         String sourceFile = sourceTokens[0];
         int targetNodeID = Integer.parseInt(sourceTokens[1]);
         Operator sourceOperator = Operator.valueOf(tokens[2]);

@@ -70,7 +70,7 @@ public class Profiler {
     private File workingDir;
     private Project project;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Profiler profiler = new Profiler(args);
         profiler.profile();
     }

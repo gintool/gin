@@ -88,12 +88,12 @@ public class MoveStatement extends StatementEdit {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
-        String sourceTokens[] = tokens[1].split(":");
+        String[] tokens = description.split("\\s+");
+        String[] sourceTokens = tokens[1].split(":");
         String sourceFilename = sourceTokens[0];
         int sourceStatement = Integer.parseInt(sourceTokens[1]);
         String destination = tokens[3];
-        String destTokens[] = destination.split(":");
+        String[] destTokens = destination.split(":");
         String destFilename = destTokens[0];
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);

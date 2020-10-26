@@ -94,7 +94,7 @@ public class UnitTestResultSet {
     public String toString() {
         String myrep = String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
                 patch, patchValid, compiledOK, noOp);
-        if (results.size() > 0) {
+        if (!results.isEmpty()) {
             myrep += " Results follow: ";
         }
         for (UnitTestResult result : results) {

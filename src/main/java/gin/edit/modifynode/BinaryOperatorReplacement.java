@@ -13,7 +13,6 @@ import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
-import gin.edit.statement.CopyStatement;
 
 public class BinaryOperatorReplacement extends ModifyNodeEdit {
     

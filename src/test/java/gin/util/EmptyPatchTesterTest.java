@@ -162,7 +162,7 @@ public class EmptyPatchTesterTest {
         sampler.classPath = resourcesDir.getPath();
         sampler.outputFile = outputFile;
         sampler.setUp();
-        sampler.inNewSubprocess = true;
+        sampler.eachTestInNewSubprocess = true;
 
         sampler.sampleMethods();
 

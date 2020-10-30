@@ -180,7 +180,7 @@ public class TestCaseGenerator {
         
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         TestCaseGenerator evotestgen = new TestCaseGenerator(args);
         

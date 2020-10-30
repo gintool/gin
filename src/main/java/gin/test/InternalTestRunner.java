@@ -128,25 +128,27 @@ public class InternalTestRunner extends TestRunner {
             String patchedSource = patch.apply();
             boolean patchValid = patch.lastApplyWasValid();
             List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
-
             // Did the code change as a result of applying the patch?
             boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
-
-            // Compile
-            //if (patchValid) { // // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-            CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
-            //}
-            boolean compiledOK = (code != null);
-
-            // Add to class loader and run tests
-            List<UnitTestResult> results = null;
-            if (compiledOK) {
-                byte[] byteCodeArray = code.getByteCode();
-                this.classLoader.setCustomCompiledCode(this.getClassName(), byteCodeArray);
-                results = runTests(reps, this.classLoader);
-            }
-
-            if (!patchValid || !compiledOK) {
+            //Initialise with default value
+            boolean compiledOK = false;
+            // Only tries to compile and run when the patch is valid
+            // The patch might be invalid due to a couple of edits, which
+            // drop to being no-ops; remaining edits might be ok so still
+            // try compiling and then running in case of no-op
+            List<UnitTestResult> results;
+            if(patchValid) {
+                // Compile
+                CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
+                compiledOK = (code != null);
+                // Run tests
+                if (compiledOK) {
+                    classLoader.setCustomCompiledCode(this.getClassName(), code.getByteCode());
+                    results = runTests(reps, classLoader);
+                } else {
+                    results = emptyResults(reps);
+                }
+            } else {
                 results = emptyResults(reps);
             }
             UnitTestResultSet unitTestResultSet = new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);

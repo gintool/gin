@@ -158,24 +158,36 @@ public class Patch {
         
     }
     
-    /**add a random edit to this patch of a specific class*/
+    /**add a random edit to this patch of a specific class
+     * @param rng - for random number generation
+     * @param allowableEditType - list of allowable edit types 
+    */
     public void addRandomEditOfClass(Random rng, Class<? extends Edit> allowableEditType) {
-    	addRandomEditOfClasses(rng, Collections.singletonList(allowableEditType));
+            addRandomEditOfClasses(rng, Collections.singletonList(allowableEditType));
     }
     
-    /**add a random edit to this patch, one of a specific list of classes*/
+    /**add a random edit to this patch, one of a specific list of classes
+     * @param rng - for random number generation
+     * @param allowableEditTypes - list of allowable edit types 
+    */
     public void addRandomEditOfClasses(Random rng, List<Class<? extends Edit>> allowableEditTypes) {
-    	this.add(randomEdit(rng, allowableEditTypes));
+            this.add(randomEdit(rng, allowableEditTypes));
     }
 
-    /**add a random edit to this patch of a specific type (family of classes)*/
+    /**add a random edit to this patch of a specific type (family of classes)
+     * @param rng - for random number generation
+     * @param allowableEditType - list of allowable edit types 
+    */
     public void addRandomEdit(Random rng, EditType allowableEditType) {
-    	addRandomEditOfClasses(rng, Edit.getEditClassesOfType(allowableEditType));
+            addRandomEditOfClasses(rng, Edit.getEditClassesOfType(allowableEditType));
     }
 
-    /**add a random edit to this patch, one of a list of specific types (families of classes)*/
+    /**        add a random edit to this patch, one of a list of specific types (families of classes)
+     * @param rng - for random number generation
+     * @param allowableEditTypes - list of allowable edit types 
+    */
     public void addRandomEdit(Random rng, List<EditType> allowableEditTypes) {
-    	addRandomEditOfClasses(rng, Edit.getEditClassesOfTypes(allowableEditTypes));
+            addRandomEditOfClasses(rng, Edit.getEditClassesOfTypes(allowableEditTypes));
     }
 
     private Edit randomEdit(Random rng, List<Class<? extends Edit>> allowableEditTypes) {
@@ -194,14 +206,14 @@ public class Patch {
         
         // make one
         try {
-        	edit = editType.getDeclaredConstructor(SourceFile.class, Random.class).newInstance(sourceFile, rng);
+                edit = editType.getDeclaredConstructor(SourceFile.class, Random.class).newInstance(sourceFile, rng);
         } catch (NoSuchMethodException e) {
-        	// we get here if the edit author forgot to add a (SourceFile,Random) constructor
-        	// leave edit null, it'll be filled below.
-        	// BUT we should issue a warning...
-        	Logger.warn("(SourceFile,Random) constructor not found for edit class " + editType);
+                // we get here if the edit author forgot to add a (SourceFile,Random) constructor
+                // leave edit null, it'll be filled below.
+                // BUT we should issue a warning...
+                Logger.warn("(SourceFile,Random) constructor not found for edit class " + editType);
         } catch (Exception e) {
-        	// e.g. NoApplicableNodesException
+                // e.g. NoApplicableNodesException
             // we get here if the chosen edit couldn't be created for the given source file
             // leave edit null, it'll be filled below.
         }

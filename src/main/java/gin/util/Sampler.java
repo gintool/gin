@@ -82,9 +82,12 @@ public abstract class Sampler {
 
     @Argument(alias = "j", description = "Run tests in a separate jvm")
     protected Boolean inSubprocess = false;
-
-    @Argument(alias = "J", description = "Run every test in a new jvm")
-    protected Boolean inNewSubprocess = false;
+    
+    @Argument(alias = "jj", description = "Run every repetition in a new jvm. Includes option '-j'")
+    protected Boolean eachRepetitionInNewSubprocess = false; 
+    
+    @Argument(alias = "J", description = "Run every test in a new jvm. Includes options '-j' and '-jj'")
+    protected Boolean eachTestInNewSubprocess = false;  
     
     @Argument(alias = "ff", description = "Fail fast. "
             + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
@@ -236,7 +239,7 @@ public abstract class Sampler {
 
         UnitTestResultSet resultSet = null;
 
-        if (!inSubprocess && !inNewSubprocess) {
+        if (!inSubprocess && !eachRepetitionInNewSubprocess && !eachTestInNewSubprocess) {
             resultSet = testPatchInternally(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
         } else {
             resultSet = testPatchInSubprocess(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
@@ -291,7 +294,7 @@ public abstract class Sampler {
 
         UnitTestResultSet resultSet = null;
 
-        if (!inSubprocess && !inNewSubprocess) {
+        if (!inSubprocess && !eachRepetitionInNewSubprocess && !eachTestInNewSubprocess) {
             resultSet = testPatchInternally(targetClass, tests, patch);
         } else {
             resultSet = testPatchInSubprocess(targetClass, tests, patch);
@@ -308,9 +311,9 @@ public abstract class Sampler {
     }
 
     private UnitTestResultSet testPatchInSubprocess(String targetClass, List<UnitTest> tests, Patch patch) {
-        ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, inNewSubprocess);
-        testRunner.setFailFast(failFast);
-        
+
+        ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, eachRepetitionInNewSubprocess, eachTestInNewSubprocess, failFast);
+
         UnitTestResultSet results = null;
         try {
             results = testRunner.runTests(patch, reps);

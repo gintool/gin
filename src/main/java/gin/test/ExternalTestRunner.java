@@ -33,7 +33,15 @@ public class ExternalTestRunner extends TestRunner {
     private Path temporaryPackageDirectory;
     private boolean failFast;
     
-    private boolean inNewSubprocess;
+    /**
+     * If true, each test is run in a new JVM.
+     */
+    private boolean eachTestInNewSubProcess;
+    
+    /**
+     * If true, each repetition of the full test suite is run in a new JVM.
+     */
+    private boolean eachRepetitionInNewSubProcess;
 
     /**
      * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
@@ -41,16 +49,27 @@ public class ExternalTestRunner extends TestRunner {
      * @param fullyQualifiedClassName Class name including full package name.
      * @param classPath Standard Java classpath format.
      * @param unitTests List of unit tests to be run against each patch.
-     * @param inNewSubprocess Make a new JVM for every test?
+     * @param eachTestInNewSubprocess Make a new JVM for every test?
+     * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
      */
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean inNewSubprocess) {
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
         super(fullyQualifiedClassName, classPath, unitTests);
-        this.inNewSubprocess = inNewSubprocess;
-        this.failFast = false;
+        this.eachTestInNewSubProcess = eachTestInNewSubprocess;
+        this.eachRepetitionInNewSubProcess = eachRepetitionInNewSubProcess;
+        this.failFast = failFast;
     }
 
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean inNewSubprocess) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), inNewSubprocess);
+    /**
+     * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
+     * and a test class that will be used to test patches.
+     * @param fullyQualifiedClassName Class name including full package name.
+     * @param classPath Standard Java classpath format.
+     * @param testClassName Test class used to test the patches.
+     * @param eachTestInNewSubprocess Make a new JVM for every test?
+     * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
+     */
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess, failFast);
         this.setTests(testsForClass(testClassName));
     }
 
@@ -112,17 +131,22 @@ public class ExternalTestRunner extends TestRunner {
         
         // Did the code change as a result of applying the patch?
         boolean noOp = isPatchedSourceSame(patch.getSourceFile().toString(), patchedSource);
-
-        // Compile in temp dir
+        //Initialise with default value
         boolean compiledOK = false;
-        //if (patchValid) { // might be invalid due to a couple of edits, which drop to being no-ops; remaining edits might be ok so try compiling
-            compiledOK = compileClassToTempDir(patchedSource);
-        //}
-
-        // Run tests
         List<UnitTestResult> results;
-        if (compiledOK && patchValid) {
-            results = runTests(reps);
+        // Only tries to compile and run when the patch is valid
+        // The patch might be invalid due to a couple of edits, which
+        // drop to being no-ops; remaining edits might be ok so still
+        // try compiling and then running in case of no-op
+        if(patchValid) {
+            // Compile
+            compiledOK = compileClassToTempDir(patchedSource);
+            // Run tests
+            if (compiledOK) {
+                results = runTests(reps);
+            } else {
+                results = emptyResults(reps);
+            }
         } else {
             results = emptyResults(reps);
         }
@@ -284,13 +308,15 @@ public class ExternalTestRunner extends TestRunner {
                                 // closes the connection and creates a new sub-
                                 // process if:
                                 // 1) new subprocess for each test
-                                if (inNewSubprocess
-                                        // 2) it is fail fast and the test failed
-                                        || (failFast && !result.getPassed())
-                                        // 3) it is the last test. This is
-                                        // needed to avoid test poisoning from
-                                        // one repetition to another
-                                        || testIndex == this.getTests().size() - 1) {
+                                if (eachTestInNewSubProcess
+                                        // 2) it is the last test of the
+                                        // repetition. This is needed to avoid
+                                        // test poisoning from one repetition to
+                                        // another
+                                        || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
+                                        // 3) it is fail fast and the test failed
+                                        || (failFast && !result.getPassed())) {
+                                        
                                     keepConnection = false; 
                                     break inner;
                                 }

@@ -122,7 +122,7 @@ public class ProjectTest {
         assertEquals(5, classPathItems.length);
         assertTrue(StringUtils.endsWith(classPathItems[0], "target" + File.separator + "classes"));
         assertTrue(StringUtils.endsWith(classPathItems[1], "target" + File.separator + "test-classes"));
-        assertTrue(StringUtils.endsWith(classPathItems[2], "junit-4.11.jar"));
+        assertTrue(StringUtils.endsWith(classPathItems[2], "junit-4.13.1.jar"));
         assertTrue(StringUtils.endsWith(classPathItems[3], "hamcrest-core-1.3.jar"));
         assertTrue(StringUtils.endsWith(classPathItems[4], "evosuite-standalone-runtime-1.0.6.jar"));
     }

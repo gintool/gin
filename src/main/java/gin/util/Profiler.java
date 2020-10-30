@@ -7,7 +7,6 @@ import com.opencsv.CSVWriter;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
@@ -78,20 +77,21 @@ public class Profiler {
 
     @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
     private String hprofFileName = "java.hprof.txt";
+    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
+    protected Long hprofInterval = 10L;
 
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String HPROF_DIR = "hprof";
-    private static final String HPROF_ARG = "-agentlib:hprof=cpu=samples,interval=1,lineno=y,depth=1,file=";
+    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
 
     // Instance Members
     private File hprofDir;
     private Project project;
 
-    public static void main(String args[]) {
-        args = new String[]{"-d", "../commons-codec", "-p", "commons-codec", "-prop", "rat.skip=true", "-threads", "1"};
-        StopWatch watch = StopWatch.createStarted();
+    public static void main(String[] args) {
         Profiler profiler = new Profiler(args);
+        StopWatch watch = StopWatch.createStarted();
         profiler.profile();
         watch.stop();
         profiler.writeTimingResults(watch);
@@ -117,6 +117,8 @@ public class Profiler {
                 project.setMavenHome(this.mavenHome);
             }
         }
+        // Adds the interval provided by the user
+        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
     }
 
     // Main Profile Method
@@ -193,7 +195,7 @@ public class Profiler {
         List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
                 .collect(Collectors.toList());
 
-        if (failures.size() != 0) {
+        if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
             for (ProfileResult result : failures) {

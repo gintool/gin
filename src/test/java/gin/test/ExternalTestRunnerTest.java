@@ -34,33 +34,33 @@ public class ExternalTestRunnerTest {
     File packageDirectory = new File(TestConfiguration.EXAMPLE_DIR, packageName);
     File sourceFile = new File(packageDirectory, className + ".java");
 
-
     @Before
     public void setUp() {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest(testClassname, testMethodName);
         tests.add(test);
-        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
-        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, false, true, false);
     }
-    
+
     @BeforeClass
     // Compile source files
-    public static void beforeClass()  {
+    public static void beforeClass() {
 
         String[] sourceFilenames = new String[]{
-                className + ".java",
-                testClassname + ".java",
-                "Example.java",
-                "ExampleTest.java",
-                "ExampleInterface.java",
-                "ExampleBase.java",
-                "ExampleWithInnerClass.java",
-                "ExampleWithInnerClassTest.java",
-                "ExampleFaulty.java",
-                "ExampleFaultyTest.java"};
+            className + ".java",
+            testClassname + ".java",
+            "Poison.java",
+            "Example.java",
+            "ExampleTest.java",
+            "ExampleInterface.java",
+            "ExampleBase.java",
+            "ExampleWithInnerClass.java",
+            "ExampleWithInnerClassTest.java",
+            "ExampleFaulty.java",
+            "ExampleFaultyTest.java"};
 
-        for (String sourceFilename: sourceFilenames) {
+        for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
             Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
@@ -98,7 +98,7 @@ public class ExternalTestRunnerTest {
         assertTrue(expectedClassPath.toFile().exists());
 
     }
-    
+
     @Test
     public void testRunTests() throws IOException, InterruptedException {
 
@@ -110,9 +110,8 @@ public class ExternalTestRunnerTest {
         UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
         tests.add(test3);
 
-        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
-        runnerReuse.setFailFast(false);
-        
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
+
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
@@ -129,7 +128,7 @@ public class ExternalTestRunnerTest {
         assertTrue(result.getPassed());
 
     }
-    
+
     @Test
     public void testRunTestsFailFast() throws IOException, InterruptedException {
 
@@ -141,9 +140,8 @@ public class ExternalTestRunnerTest {
         UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
         tests.add(test3);
 
-        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false);
-        runnerReuse.setFailFast(true);
-        
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, true);
+
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
@@ -158,7 +156,7 @@ public class ExternalTestRunnerTest {
         assertFalse(result.getPassed());
 
     }
-    
+
     @Test
     public void testRunTestsNewSubProcess() throws IOException, InterruptedException {
 
@@ -170,9 +168,8 @@ public class ExternalTestRunnerTest {
         UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
         tests.add(test3);
 
-        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
-        runnerMakeNew.setFailFast(false);
-        
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true, true, false);
+
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
@@ -189,7 +186,7 @@ public class ExternalTestRunnerTest {
         assertTrue(result.getPassed());
 
     }
-    
+
     @Test
     public void testRunTestsNewSubProcessFailFast() throws IOException, InterruptedException {
 
@@ -201,9 +198,9 @@ public class ExternalTestRunnerTest {
         UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
         tests.add(test3);
 
-        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true);
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true, true, true);
         runnerMakeNew.setFailFast(true);
-        
+
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
@@ -219,19 +216,53 @@ public class ExternalTestRunnerTest {
 
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-            File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
-            resourcesDir = new File(resourcesDir, "mypackage");
-            Files.deleteIfExists(new File(resourcesDir, "ExampleInterface.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+    @Test
+    public void testPoisonShouldFail() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        // The second repetition fails
+        assertFalse(results.getResults().get(1).getPassed());
     }
-    
+
+    @Test
+    public void testPoisonShouldPass() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, true, false, false);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        assertTrue(results.getResults().get(1).getPassed());
+    }
+
+    @Test
+    public void testPoisonShouldPassWithJ() throws IOException, InterruptedException {
+        List<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
+        tests.add(test);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, true, false);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        assertTrue(results.getResults().get(0).getPassed());
+        assertTrue(results.getResults().get(1).getPassed());
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+        resourcesDir = new File(resourcesDir, "mypackage");
+        Files.deleteIfExists(new File(resourcesDir, "ExampleInterface.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "Poison.class").toPath());
+    }
 }

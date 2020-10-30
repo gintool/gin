@@ -781,8 +781,8 @@ public class PatchTest {
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
         rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
-    	ibf = new InsertBreakWithIf(sourceFile, rng);
-    	assertEquals(InsertBreakWithIf.fromString(ibf.toString()).toString(), ibf.toString());
+            ibf = new InsertBreakWithIf(sourceFile, rng);
+            assertEquals(InsertBreakWithIf.fromString(ibf.toString()).toString(), ibf.toString());
         
         
         // InsertContinue
@@ -823,7 +823,7 @@ public class PatchTest {
                 "        int c = a + b;\n" +
                 "        if ((a < b) || (a > c)) {\n" + 
                 "            if (a < 0)" + 
-                " 		         continue;\n" + 
+                "                          continue;\n" + 
                 "            c++;\n" + 
                 "        }" +
                 "    }\n" +
@@ -840,8 +840,8 @@ public class PatchTest {
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
         rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
-    	icf = new InsertContinueWithIf(sourceFile, rng);
-    	assertEquals(InsertContinueWithIf.fromString(icf.toString()).toString(), icf.toString());
+            icf = new InsertContinueWithIf(sourceFile, rng);
+            assertEquals(InsertContinueWithIf.fromString(icf.toString()).toString(), icf.toString());
         
         // InsertReturn
         Patch irPatch = new Patch(sourceFile);
@@ -895,9 +895,9 @@ public class PatchTest {
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
         rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
-    	irf = new InsertReturnWithIf(sourceFile, rng);
-    	assertEquals(InsertReturnWithIf.fromString(irf.toString()).toString(), irf.toString());
-    	
+            irf = new InsertReturnWithIf(sourceFile, rng);
+            assertEquals(InsertReturnWithIf.fromString(irf.toString()).toString(), irf.toString());
+            
     }
 
     

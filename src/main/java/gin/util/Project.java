@@ -400,7 +400,7 @@ public class Project {
             output = Files.readAllLines(path);
             Files.deleteIfExists(depOutput.toPath());
             
-            if (output.size() > 0) {
+            if (!output.isEmpty()) {
                 for (String jar : output) {
                     Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
                     Matcher matcher = pattern.matcher(jar);
@@ -671,9 +671,9 @@ public class Project {
 
                     UnitTest test = new UnitTest(className, methodName, moduleName);
 
-                    if (skipped.size() != 0) {
+                    if (!skipped.isEmpty()) {
                         Logger.warn("Test skipped so excluded by profiler: " + test);
-                    } else if (failure.size() != 0) {
+                    } else if (!failure.isEmpty()) {
                         Logger.warn("Test case failed, excluded by profiler: " + test);
                     } else {
                         tests.add(test);

@@ -173,7 +173,7 @@ public class SourceFileTree extends SourceFile {
         }
         
         // find the root nodes for the target methods
-        if (this.targetMethods == null || targetMethods.size() == 0) {
+        if (this.targetMethods == null || targetMethods.isEmpty()) {
             this.targetMethodRootNodes = null;
         } else {
             this.targetMethodRootNodes = getTargetMethodRootNodesFromCU(this.compilationUnit, this.targetMethods);

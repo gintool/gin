@@ -61,13 +61,13 @@ public class ReplaceLine extends LineEdit {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
+        String[] tokens = description.split("\\s+");
         String source = tokens[1];
         String destination = tokens[3];
-        String sourceTokens[] = source.split(":");
+        String[] sourceTokens = source.split(":");
         String sourceFile = sourceTokens[0];
         int sourceLine = Integer.parseInt(sourceTokens[1]);
-        String destTokens[] = destination.split(":");
+        String[] destTokens = destination.split(":");
         String destFile = destTokens[0];
         int destLine = Integer.parseInt(destTokens[1]);
         return new ReplaceLine(sourceFile, sourceLine, destFile, destLine);

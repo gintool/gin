@@ -44,11 +44,11 @@ public class MatchedSwapStatement extends SwapStatement {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
-        String srcTokens[] = tokens[1].split(":");
+        String[] tokens = description.split("\\s+");
+        String[] srcTokens = tokens[1].split(":");
         String srcFilename = srcTokens[0];
         int source = Integer.parseInt(srcTokens[1]);
-        String destTokens[] = tokens[3].split(":");
+        String[] destTokens = tokens[3].split(":");
         String destFilename = destTokens[0];
         int destination = Integer.parseInt(destTokens[1]);
         return new MatchedSwapStatement(srcFilename, source, destFilename, destination);

@@ -70,7 +70,7 @@ public class Profiler {
     private File workingDir;
     private Project project;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Profiler profiler = new Profiler(args);
         profiler.profile();
     }
@@ -140,7 +140,7 @@ public class Profiler {
         List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
                 .collect(Collectors.toList());
 
-        if (failures.size() != 0) {
+        if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
             for (ProfileResult result: failures) {

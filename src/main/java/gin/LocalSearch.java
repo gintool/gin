@@ -70,7 +70,7 @@ public class LocalSearch {
     }
 
     // Constructor parses arguments
-    LocalSearch(String args[]) {
+    LocalSearch(String[] args) {
 
         Args.parseOrExit(this, args);
         editTypes = Edit.parseEditClassesFromString(editType);

@@ -5,7 +5,6 @@ import java.util.List;
 
 import gin.Patch;
 import gin.test.UnitTest;
-import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 
 

@@ -92,6 +92,7 @@ public class UnitTestResultSet {
 
     @Override
     public String toString() {
+
         StringBuilder myrep = new StringBuilder(String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
                 patch, patchValid, compiledOK, noOp));
         if (results.size() > 0) {

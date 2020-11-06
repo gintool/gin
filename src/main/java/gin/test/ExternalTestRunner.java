@@ -40,6 +40,13 @@ public class ExternalTestRunner extends TestRunner {
      * If true, each repetition of the full test suite is run in a new JVM.
      */
     private boolean eachRepetitionInNewSubProcess;
+    
+    /**
+     * If set to true, the tests will stop at the first failure and the next 
+     * patch will be executed. You probably don't want to set this to true for 
+     * Automatic Program Repair.
+     */
+    private boolean failFast;
 
     /**
      * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
@@ -50,10 +57,11 @@ public class ExternalTestRunner extends TestRunner {
      * @param eachTestInNewSubprocess Make a new JVM for every test?
      * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
      */
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess) {
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
         super(fullyQualifiedClassName, classPath, unitTests);
         this.eachTestInNewSubProcess = eachTestInNewSubprocess;
         this.eachRepetitionInNewSubProcess = eachRepetitionInNewSubProcess;
+        this.failFast = failFast;
     }
 
     /**
@@ -65,9 +73,28 @@ public class ExternalTestRunner extends TestRunner {
      * @param eachTestInNewSubprocess Make a new JVM for every test?
      * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
      */
-    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess);
+    public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess, failFast);
         this.setTests(testsForClass(testClassName));
+    }
+    
+    /**
+     * Returns whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @return {@code true} if the runner should stop at the first failed test
+     */
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    /**
+     * Sets whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @param failFast {@code true} if the runner should stop at the first
+     * failed test
+     */
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
     }
 
     class TestClient {
@@ -299,7 +326,9 @@ public class ExternalTestRunner extends TestRunner {
                                         // repetition. This is needed to avoid
                                         // test poisoning from one repetition to
                                         // another
-                                        || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)) {
+                                        || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
+                                         // 3) it is fail fast and the test failed
+                                        || (failFast && !result.getPassed())) {
                                     keepConnection = false; 
                                     break inner;
                                 }
@@ -339,6 +368,12 @@ public class ExternalTestRunner extends TestRunner {
             }
 
             Thread.sleep(500); // cleanup time
+            
+            // In case the tests failed and it is fail fast, then stop the loop
+            if (failFast && results.stream()
+                    .anyMatch(result -> !result.getPassed())){
+                break;
+            }
 
         } // end of outer
 

@@ -85,6 +85,11 @@ public abstract class Sampler {
     @Argument(alias = "J", description = "Run every test in a new jvm. Includes options '-j' and '-jj'")
     protected Boolean eachTestInNewSubprocess = false;  
     
+    @Argument(alias = "ff", description = "Fail fast. "
+            + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
+            + "You probably don't want to set this to true for Automatic Program Repair.")
+    protected Boolean failFast = false;
+    
     // Unused at the moment, thus commented out
     //@Argument(alias = "b", description = "Buffer time for test cases to be run on modified code, set only if > -1 and when -inSubprocess is false")
     //private Integer bufferTimeMS = -1;  // test case timeout: timeout on unmodified code + bufferTime
@@ -299,13 +304,13 @@ public abstract class Sampler {
 
     private UnitTestResultSet testPatchInternally(String targetClass, List<UnitTest> tests, Patch patch) {
 
-        InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests);
+        InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests, failFast);
         return testRunner.runTests(patch, reps);
     }
 
     private UnitTestResultSet testPatchInSubprocess(String targetClass, List<UnitTest> tests, Patch patch) {
 
-        ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, eachRepetitionInNewSubprocess, eachTestInNewSubprocess);
+        ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, eachRepetitionInNewSubprocess, eachTestInNewSubprocess, failFast);
 
         UnitTestResultSet results = null;
 

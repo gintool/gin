@@ -46,6 +46,11 @@ public class PatchAnalyser {
 
     @Argument(alias = "t", description = "Test class name")
     protected String testClassName;
+    
+    @Argument(alias = "ff", description = "Fail fast. "
+            + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
+            + "You probably don't want to set this to true for Automatic Program Repair.")
+    protected Boolean failFast = false;
 
     private SourceFileLine sourceFileLine;
     private SourceFileTree sourceFileTree;
@@ -85,7 +90,7 @@ public class PatchAnalyser {
         SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
         SourceFileTree sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
 
-        this.testRunner = new InternalTestRunner(className, classPath, testClassName);
+        this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFileTree.statementList();

@@ -19,23 +19,63 @@ public class InternalTestRunner extends TestRunner {
     public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
 
     private CacheClassLoader classLoader;
+    
+    /**
+     * If set to true, the tests will stop at the first failure and the next 
+     * patch will be executed. You probably don't want to set this to true for 
+     * Automatic Program Repair.
+     */
+    private boolean failFast;
 
     /**
      * Create an InternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
      * and a list of unit tests that will be used to test patches.
+     * 
      * @param fullyQualifiedClassName Class name including full package name.
      * @param classPath Standard Java classpath format.
      * @param unitTests List of unit tests to be run against each patch.
+     * @param failFast Whether the test execution should stop at the first
+     * failed test.
      */
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests) {
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean failFast) {
         super(fullyQualifiedClassName, classPath, unitTests);
+        this.failFast = failFast;
     }
 
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>());
+    /**
+     * Create an InternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
+     * and a list of unit tests that will be used to test patches.
+     * 
+     * @param fullyQualifiedClassName Class name including full package name.
+     * @param classPath Standard Java classpath format.
+     * @param testClassName Fully qualified name of the test class to be run
+     * against each patch.
+     * @param failFast Whether the test execution should stop at the first
+     * failed test.
+     */
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean failFast) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), failFast);
         this.setTests(testsForClass(testClassName));
     }
 
+    /**
+     * Returns whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @return {@code true} if the runner should stop at the first failed test
+     */
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    /**
+     * Sets whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @param failFast {@code true} if the runner should stop at the first
+     * failed test
+     */
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
+    }
 
     /**
      * Apply and compile the given patch, then run all unit tests against it.
@@ -93,13 +133,21 @@ public class InternalTestRunner extends TestRunner {
      * @param classLoader CacheClassLoader containing correct classpath and any modified classes.
      * @return
      */
-    private LinkedList<UnitTestResult> runTests(int reps, CacheClassLoader classLoader) {
+    private List<UnitTestResult> runTests(int reps, CacheClassLoader classLoader) {
 
-        LinkedList<UnitTestResult> results = new LinkedList<>();
-
-        for (int r=1; r <= reps; r++) {
-            for (UnitTest test: this.getTests()) {
-                results.add(runSingleTest(test, classLoader, r));
+        List<UnitTest> testsToRun = this.getTests();
+        List<UnitTestResult> results = new LinkedList<>();
+        for (int r = 1; r <= reps; r++) {
+            for (UnitTest testToRun : testsToRun) {
+                // Run the test.
+                UnitTestResult testResult = runSingleTest(testToRun, classLoader, r);
+                // Save results.
+                results.add(testResult);
+                // If it is fail fast and the test failed, then return and stop
+                // the execution.
+                if (failFast && !testResult.getPassed()) {
+                    return results;
+                }
             }
         }
 

@@ -116,8 +116,8 @@ public abstract class TestRunner {
         String normalisedPatched = patchedSource.replaceAll("//.*\\n", "");
         String normalisedOriginal = original.replaceAll("//.*\\n", "");
         normalisedPatched = normalisedPatched.replaceAll("\\s+", " ");
-        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
-        normalisedOriginal = normalisedOriginal.toString().replaceAll("\\s+", " ");
+        normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
+        normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
         boolean noOp = normalisedPatched.equals(normalisedOriginal);
         return noOp;
     }

@@ -280,7 +280,7 @@ public class ExternalTestRunner extends TestRunner {
 
                         client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
 
-                        String message = testName + "," + String.valueOf(rep+1) + "," + String.valueOf(timeoutMS);
+                        String message = testName + "," + rep+1 + "," + timeoutMS;
                         String resp;
                         try {
                             resp = client.sendMessage(message);

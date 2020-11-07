@@ -276,43 +276,43 @@ public class SourceFileTree extends SourceFile {
     public String statementList() {
         List<Statement> list = compilationUnit.getChildNodesByType(Statement.class);
         int counter = 0;
-        String output = "";
+        StringBuilder output = new StringBuilder();
         for (Statement statement : list) {
-            output += "[" + counter + "] " + statement.toString() + "\n"; // can't use indexof as may appear > once
+            output.append("[").append(counter).append("] ").append(statement.toString()).append("\n"); // can't use indexof as may appear > once
             counter++;
         }
-        return output;
+        return output.toString();
     }
 
     public String blockList() {
         List<BlockStmt> list = compilationUnit.getChildNodesByType(BlockStmt.class);
         int counter = 0;
-        String output = "";
+        StringBuilder output = new StringBuilder();
         for (BlockStmt block : list) {
-            output += "[" + counter + "] " + block.toString() + "\n"; // can't use indexof as may appear > once
+            output.append("[").append(counter).append("] ").append(block.toString()).append("\n"); // can't use indexof as may appear > once
             counter++;
         }
-        return output;
+        return output.toString();
     }
 
     public String statementListWithIDs() {
         List<Integer> list = getAllStatementIDs();
-        String output = "";
+        StringBuilder output = new StringBuilder();
         for (Integer id : list) {
             Statement statement = getStatement(id);
-            output += "[" + id + "] " + statement.toString() + "\n";
+            output.append("[").append(id).append("] ").append(statement.toString()).append("\n");
         }
-        return output;
+        return output.toString();
     }
 
     public String blockListWithIDs() {
         List<Integer> list = getAllBlockIDs();
-        String output = "";
+        StringBuilder output = new StringBuilder();
         for (Integer id : list) {
             Statement block = getStatement(id);
-            output += "[" + id + "] " + block.toString() + "\n"; // can't use indexof as may appear > once
+            output.append("[").append(id).append("] ").append(block.toString()).append("\n"); // can't use indexof as may appear > once
         }
-        return output;
+        return output.toString();
     }
 
 

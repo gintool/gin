@@ -269,11 +269,11 @@ public class Patch {
 
     @Override
     public String toString() {
-        String description = "| ";
+        StringBuilder description = new StringBuilder("| ");
         for (Edit edit: edits) {
-            description += edit.toString() + " | ";
+            description.append(edit.toString()).append(" | ");
         }
-        return description.trim();
+        return description.toString().trim();
     }
 
 

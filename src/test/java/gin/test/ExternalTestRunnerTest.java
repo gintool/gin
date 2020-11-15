@@ -37,7 +37,9 @@ public class ExternalTestRunnerTest {
     @BeforeClass
     public static void setUpClass() {
         String[] sourceFilenames = new String[]{
-            "Poison.java"};
+            "Poison.java",
+            "ExampleFaultyTest.java",
+            "ExampleFaulty.java"};
 
         for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
@@ -51,8 +53,8 @@ public class ExternalTestRunnerTest {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest(testClassname, testMethodName);
         tests.add(test);
-        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false);
-        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, false, true);
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, false, true, false);
     }
 
     @Test
@@ -85,13 +87,129 @@ public class ExternalTestRunnerTest {
         assertTrue(expectedClassPath.toFile().exists());
 
     }
+    
+    @Test
+    public void testRunTests() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
+
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(3, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+        result = results.get(2);
+        assertTrue(result.getPassed());
+
+    }
+
+    @Test
+    public void testRunTestsFailFast() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerReuse = new ExternalTestRunner(fullClassName, classPath, tests, false, false, true);
+
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(2, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+
+    }
+
+    @Test
+    public void testRunTestsNewSubProcess() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true, true, false);
+
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(3, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+        result = results.get(2);
+        assertTrue(result.getPassed());
+
+    }
+
+    @Test
+    public void testRunTestsNewSubProcessFailFast() throws IOException, InterruptedException {
+
+        LinkedList<UnitTest> tests = new LinkedList<>();
+        UnitTest test = new UnitTest("mypackage.ExampleFaultyTest", "emptyTest");
+        tests.add(test);
+        UnitTest test2 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnTen");
+        tests.add(test2);
+        UnitTest test3 = new UnitTest("mypackage.ExampleFaultyTest", "testReturnOneHundred");
+        tests.add(test3);
+
+        runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true, true, true);
+
+        List<String> targetMethodNames = new LinkedList<>();
+        targetMethodNames.add(methodName);
+        SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
+        Patch patch = new Patch(sourceFileLine);
+
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        List<UnitTestResult> results = resultSet.getResults();
+        assertEquals(2, results.size());
+        UnitTestResult result = results.get(0);
+        assertTrue(result.getPassed());
+        result = results.get(1);
+        assertFalse(result.getPassed());
+
+    }
 
     @Test
     public void testPoisonShouldFail() throws IOException, InterruptedException {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
-        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, false);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
         UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
         assertTrue(results.getResults().get(0).getPassed());
         // The second repetition fails
@@ -103,7 +221,7 @@ public class ExternalTestRunnerTest {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
-        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, true, false);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, true, false, false);
         UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
@@ -114,7 +232,7 @@ public class ExternalTestRunnerTest {
         List<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
-        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, true);
+        ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, true, false);
         UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
@@ -125,5 +243,7 @@ public class ExternalTestRunnerTest {
         File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
         resourcesDir = new File(resourcesDir, "mypackage");
         Files.deleteIfExists(new File(resourcesDir, "Poison.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
     }
 }

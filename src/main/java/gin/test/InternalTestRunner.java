@@ -26,6 +26,12 @@ public class InternalTestRunner extends TestRunner {
 
     protected ClassLoaderFactory classLoaderFactory;
     private CacheClassLoader classLoader;
+
+    /**
+     * If set to true, the tests will stop at the first failure and the next
+     * patch will be executed. You probably don't want to set this to true for
+     * Automatic Program Repair.
+     */
     private boolean failFast;
 
     /**
@@ -40,10 +46,13 @@ public class InternalTestRunner extends TestRunner {
      *                                patch.
      * @param classLoaderFactory      a specific ClassLoaderFactory to load
      *                                modified classes during test runs
+     * @param failFast                Whether the test execution should stop at
+     *                                the first failed test.
      */
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, ClassLoaderFactory classLoaderFactory) {
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean failFast, ClassLoaderFactory classLoaderFactory) {
         super(fullyQualifiedClassName, classPath, unitTests);
         this.classLoaderFactory = classLoaderFactory;
+        this.failFast = failFast;
     }
 
     /**
@@ -58,9 +67,11 @@ public class InternalTestRunner extends TestRunner {
      *                                will be retrieved via reflection
      * @param classLoaderFactory      a specific ClassLoaderFactory to load
      *                                modified classes during test runs
+     * @param failFast                Whether the test execution should stop at
+     *                                the first failed test.
      */
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, ClassLoaderFactory classLoaderFactory) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), classLoaderFactory);
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean failFast, ClassLoaderFactory classLoaderFactory) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), failFast, classLoaderFactory);
         this.setTests(testsForClass(testClassName));
     }
 
@@ -73,9 +84,11 @@ public class InternalTestRunner extends TestRunner {
      * @param classPath               standard Java classpath format
      * @param unitTests               list of unit tests to be run against each
      *                                patch
+     * @param failFast                Whether the test execution should stop at
+     *                                the first failed test.
      */
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests) {
-        this(fullyQualifiedClassName, classPath, unitTests, ClassLoaderFactory.createDefaultGinClassLoader());
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean failFast) {
+        this(fullyQualifiedClassName, classPath, unitTests, failFast, ClassLoaderFactory.createDefaultGinClassLoader());
     }
 
     /**
@@ -87,9 +100,11 @@ public class InternalTestRunner extends TestRunner {
      * @param classPath               standard Java classpath format
      * @param testClassName           name of the test class. The unit tests
      *                                will be retrieved via reflection
+     * @param failFast                Whether the test execution should stop at
+     *                                the first failed test.
      */
-    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>());
+    public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean failFast) {
+        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), failFast);
         this.setTests(testsForClass(testClassName));
     }
 
@@ -101,10 +116,21 @@ public class InternalTestRunner extends TestRunner {
         this.classLoaderFactory = classLoaderFactory;
     }
 
+    /**
+     * Returns whether this runner should fail fast. See {@link #failFast}.
+     *
+     * @return {@code true} if the runner should stop at the first failed test
+     */
     public boolean isFailFast() {
         return failFast;
     }
 
+    /**
+     * Sets whether this runner should fail fast. See {@link #failFast}.
+     *
+     * @param failFast {@code true} if the runner should stop at the first
+     *                 failed test
+     */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
     }
@@ -137,7 +163,7 @@ public class InternalTestRunner extends TestRunner {
             // drop to being no-ops; remaining edits might be ok so still
             // try compiling and then running in case of no-op
             List<UnitTestResult> results;
-            if(patchValid) {
+            if (patchValid) {
                 // Compile
                 CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
                 compiledOK = (code != null);
@@ -174,6 +200,7 @@ public class InternalTestRunner extends TestRunner {
      * @return the result of the test set run. See {@link UnitTest}
      */
     private List<UnitTestResult> runTests(int reps, CacheClassLoader classLoader) {
+
         List<UnitTest> testsToRun = this.getTests();
         List<UnitTestResult> results = new LinkedList<>();
         for (int r = 1; r <= reps; r++) {
@@ -182,6 +209,8 @@ public class InternalTestRunner extends TestRunner {
                 UnitTestResult testResult = runSingleTest(testToRun, classLoader, r);
                 // Save results.
                 results.add(testResult);
+                // If it is fail fast and the test failed, then return and stop
+                // the execution.
                 if (failFast && !testResult.getPassed()) {
                     return results;
                 }

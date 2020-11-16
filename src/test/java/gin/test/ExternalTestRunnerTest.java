@@ -50,22 +50,21 @@ public class ExternalTestRunnerTest {
         String[] sourceFilenames = new String[]{
             className + ".java",
             testClassname + ".java",
-            "Poison.java",
             "Example.java",
             "ExampleTest.java",
             "ExampleInterface.java",
             "ExampleBase.java",
             "ExampleWithInnerClass.java",
             "ExampleWithInnerClassTest.java",
-            "ExampleFaulty.java",
-            "ExampleFaultyTest.java"};
+            "Poison.java",
+            "ExampleFaultyTest.java",
+            "ExampleFaulty.java"};
 
         for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
             Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
         }
-
     }
 
     @Test
@@ -98,7 +97,7 @@ public class ExternalTestRunnerTest {
         assertTrue(expectedClassPath.toFile().exists());
 
     }
-
+    
     @Test
     public void testRunTests() throws IOException, InterruptedException {
 
@@ -199,7 +198,6 @@ public class ExternalTestRunnerTest {
         tests.add(test3);
 
         runnerMakeNew = new ExternalTestRunner(fullClassName, classPath, tests, true, true, true);
-        runnerMakeNew.setFailFast(true);
 
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);

@@ -58,6 +58,11 @@ public class LocalSearch {
     
     /**allowed edit types for sampling: parsed from editType*/
     protected List<Class<? extends Edit>> editTypes;
+    
+    @Argument(alias = "ff", description = "Fail fast. "
+            + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
+            + "You probably don't want to set this to true for Automatic Program Repair.")
+    protected Boolean failFast = false;
 
     protected SourceFile sourceFile;
     InternalTestRunner testRunner;
@@ -90,7 +95,7 @@ public class LocalSearch {
         if (this.testClassName == null) {
             this.testClassName = this.className + "Test";
         }
-        this.testRunner = new InternalTestRunner(className, classPath, testClassName);
+        this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
     }
 

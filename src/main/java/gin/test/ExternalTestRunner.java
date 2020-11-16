@@ -31,7 +31,6 @@ public class ExternalTestRunner extends TestRunner {
 
     private Path temporaryDirectory;
     private Path temporaryPackageDirectory;
-    private boolean failFast;
     
     /**
      * If true, each test is run in a new JVM.
@@ -42,6 +41,13 @@ public class ExternalTestRunner extends TestRunner {
      * If true, each repetition of the full test suite is run in a new JVM.
      */
     private boolean eachRepetitionInNewSubProcess;
+    
+    /**
+     * If set to true, the tests will stop at the first failure and the next 
+     * patch will be executed. You probably don't want to set this to true for 
+     * Automatic Program Repair.
+     */
+    private boolean failFast;
 
     /**
      * Create an ExternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
@@ -72,15 +78,26 @@ public class ExternalTestRunner extends TestRunner {
         this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess, failFast);
         this.setTests(testsForClass(testClassName));
     }
-
+    
+    /**
+     * Returns whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @return {@code true} if the runner should stop at the first failed test
+     */
     public boolean isFailFast() {
         return failFast;
     }
 
+    /**
+     * Sets whether this runner should fail fast. See {@link #failFast}.
+     * 
+     * @param failFast {@code true} if the runner should stop at the first
+     * failed test
+     */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
     }
-    
+
     class TestClient {
         
         private Socket clientSocket;
@@ -294,7 +311,7 @@ public class ExternalTestRunner extends TestRunner {
 
                         client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
 
-                        String message = testName + "," + String.valueOf(rep+1) + "," + String.valueOf(timeoutMS);
+                        String message = testName + "," + rep+1 + "," + timeoutMS;
                         String resp;
                         try {
                             resp = client.sendMessage(message);
@@ -314,7 +331,7 @@ public class ExternalTestRunner extends TestRunner {
                                         // test poisoning from one repetition to
                                         // another
                                         || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
-                                        // 3) it is fail fast and the test failed
+                                         // 3) it is fail fast and the test failed
                                         || (failFast && !result.getPassed())) {
                                         
                                     keepConnection = false; 
@@ -356,6 +373,12 @@ public class ExternalTestRunner extends TestRunner {
             }
 
             Thread.sleep(500); // cleanup time
+            
+            // In case the tests failed and it is fail fast, then stop the loop
+            if (failFast && results.stream()
+                    .anyMatch(result -> !result.getPassed())){
+                break;
+            }
 
             if (failFast && results.stream()
                     .anyMatch(result -> !result.getPassed())){

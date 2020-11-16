@@ -93,7 +93,7 @@ public abstract class Sampler {
             + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
             + "You probably don't want to set this to true for Automatic Program Repair.")
     protected Boolean failFast = false;
-
+    
     // Unused at the moment, thus commented out
     //@Argument(alias = "b", description = "Buffer time for test cases to be run on modified code, set only if > -1 and when -inSubprocess is false")
     //private Integer bufferTimeMS = -1;  // test case timeout: timeout on unmodified code + bufferTime
@@ -305,8 +305,8 @@ public abstract class Sampler {
     }
 
     private UnitTestResultSet testPatchInternally(String targetClass, List<UnitTest> tests, Patch patch) {
-        InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests);
-        testRunner.setFailFast(failFast);
+
+        InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests, failFast);
         return testRunner.runTests(patch, reps);
     }
 
@@ -509,31 +509,31 @@ public abstract class Sampler {
         String testAssertionExpectedValue = testResult.getAssertionExpectedValue();
         String testAssertionActualValue = testResult.getAssertionActualValue();
         String noOp = Boolean.toString(patchNoOp);
-        String editsValidStr = "";
+        StringBuilder editsValidStr = new StringBuilder();
         for (Boolean b : editsValid) {
-            editsValidStr += (b ? 1 : 0);
+            editsValidStr.append(b ? 1 : 0);
         }
 
         String[] entry = {
-            patchIndex,
-            patchSize,
-            patchDetails,
-            methodIndex,
-            testIndex,
-            testName,
-            rep,
-            valid,
-            cleanCompile,
-            testPassed,
-            testExecutionTime,
-            testCPUTime,
-            testTimedOut,
-            testExceptionType,
-            testExceptionMessage,
-            testAssertionExpectedValue,
-            testAssertionActualValue,
-            noOp,
-            editsValidStr
+                patchIndex,
+                patchSize,
+                patchDetails,
+                methodIndex,
+                testIndex,
+                testName,
+                rep,
+                valid,
+                cleanCompile,
+                testPassed,
+                testExecutionTime,
+                testCPUTime,
+                testTimedOut,
+                testExceptionType,
+                testExceptionMessage,
+                testAssertionExpectedValue,
+                testAssertionActualValue,
+                noOp,
+                editsValidStr.toString()
         };
 
         outputFileWriter.writeNext(entry);

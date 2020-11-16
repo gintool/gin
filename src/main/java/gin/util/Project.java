@@ -344,7 +344,7 @@ public class Project {
 
     public String getDependenciesClasspath() {
 
-        String dependencies = "";
+        StringBuilder dependencies = new StringBuilder();
         try {
             InvocationRequest request = new DefaultInvocationRequest();
             
@@ -405,7 +405,7 @@ public class Project {
                     Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
                     Matcher matcher = pattern.matcher(jar);
                     if (matcher.find()) {
-                        dependencies = dependencies + File.pathSeparator + matcher.group(1);
+                        dependencies.append(File.pathSeparator).append(matcher.group(1));
                     }
                 }
             }
@@ -413,7 +413,7 @@ public class Project {
             Logger.error(ex, "Error reading dependencies classpath file");
             System.exit(-1);
         }
-        return dependencies;
+        return dependencies.toString();
     }
 
     // Get the names of all unit tests in the project

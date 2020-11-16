@@ -17,7 +17,6 @@ import org.junit.Before;
 import org.junit.After;
 import org.junit.Test;
 import org.mdkt.compiler.CompiledCode;
-import org.mdkt.compiler.InMemoryJavaCompiler;
 
 import gin.Patch;
 import gin.SourceFileLine;
@@ -55,7 +54,7 @@ public class TestRunnerTest {
         testSet = new LinkedList<>();
         testSet.add(test);
 
-        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR_NAME, testSet);
+        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR_NAME, testSet, false);
 
         List<String> targetMethodNames = new LinkedList<>();
         targetMethodNames.add(methodName);
@@ -140,7 +139,7 @@ public class TestRunnerTest {
         tests.add(test2);
 
         InternalTestRunner internalTestRunner;
-        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests);
+        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests, false);
 
         Patch patch = new Patch(sourceFileLine);
 
@@ -164,7 +163,7 @@ public class TestRunnerTest {
         File exampleSourceFile = new File(new File(TestConfiguration.EXAMPLE_DIR, "mypackage"), "Example.java");
 
         InternalTestRunner internalTestRunner ;
-        internalTestRunner = new InternalTestRunner("mypackage.Example", classPath, tests);
+        internalTestRunner = new InternalTestRunner("mypackage.Example", classPath, tests, false);
 
         LinkedList<String> methods = new LinkedList<>();
         methods.add("returnOneHundred()");
@@ -192,7 +191,7 @@ public class TestRunnerTest {
         InternalTestRunner internalTestRunner;
         String classPath = TestConfiguration.EXAMPLE_DIR_NAME;
         String classWithInnerName = "mypackage.ExampleWithInnerClass";
-        internalTestRunner = new InternalTestRunner(classWithInnerName, classPath, tests);
+        internalTestRunner = new InternalTestRunner(classWithInnerName, classPath, tests, false);
 
         LinkedList<String> methods = new LinkedList<>();
         methods.add("simpleMethod()");
@@ -257,8 +256,7 @@ public class TestRunnerTest {
         tests.add(test3);
 
         InternalTestRunner internalTestRunner;
-        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests);
-        internalTestRunner.setFailFast(false);
+        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests, false);
         
         Patch patch = new Patch(sourceFileLine);
 
@@ -286,8 +284,7 @@ public class TestRunnerTest {
         tests.add(test3);
 
         InternalTestRunner internalTestRunner;
-        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests);
-        internalTestRunner.setFailFast(true);
+        internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests, true);
         
         Patch patch = new Patch(sourceFileLine);
 
@@ -312,7 +309,7 @@ public class TestRunnerTest {
             Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
             Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
             Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
             Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+            Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
     }
 }

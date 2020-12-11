@@ -389,7 +389,7 @@ public class SourceFileTree extends SourceFile {
                 statementLoop:
                 for (int i = 0; i < statements.size(); i++) {
                     Integer id = statements.get(i).getData(NODEKEY_ID);
-                    if ((id != null) && (id <= insertionPoint)) {
+                    if ((id == null) || (id <= insertionPoint)) {
                         insertIndex = i + 1; // add 1 because we want to insert after the statement!
                     } else {
                         break statementLoop;

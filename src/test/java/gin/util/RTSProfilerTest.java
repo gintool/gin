@@ -16,7 +16,7 @@ import org.junit.Test;
  */
 public class RTSProfilerTest {
 
-    private static final String PROJECT_PATH = TestConfiguration.EXAMPLE_DIR_NAME + File.separator + "ekstazi_mvn";
+    private static final String PROJECT_PATH = TestConfiguration.EXAMPLE_DIR_NAME + "ekstazi_mvn";
     private static final File PROJECT_DIR = FileUtils.getFile(PROJECT_PATH);
     private static final String OUTPUT_CSV_PATH = PROJECT_PATH + File.separator + "output_file.csv";
 

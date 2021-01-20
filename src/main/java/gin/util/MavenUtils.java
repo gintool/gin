@@ -32,6 +32,8 @@ public class MavenUtils {
             return System.getenv("MAVEN_HOME");
         } else if (System.getenv("MVN_HOME") != null) {
             return System.getenv("MVN_HOME");
+        } else if (System.getenv("M2_HOME") != null) {
+            return System.getenv("M2_HOME");
         } else if (System.getenv("PATH") != null) {
             String systemPath = System.getenv("PATH");
             String[] split = StringUtils.split(systemPath, File.pathSeparator);

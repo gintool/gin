@@ -67,16 +67,16 @@ public class ReplaceStatement extends StatementEdit {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " " + sourceFilename + ":" + sourceStatement + " -> " + destinationFilename + ":" + destinationStatement;
+        return this.getClass().getCanonicalName() + " \"" + sourceFilename + "\":" + sourceStatement + " -> \"" + destinationFilename + "\":" + destinationStatement;
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] srcTokens = tokens[1].split(":");
-        String srcFilename = srcTokens[0];
+        String srcFilename = srcTokens[0].replace("\"", "");
         int source = Integer.parseInt(srcTokens[1]);
         String[] destTokens = tokens[3].split(":");
-        String destFilename = destTokens[0];
+        String destFilename = destTokens[0].replace("\"", "");
         int destination = Integer.parseInt(destTokens[1]);
         return new ReplaceStatement(srcFilename, source, destFilename, destination);
     }

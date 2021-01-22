@@ -110,7 +110,7 @@ public class CopyLineTest {
 
     @Test
     public void toStringTest() {
-        String expected = "gin.edit.line.CopyLine " + TEST_SOURCE + ":2 -> " + TEST_SOURCE + ":6";
+        String expected = "gin.edit.line.CopyLine \"" + TEST_SOURCE + "\":2 -> \"" + TEST_SOURCE + "\":6";
         String copyLineDescription = this.specificCopyLine.toString();
         assertEquals(expected, copyLineDescription);
     }

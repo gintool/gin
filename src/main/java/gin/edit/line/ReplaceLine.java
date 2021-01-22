@@ -56,19 +56,19 @@ public class ReplaceLine extends LineEdit {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " " + sourceFile + ":" + sourceLine + " -> "
-                + destinationFile + ":" + destinationLine;
+        return this.getClass().getCanonicalName() + " \"" + sourceFile + "\":" + sourceLine + " -> \""
+                + destinationFile + "\":" + destinationLine;
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String source = tokens[1];
         String destination = tokens[3];
         String[] sourceTokens = source.split(":");
-        String sourceFile = sourceTokens[0];
+        String sourceFile = sourceTokens[0].replace("\"", "");
         int sourceLine = Integer.parseInt(sourceTokens[1]);
         String[] destTokens = destination.split(":");
-        String destFile = destTokens[0];
+        String destFile = destTokens[0].replace("\"", "");
         int destLine = Integer.parseInt(destTokens[1]);
         return new ReplaceLine(sourceFile, sourceLine, destFile, destLine);
     }

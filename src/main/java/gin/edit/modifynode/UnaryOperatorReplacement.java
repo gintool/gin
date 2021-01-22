@@ -101,13 +101,13 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
     
     @Override
     public String toString() {
-        return super.toString() + " " + targetFilename + ":" + targetNode + " " + source + " -> " + replacement + "";
+        return super.toString() + " \"" + targetFilename + "\":" + targetNode + " " + source + " -> " + replacement + "";
     }
     
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String sourceTokens[] = tokens[1].split(":");
-        String sourceFile = sourceTokens[0];
+        String sourceFile = sourceTokens[0].replace("\"", "");
         int targetNodeID = Integer.parseInt(sourceTokens[1]);
         Operator sourceOperator = Operator.valueOf(tokens[2]);
         Operator replacementOperator = Operator.valueOf(tokens[4]);

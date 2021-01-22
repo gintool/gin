@@ -7,5 +7,5 @@ include 'services:webservice'
 
 rootProject.name = 'gin'
 
-include 'gradle-simple'
-project(':gradle-simple').projectDir = new File('examples/unittests/gradle/gradle-simple')
+//include 'gradle-simple'
+//project(':gradle-simple').projectDir = new File('examples/unittests/gradle/gradle-simple')

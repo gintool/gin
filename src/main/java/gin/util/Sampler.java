@@ -488,9 +488,9 @@ public abstract class Sampler {
     }
 
     protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID) {
-        for (UnitTestResult result : testResultSet.getResults()) {
-            int testNameIdx = result.getTest().hashCode();
-            writeResult(patchCount, testNameIdx, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
+        int testIdx = 1;
+    	for (UnitTestResult result : testResultSet.getResults()) {
+            writeResult(patchCount, testIdx++, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
         }
     }
 

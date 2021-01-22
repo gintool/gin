@@ -26,7 +26,7 @@ These instructions will show you how to build Gin and run a simple local search 
 
 Gin requires:
 
-* JDK 1.8.x  *note: there is currently a known issue that prevents Gin running on JDK 9 Aand above*
+* JDK 1.8.x  *note: there is currently a known issue that prevents Gin running on JDK 9 and above*
 * Gradle (tested with version 4.10.2)
 * A number of dependencies, which can be downloaded manually or via Gradle (recommended)
 * For Maven projects: make sure the Java version is set to 1.8.x

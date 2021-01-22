@@ -71,7 +71,7 @@ dependencies {
     compile 'org.jsoup:jsoup:1.12.2'
 
     // build example project so main project unit tests (e.g. profiler) will pass!
-//    compile project(':gradle-simple')
+    compile project(':gradle-simple')
 }
 
 // This is handy to copy dependencies into a folder, for use in an IDE etc.

@@ -347,25 +347,25 @@ public class Project {
         StringBuilder dependencies = new StringBuilder();
         try {
             InvocationRequest request = new DefaultInvocationRequest();
-            
+
             File pomFile = new File(projectDir, "pom.xml");
             request.setPomFile(pomFile);
-            
+
             request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
-            
+
             File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
-            
+
             Properties properties = new Properties();
             properties.setProperty("outputFile", depOutput.getCanonicalPath());
             properties.setProperty("appendOutput", "true");
             properties.setProperty("outputAbsoluteArtifactFilename", "true");
             request.setProperties(properties);
-            
+
             Invoker invoker = new DefaultInvoker();
             invoker.setMavenHome(mavenHome);
-            
+
             InvocationResult result = null;
-            
+
             // Extremely detailed debug output.
             if (this.DEBUG) {
                 request.setErrorHandler(new InvocationOutputHandler() {
@@ -375,31 +375,31 @@ public class Project {
                     }
                 });
             }
-            
+
             request.setOutputHandler(new InvocationOutputHandler() {
                 @Override
                 public void consumeLine(String line) throws IOException {
                     // silent output on stdout
                 }
             });
-            
+
             try {
                 result = invoker.execute(request);
             } catch (MavenInvocationException e) {
                 Logger.error(e, "Error invoking maven.");
                 System.exit(-1);
             }
-            
+
             if (result.getExitCode() != 0) {
                 Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
                 System.exit(-1);
             }
-            
+
             List<String> output = new LinkedList<String>();
             Path path = depOutput.toPath();
             output = Files.readAllLines(path);
             Files.deleteIfExists(depOutput.toPath());
-            
+
             if (!output.isEmpty()) {
                 for (String jar : output) {
                     Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
@@ -422,7 +422,7 @@ public class Project {
         if (isMavenProject()) {
             runAllUnitTestsMaven(task, mavenProfile, properties);
         } else {
-            runAllUnitTestsGradle();
+            runAllUnitTestsGradle(properties);
         }
 
     }
@@ -448,10 +448,10 @@ public class Project {
         }
 
         request.setGoals(Collections.singletonList(task));
-        
+
         request.setThreads(properties.getProperty("THREADS", "1"));
         properties.remove("THREADS");
-        
+
         request.setProperties(properties);
 
         Invoker invoker = new DefaultInvoker();
@@ -485,7 +485,7 @@ public class Project {
     }
 
     // Gradle
-    private void runAllUnitTestsGradle() {
+    private void runAllUnitTestsGradle(Properties properties) {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
 
@@ -497,7 +497,14 @@ public class Project {
 
         TestLauncher launcher = connection.newTestLauncher();
 
+        Map<String, String> variables = new HashMap<>();
+        if (properties.containsKey("argLine")) {
+            variables.put("JAVA_TOOL_OPTIONS", properties.getProperty("argLine"));
+        }
+
         launcher.withJvmTestClasses("*");
+
+        launcher.setEnvironmentVariables(variables);
 
         try {
             launcher.run();

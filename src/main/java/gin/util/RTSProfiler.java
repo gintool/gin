@@ -76,11 +76,14 @@ public class RTSProfiler {
 
     @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
     private String hprofFileName = "java.hprof.txt";
+    
+    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
+    protected Long hprofInterval = 10L;
 
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String HPROF_DIR = "hprof";
-    private static final String HPROF_ARG = "-agentlib:hprof=cpu=samples,interval=1,lineno=y,depth=1,file=";
+    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
 
     // Instance Members
     private File hprofDir;
@@ -119,6 +122,9 @@ public class RTSProfiler {
                 project.setMavenHome(this.mavenHome);
             }
         }
+        
+        // Adds the interval provided by the user
+        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
     }
 
     // Main Profile Method

@@ -985,8 +985,8 @@ public class PatchTest {
         patchTree.add(delete);
         patchTree.add(copy);
         patchTree.add(move);
-        assertEquals("| gin.edit.statement.DeleteStatement "+verySmallExampleSourceFilename+":13 | gin.edit.statement.CopyStatement "+verySmallExampleSourceFilename+":1 -> "+verySmallExampleSourceFilename+":3:2 " +
-                "| gin.edit.statement.MoveStatement "+verySmallExampleSourceFilename+":3 -> "+verySmallExampleSourceFilename+":4:2 |", patchTree.toString());
+        assertEquals("| gin.edit.statement.DeleteStatement \""+verySmallExampleSourceFilename+"\":13 | gin.edit.statement.CopyStatement \""+verySmallExampleSourceFilename+"\":1 -> \""+verySmallExampleSourceFilename+"\":3:2 " +
+                "| gin.edit.statement.MoveStatement \""+verySmallExampleSourceFilename+"\":3 -> \""+verySmallExampleSourceFilename+"\":4:2 |", patchTree.toString());
     }
 
     public static void assertEqualsWithoutWhitespace(String s1, String s2) {

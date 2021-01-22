@@ -38,13 +38,13 @@ public class DeleteStatement extends StatementEdit {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " " + sourceFilename + ":" + statementToDelete;
+        return this.getClass().getCanonicalName() + " \"" + sourceFilename + "\":" + statementToDelete;
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] tokens2 = tokens[1].split(":");
-        String filename = tokens2[0];
+        String filename = tokens2[0].replace("\"", "");
         int statement = Integer.parseInt(tokens2[1]);
         return new DeleteStatement(filename, statement);
     }

@@ -40,14 +40,14 @@ public class DeleteLine extends LineEdit {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " " + file + ":" + lineToDelete;
+        return this.getClass().getCanonicalName() + " \"" + file + "\":" + lineToDelete;
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String source = tokens[1];
         String[] sourceTokens = source.split(":");
-        String sourceFile = sourceTokens[0];
+        String sourceFile = sourceTokens[0].replace("\"", "");
         int sourceLine = Integer.parseInt(sourceTokens[1]);
         return new DeleteLine(sourceFile, sourceLine);
     }

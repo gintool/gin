@@ -30,13 +30,13 @@ public class MatchedCopyStatement extends CopyStatement {
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");
-        String sourceFile = sourceTokens[0];
+        String sourceFile = sourceTokens[0].replace("\"", ""); // strip quotes;
         int sourceStatement = Integer.parseInt(sourceTokens[1]);
         String destination = tokens[3];
         String[] destTokens = destination.split(":");
-        String destFile = destTokens[0];
+        String destFile = destTokens[0].replace("\"", ""); // strip quotes;
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);
         return new MatchedCopyStatement(sourceFile, sourceStatement, destFile, destBlock, destLine);

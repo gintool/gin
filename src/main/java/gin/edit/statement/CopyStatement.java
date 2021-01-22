@@ -81,17 +81,19 @@ public class CopyStatement extends StatementEdit {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " " + sourceFilename + ":" + sourceStatement + " -> " + destinationFilename + ":" + destinationBlock + ":" + destinationChildInBlock;
+        return this.getClass().getCanonicalName() + " \"" + sourceFilename + "\":" + sourceStatement + " -> \"" + destinationFilename + "\":" + destinationBlock + ":" + destinationChildInBlock;
     }
 
     public static Edit fromString(String description) {
-        String[] tokens = description.split("\\s+");
+    	// regex for excluding quotes is below...
+    	// https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
+        String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");
-        String sourceFile = sourceTokens[0];
+        String sourceFile = sourceTokens[0].replace("\"", ""); // strip quotes
         int sourceStatement = Integer.parseInt(sourceTokens[1]);
         String destination = tokens[3];
         String[] destTokens = destination.split(":");
-        String destFile = destTokens[0];
+        String destFile = destTokens[0].replace("\"", "");
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);
         return new CopyStatement(sourceFile, sourceStatement, destFile, destBlock, destLine);

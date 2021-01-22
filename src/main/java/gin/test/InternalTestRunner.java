@@ -145,7 +145,7 @@ public class InternalTestRunner extends TestRunner {
     @Override
     public UnitTestResultSet runTests(Patch patch, int reps) {
         try {
-            Logger.info("Preparing to run patch #" + (++count) + ": " + patch.toString());
+            Logger.debug("Preparing to run patch #" + (++count) + ": " + patch.toString());
             // Create a new class loader for every compilation, otherwise java will
             // cache the modified class for us
             this.classLoader = classLoaderFactory.createClassLoader(this.getClassPath());
@@ -178,12 +178,14 @@ public class InternalTestRunner extends TestRunner {
                 results = emptyResults(reps);
             }
             UnitTestResultSet unitTestResultSet = new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
-            Logger.info("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
-            Logger.info("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
+            Logger.debug("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
+            Logger.debug("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
             return unitTestResultSet;
         } finally {
             try {
-                this.classLoader.close();
+                if(this.classLoader != null) {
+                    this.classLoader.close();	
+                }
             } catch (IOException ex) {
                 Logger.error(ex, "Could not close CacheClassLoader.");
             }

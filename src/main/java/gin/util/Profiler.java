@@ -126,37 +126,39 @@ public class Profiler {
 
         Logger.info("Profiling project: " + this.project);
 
-        Properties properties = new Properties();
-        File hprofFile = FileUtils.getFile(hprofDir, hprofFileName);
-        try {
-            FileUtils.forceMkdir(hprofDir);
-        } catch (IOException ex) {
-            Logger.error(ex, "Unable to create hprof folder " + hprofDir.getAbsolutePath());
-            System.exit(-1);
-        }
-        StringBuilder argLine = new StringBuilder();
-        // Inject hprof agent
-        argLine.append(HPROF_ARG)
-                .append(FilenameUtils.normalize(hprofFile.getAbsolutePath()));
-
-        // Set the argument line witht he agents
-        properties.put("argLine", argLine.toString().trim());
-
-        // Set the additional properties
-        for (String additionalProperty : additionalProperties) {
-            final String[] split = additionalProperty.split("=");
-            // If format is valid
-            if (split.length == 2) {
-                properties.put(split[0].trim(), split[1].trim());
+        if (!this.skipInitialRun) {
+            Properties properties = new Properties();
+            File hprofFile = FileUtils.getFile(hprofDir, hprofFileName);
+            try {
+                FileUtils.forceMkdir(hprofDir);
+            } catch (IOException ex) {
+                Logger.error(ex, "Unable to create hprof folder " + hprofDir.getAbsolutePath());
+                System.exit(-1);
             }
+            StringBuilder argLine = new StringBuilder();
+            // Inject hprof agent
+            argLine.append(HPROF_ARG)
+                    .append(FilenameUtils.normalize(hprofFile.getAbsolutePath()));
+
+            // Set the argument line witht he agents
+            properties.put("argLine", argLine.toString().trim());
+
+            // Set the additional properties
+            for (String additionalProperty : additionalProperties) {
+                final String[] split = additionalProperty.split("=");
+                // If format is valid
+                if (split.length == 2) {
+                    properties.put(split[0].trim(), split[1].trim());
+                }
+            }
+
+            // Set the number of threads to be used by Maven
+            properties.setProperty("THREADS", threads);
+
+            // Run all test cases
+            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, properties);
         }
-
-        // Set the number of threads to be used by Maven
-        properties.setProperty("THREADS", threads);
-
-        // Run all test cases
-        project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, properties);
-
+        
         Set<UnitTest> tests = project.parseTestReports();
 
         if (tests.isEmpty()) {

@@ -110,13 +110,11 @@ public class TestHarness {
 
         try {
             clazz = Class.forName(className);
-            //TODO uncomment those lines
         } catch (ClassNotFoundException e) {
-//            Logger.error("Unable to find test class file: " + className);
-//            Logger.error("Is the class file on provided classpath?");
-//            Logger.trace(e);
+            Logger.error("Unable to find test class file: " + className);
+            Logger.error("Is the class file on provided classpath?");
+            Logger.trace(e);
 
-            result.setPassed(true);
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
@@ -126,11 +124,10 @@ public class TestHarness {
             JUnitBridge.annotateTestWithTimeout(clazz, methodName, timeout);
 
         } catch (NoSuchMethodException e) {
-//            Logger.error(e.getMessage());
-//            Logger.error("Note that parametirised JUnit tetsts are not allowed in Gin.");
-//            Logger.trace(e);
+            Logger.error(e.getMessage());
+            Logger.error("Note that parametirised JUnit tetsts are not allowed in Gin.");
+            Logger.trace(e);
 
-            result.setPassed(true);
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;

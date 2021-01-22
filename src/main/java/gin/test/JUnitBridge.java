@@ -37,12 +37,10 @@ public class JUnitBridge {
             request = buildRequest(test);
 
         } catch (ClassNotFoundException e) {
-            // TODO: Uncomment those lines
             Logger.error("Unable to find test class file: " + test);
             Logger.error("Is the class file on provided classpath?");
             Logger.trace(e);
 
-//            result.setPassed(true);
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
@@ -52,7 +50,6 @@ public class JUnitBridge {
             Logger.error("Note that parametirised JUnit tetsts are not allowed in Gin.");
             Logger.trace(e);
 
-//            result.setPassed(true);
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;

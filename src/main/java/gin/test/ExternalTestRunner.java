@@ -138,7 +138,7 @@ public class ExternalTestRunner extends TestRunner {
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException {
-        Logger.info("Preparing to run patch #" + (++count) + ": " + patch.toString());
+        Logger.debug("Preparing to run patch #" + (++count) + ": " + patch.toString());
         createTempDirectory();
 
         // Apply the patch.
@@ -171,8 +171,8 @@ public class ExternalTestRunner extends TestRunner {
         deleteTempDirectory();
         
         UnitTestResultSet unitTestResultSet = new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
-        Logger.info("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
-        Logger.info("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
+        Logger.debug("\t|---> Results of " + unitTestResultSet.getResults().size() + " tests successful? = " + unitTestResultSet.allTestsSuccessful());
+        Logger.debug("\t|---> Execution time: " + unitTestResultSet.totalExecutionTime());
         return unitTestResultSet;
 
     }
@@ -333,7 +333,6 @@ public class ExternalTestRunner extends TestRunner {
                                         || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
                                          // 3) it is fail fast and the test failed
                                         || (failFast && !result.getPassed())) {
-                                        
                                     keepConnection = false; 
                                     break inner;
                                 }

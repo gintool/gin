@@ -42,9 +42,9 @@ examples/unittests/ExampleWithInnerClass.class
 examples/unittests/ExampleWithInnerClassTest.class
 /nb-configuration.xml
 /nbproject/
-/.classpath
-/.project
-/.settings
+**/.classpath
+**/.project
+**/.settings
 /examples/unittests/ekstazi/target/
 /examples/unittests/ekstazi_mvn/target/
 /examples/unittests/ekstazi_mvn/.ekstazi/

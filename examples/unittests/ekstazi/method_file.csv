@@ -1,0 +1,8 @@
+"Method","Tests"
+"EkstaziA.methodA()","EkstaziATest.testMethodA1 []"
+"EkstaziA.methodB()","EkstaziATest.testMethodB1 []"
+"EkstaziB.sum()","EkstaziBTest.testSum1 []"
+"EkstaziB.sum()","EkstaziBTest.testSum2 []"
+"EkstaziB.sum()","EkstaziBTest.testSum3 []"
+"EkstaziC.methodFromEkstaziC()","EkstaziCTest.testC1 []"
+"EkstaziD.methodFromEkstaziD()","EkstaziDTest.testD1 []"

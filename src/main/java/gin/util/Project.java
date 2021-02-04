@@ -427,9 +427,19 @@ public class Project {
     public void runAllUnitTests(String task, String mavenProfile) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile);
+            runAllUnitTestsMaven(task, mavenProfile, new Properties());
         } else {
             runAllUnitTestsGradle();
+        }
+
+    }
+
+    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties) {
+
+        if (isMavenProject()) {
+            runAllUnitTestsMaven(task, mavenProfile, properties);
+        } else {
+            Logger.error("Test run with the extra properties parameter is currently not supported for Gradle projects.");
         }
 
     }
@@ -443,7 +453,7 @@ public class Project {
     }
 
     // Maven
-    private void runAllUnitTestsMaven(String task, String profile) {
+    private void runAllUnitTestsMaven(String task, String profile, Properties properties) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -456,7 +466,11 @@ public class Project {
 
         request.setGoals(Collections.singletonList(task));
 
-        Properties properties = new Properties();
+        if (properties.getProperty("THREADS") != null) {
+            request.setThreads(properties.getProperty("THREADS"));
+            properties.remove("THREADS");
+        }
+
         request.setProperties(properties);
 
         Invoker invoker = new DefaultInvoker();

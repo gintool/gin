@@ -1,6 +1,5 @@
 .idea/
 tmp/
-out/
 .gradle/
 build/
 .DS_Store
@@ -18,6 +17,7 @@ src/test/resources/ExampleTriangleProgram.java.patched
 classes/
 *.iml
 examples/*.class
+examples/unittests/mypackage/*.class
 /bin/
 evoexample/
 evosuite-report/
@@ -40,7 +40,16 @@ examples/unittests/ExampleTest.class
 examples/unittests/ExampleWithInnerClass$MyInner.class
 examples/unittests/ExampleWithInnerClass.class
 examples/unittests/ExampleWithInnerClassTest.class
-/.classpath
-/.project
 nbproject/
-.settings
+nb-configuration.xml
+.classpath
+**/.project
+**/.settings
+examples/unittests/ekstazi/target/
+examples/unittests/ekstazi_mvn/target/
+examples/unittests/ekstazi_mvn/.ekstazi/
+examples/unittests/ekstazi_mvn/.starts/
+examples/unittests/ekstazi_mvn/jdeps-cache/
+examples/unittests/ekstazi_mvn/output_file.csv
+profile_timing.csv
+sampler_timing.csv

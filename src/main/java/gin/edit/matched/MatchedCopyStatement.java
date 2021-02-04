@@ -30,7 +30,7 @@ public class MatchedCopyStatement extends CopyStatement {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");
         String sourceFile = sourceTokens[0].replace("\"", ""); // strip quotes;
         int sourceStatement = Integer.parseInt(sourceTokens[1]);

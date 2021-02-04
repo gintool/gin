@@ -59,7 +59,7 @@ public class CopyLine extends LineEdit {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String source = tokens[1];
         String destination = tokens[3];
         String[] sourceTokens = source.split(":");

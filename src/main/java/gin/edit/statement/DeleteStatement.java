@@ -42,7 +42,7 @@ public class DeleteStatement extends StatementEdit {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] tokens2 = tokens[1].split(":");
         String filename = tokens2[0].replace("\"", "");
         int statement = Integer.parseInt(tokens2[1]);

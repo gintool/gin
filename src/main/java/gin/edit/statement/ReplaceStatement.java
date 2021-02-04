@@ -71,7 +71,7 @@ public class ReplaceStatement extends StatementEdit {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] srcTokens = tokens[1].split(":");
         String srcFilename = srcTokens[0].replace("\"", "");
         int source = Integer.parseInt(srcTokens[1]);

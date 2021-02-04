@@ -489,7 +489,7 @@ public abstract class Sampler {
 
     protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID) {
         int testIdx = 1;
-    	for (UnitTestResult result : testResultSet.getResults()) {
+            for (UnitTestResult result : testResultSet.getResults()) {
             writeResult(patchCount, testIdx++, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
         }
     }

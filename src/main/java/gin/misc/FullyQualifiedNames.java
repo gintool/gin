@@ -199,7 +199,7 @@ public class FullyQualifiedNames {
         if (!l.isEmpty()) {  
             // find public class!
             for (ClassOrInterfaceDeclaration cd : l) {
-            		if (cd.isPublic()) {
+                            if (cd.isPublic()) {
                     return cd.getNameAsString() + ".";
                 }
             }

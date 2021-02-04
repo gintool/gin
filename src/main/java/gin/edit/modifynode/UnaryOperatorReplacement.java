@@ -105,7 +105,7 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
     }
     
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String sourceTokens[] = tokens[1].split(":");
         String sourceFile = sourceTokens[0].replace("\"", "");
         int targetNodeID = Integer.parseInt(sourceTokens[1]);

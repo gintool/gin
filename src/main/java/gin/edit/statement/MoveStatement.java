@@ -88,7 +88,7 @@ public class MoveStatement extends StatementEdit {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");
         String sourceFilename = sourceTokens[0].replace("\"", "");
         int sourceStatement = Integer.parseInt(sourceTokens[1]);

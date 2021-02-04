@@ -85,8 +85,8 @@ public class CopyStatement extends StatementEdit {
     }
 
     public static Edit fromString(String description) {
-    	// regex for excluding quotes is below...
-    	// https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
+            // regex for excluding quotes is below...
+            // https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
         String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");
         String sourceFile = sourceTokens[0].replace("\"", ""); // strip quotes

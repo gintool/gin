@@ -112,28 +112,28 @@ public class FullyQualifiedNamesTest {
     
     @Test
     public void testIssue52() {
-    	
-		// was buggy
-		SourceFile sfBug0 = new SourceFileTree(exampleForIssue52, 
-				Collections.singletonList("testMethodBug0(int,Map<List,Integer>)"));
-		
-		// was ok
-		SourceFile sfBug1 = new SourceFileTree(exampleForIssue52, 
-				Collections.singletonList("testMethodBug1(int,Map<List,Integer>)"));
-		
-		// was buggy
-		SourceFile sfBug2 = new SourceFileTree(exampleForIssue52, 
-				Collections.singletonList("testMethodBug2(int,List<Integer>)"));
+            
+                // was buggy
+                SourceFile sfBug0 = new SourceFileTree(exampleForIssue52, 
+                                Collections.singletonList("testMethodBug0(int,Map<List,Integer>)"));
+                
+                // was ok
+                SourceFile sfBug1 = new SourceFileTree(exampleForIssue52, 
+                                Collections.singletonList("testMethodBug1(int,Map<List,Integer>)"));
+                
+                // was buggy
+                SourceFile sfBug2 = new SourceFileTree(exampleForIssue52, 
+                                Collections.singletonList("testMethodBug2(int,List<Integer>)"));
 
-		
-		// was ok
-		SourceFile sfBug3 = new SourceFileTree(exampleForIssue52, 
-				Collections.singletonList("testMethodBug3(int,Map<List,Integer>)"));
-		
-		// was ok
-		SourceFile sfBug4 = new SourceFileTree(exampleForIssue52, 
-				Collections.singletonList("testMethodBug4(int,List<Integer>)"));
-				
+                
+                // was ok
+                SourceFile sfBug3 = new SourceFileTree(exampleForIssue52, 
+                                Collections.singletonList("testMethodBug3(int,Map<List,Integer>)"));
+                
+                // was ok
+                SourceFile sfBug4 = new SourceFileTree(exampleForIssue52, 
+                                Collections.singletonList("testMethodBug4(int,List<Integer>)"));
+                                
     }
     
 

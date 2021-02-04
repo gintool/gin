@@ -44,7 +44,7 @@ public class DeleteLine extends LineEdit {
     }
 
     public static Edit fromString(String description) {
-    	String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String source = tokens[1];
         String[] sourceTokens = source.split(":");
         String sourceFile = sourceTokens[0].replace("\"", "");

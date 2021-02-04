@@ -28,7 +28,7 @@ import gin.edit.statement.SwapStatement;
 
 public class EditTestIssue34 {
 
-	private final static String exampleSourceFilenameSpaces = TestConfiguration.EXAMPLE_DIR_NAME + "Folder With Spaces Issue_34" + File.separator + "Triangle.java";
+        private final static String exampleSourceFilenameSpaces = TestConfiguration.EXAMPLE_DIR_NAME + "Folder With Spaces Issue_34" + File.separator + "Triangle.java";
 
     private SourceFileTree sourceFileTreeSpaces;
 

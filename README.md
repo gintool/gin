@@ -10,6 +10,12 @@ Please cite the following papers, if you use Gin for academic purposes: <br>
 ["GI in No Time"](https://github.com/gintool/gin/blob/master/doc/gin.pdf), David R. White, 3rd International GI Workshop, GECCO Companion Material Proceedings, 2017. <br>
 ["Gin: Genetic Improvement Research Made Easy"](https://github.com/gintool/gin/blob/master/doc/gin2.pdf), Alexander E.I. Brownlee, Justyna Petke, Brad Alexander, Earl T. Barr, Markus Wagner, and David R. White, GECCO Proceedings, 2019. 
 
+Please cite the following paper, if using the edits from the [insert](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/insert) folder:
+["Injecting Shortcuts for Faster Running Java Code"](https://ieeexplore.ieee.org/document/9185708), Alexander E. I. Brownlee, Justyna Petke, Anna F. Rasburn, CEC 2020.
+
+Please cite the following paper, if using Regression Test Selection (RTS) strategies:
+"Enhancing Genetic Improvement of Software with Regression Test Selection", Giovani Guizzo, Justyna Petke, Federica Sarro, Mark Harman, ICSE 2021.
+
 ## The Gin Design Philosophy
 
 The goal of Gin is to stimulate development in GI tooling, and to lower the barrier to experimenting with GI and related ideas such as program fragility. 

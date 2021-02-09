@@ -41,7 +41,7 @@ import org.pmw.tinylog.Logger;
  *
  * @see <a href="https://github.com/TestingResearchIllinois/starts">STARTS Home
  * Page</a>
- * @see RTSProfiler
+ * see RTSProfiler
  */
 public class STARTSRTS extends RTSStrategy {
 

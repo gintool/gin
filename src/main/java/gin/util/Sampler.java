@@ -16,6 +16,7 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import com.opencsv.CSVReaderHeaderAware;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
@@ -411,6 +412,9 @@ public abstract class Sampler {
 
             return methods;
 
+        } catch (CsvValidationException e) {
+            Logger.error(e.getMessage());
+            Logger.trace(e);
         } catch (ParseException e) {
             Logger.error(e.getMessage());
             Logger.trace(e);

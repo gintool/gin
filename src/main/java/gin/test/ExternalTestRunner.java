@@ -56,6 +56,7 @@ public class ExternalTestRunner extends TestRunner {
      * @param unitTests List of unit tests to be run against each patch.
      * @param eachTestInNewSubprocess Make a new JVM for every test?
      * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
+     * @param failFast option for halting test execution upon first test failure encountered
      */
     public ExternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
         super(fullyQualifiedClassName, classPath, unitTests);
@@ -72,6 +73,7 @@ public class ExternalTestRunner extends TestRunner {
      * @param testClassName Test class used to test the patches.
      * @param eachTestInNewSubprocess Make a new JVM for every test?
      * @param eachRepetitionInNewSubProcess Run each repetition in a new JVM?
+     * @param failFast option for halting test execution upon first test failure encountered
      */
     public ExternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean eachRepetitionInNewSubProcess, boolean eachTestInNewSubprocess, boolean failFast) {
         this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), eachRepetitionInNewSubProcess, eachTestInNewSubprocess, failFast);

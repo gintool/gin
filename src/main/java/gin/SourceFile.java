@@ -179,7 +179,7 @@ public abstract class SourceFile {
 
         for (MethodDeclaration m : nodes) {
 
-            String methodName = m.getData(FullyQualifiedNames.NODEKEY_FQ_METHOD_NAME);
+            String methodName = m.containsData(FullyQualifiedNames.NODEKEY_FQ_METHOD_NAME) ? m.getData(FullyQualifiedNames.NODEKEY_FQ_METHOD_NAME) : null;
 
             if (methodName != null) {
                 for (TargetMethod targetMethod : targetMethods) {

@@ -29,6 +29,7 @@ import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 
 import gin.misc.BlockedByJavaParserException;
 import gin.misc.CloneVisitorCopyIDs;
@@ -42,8 +43,11 @@ import gin.misc.CloneVisitorCopyIDs;
  */
 public class SourceFileTree extends SourceFile {
 
-    /**the key used to track IDs in JavaParser nodes*/
+    /**the key used to track IDs in JavaParser nodes; nodes in original source have ID>=0*/
     public static final DataKey<Integer> NODEKEY_ID = new DataKey<Integer>() { };
+
+    /**all nodes from the original source have ID >=0*/
+    public static final int NODE_NULL_ID = -1; 
     
     /**
      * The compilation unit is only ever made available as a copy,
@@ -114,7 +118,7 @@ public class SourceFileTree extends SourceFile {
     private SourceFileTree(SourceFileTree sf, Map<Integer, Node> nodesToReplace) {
         
         super(sf.filename, sf.targetMethods);
-        
+       
         // clone the compilation unit (including IDs)
         this.compilationUnit = cloneCompilationUnitWithIDs(sf.compilationUnit, nodesToReplace);
         
@@ -142,7 +146,7 @@ public class SourceFileTree extends SourceFile {
             // make the CU
             compilationUnit = JavaParser.parse(file);
             
-            // assign the IDs
+            // assign the IDs - they start at zero
             int id = 0;
             for (Node n : compilationUnit.getChildNodesByType(Node.class)) {
                 n.setData(NODEKEY_ID, id);
@@ -169,7 +173,7 @@ public class SourceFileTree extends SourceFile {
         // update the cache of IDs in the CU
         this.allNodes = new HashMap<>();
         for (Node n : this.compilationUnit.getChildNodesByType(Node.class)) {
-            this.allNodes.put(n.getData(NODEKEY_ID), n);
+            this.allNodes.put(n.containsData(NODEKEY_ID) ? n.getData(NODEKEY_ID) : NODE_NULL_ID, n);
         }
         
         // find the root nodes for the target methods
@@ -193,7 +197,7 @@ public class SourceFileTree extends SourceFile {
         allStatementIDs = new ArrayList<>();
         
         for (Statement s : compilationUnit.getChildNodesByType(Statement.class)) {
-            Integer id = s.getData(NODEKEY_ID);
+            Integer id = s.containsData(NODEKEY_ID) ? s.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
             allStatementIDs.add(id);
         }
         
@@ -207,7 +211,7 @@ public class SourceFileTree extends SourceFile {
                 List<Node> nodesInTargetMethod = tn.getChildNodesByType(Node.class);
                 
                 for (Node n : nodesInTargetMethod) {
-                    Integer id = n.getData(NODEKEY_ID);
+                    Integer id = n.containsData(NODEKEY_ID) ? n.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
                     if (id != null) { // only track nodes in the original source, i.e. those with IDs
                         nIDs.add(id);
                         if (Statement.class.isAssignableFrom(n.getClass())) {
@@ -232,15 +236,15 @@ public class SourceFileTree extends SourceFile {
         insertionPointsInBlock = new HashMap<>();
         
         for (BlockStmt b : allBlocks) {
-            allBlockIDs.add(b.getData(NODEKEY_ID));
+            allBlockIDs.add(b.containsData(NODEKEY_ID) ? b.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
             NodeList<Statement> statements = b.getStatements();
             List<Integer> statementIDs = new ArrayList<>(statements.size());
-            statementIDs.add(b.getData(NODEKEY_ID)); // add the blockID too, representing the start of the block
+            statementIDs.add(b.containsData(NODEKEY_ID) ? b.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID); // add the blockID too, representing the start of the block
             for (Statement statement : statements) {
-                statementIDs.add(statement.getData(NODEKEY_ID));
+                statementIDs.add(statement.containsData(NODEKEY_ID) ? statement.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
             }
             
-            insertionPointsInBlock.put(b.getData(NODEKEY_ID), statementIDs);
+            insertionPointsInBlock.put(b.containsData(NODEKEY_ID) ? b.getData(NODEKEY_ID) : NODE_NULL_ID, statementIDs);
         }
 
         targetMethodBlockIDs = new ArrayList<>();
@@ -249,13 +253,13 @@ public class SourceFileTree extends SourceFile {
                 List<BlockStmt> listTargetMethod = n.getChildNodesByType(BlockStmt.class);
                 for (BlockStmt b : allBlocks) {
                     if (listTargetMethod.contains(b)) {
-                        targetMethodBlockIDs.add(b.getData(NODEKEY_ID));
+                        targetMethodBlockIDs.add(b.containsData(NODEKEY_ID) ? b.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
                     }
                 }
             }
         } else {
             for (BlockStmt b : allBlocks) { // no target methods? just add all
-                targetMethodBlockIDs.add(b.getData(NODEKEY_ID));
+                targetMethodBlockIDs.add(b.containsData(NODEKEY_ID) ? b.getData(NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
             }
         }
     }
@@ -377,7 +381,7 @@ public class SourceFileTree extends SourceFile {
             SourceFileTree sf = new SourceFileTree(this);
         
             Statement copy = statementToInsert.clone(); // always clone to avoid nasty stateful stuff
-            copy.setData(NODEKEY_ID, null); // clear the ID of the copy
+            copy.setData(NODEKEY_ID, NODE_NULL_ID); // clear the ID of the copy
 
             Node parent = sf.allNodes.get(blockID);
             if (parent instanceof BlockStmt) {
@@ -388,7 +392,7 @@ public class SourceFileTree extends SourceFile {
                     
                 statementLoop:
                 for (int i = 0; i < statements.size(); i++) {
-                    Integer id = statements.get(i).getData(NODEKEY_ID);
+                    Integer id = statements.get(i).containsData(NODEKEY_ID) ? statements.get(i).getData(NODEKEY_ID) : NODE_NULL_ID;
                     if ((id == null) || (id <= insertionPoint)) {
                         insertIndex = i + 1; // add 1 because we want to insert after the statement!
                     } else {
@@ -423,7 +427,7 @@ public class SourceFileTree extends SourceFile {
         } else {
             Node replacementNodeCopy = replacement.clone();
             //replacementNodeCopy.setData(NODEKEY_ID, ID);  // don't do this. it then makes edits to the replaced node possible. Issue https://github.com/drdrwhite/ginfork/issues/46
-            replacementNodeCopy.setData(NODEKEY_ID, null);
+            replacementNodeCopy.setData(NODEKEY_ID, NODE_NULL_ID);
             
             Map<Integer, Node> nodesToReplace = Collections.singletonMap(ID, replacementNodeCopy);
             SourceFileTree sf = new SourceFileTree(this, nodesToReplace);
@@ -604,7 +608,7 @@ public class SourceFileTree extends SourceFile {
                 classLoop:
                 for (Class<? extends Node> clazz : clazzes) {
                     if (clazz.isAssignableFrom(n.getClass())) {
-                        rval.add(n.getData(NODEKEY_ID)); // no need to check for null, these nodes are only ones from the original and have IDs
+                        rval.add(n.containsData(NODEKEY_ID) ? n.getData(NODEKEY_ID) : NODE_NULL_ID); // no need to check for null, these nodes are only ones from the original and have IDs
                         break classLoop;
                     }
                 }
@@ -635,7 +639,11 @@ public class SourceFileTree extends SourceFile {
      */
     public int getIDForStatementNumber(int index) {
         List<Statement> l = compilationUnit.getChildNodesByType(Statement.class);
-        return l.get(index).getData(NODEKEY_ID);
+        if (l.get(index).containsData(NODEKEY_ID)) {
+        	return l.get(index).getData(NODEKEY_ID);
+        } else {
+        	return SourceFileTree.NODE_NULL_ID;
+        }
     }
     
     /**
@@ -647,7 +655,11 @@ public class SourceFileTree extends SourceFile {
      */
     public int getIDForBlockNumber(int index) {
         List<BlockStmt> l = compilationUnit.getChildNodesByType(BlockStmt.class);
-        return l.get(index).getData(NODEKEY_ID);
+        if (l.get(index).containsData(NODEKEY_ID)) {
+        	return l.get(index).getData(NODEKEY_ID);
+        } else {
+        	return SourceFileTree.NODE_NULL_ID;
+        }
     }
     
     /**
@@ -664,7 +676,7 @@ public class SourceFileTree extends SourceFile {
         List<Statement> l = compilationUnit.getChildNodesByType(Statement.class);
         
         for (int i = 0; i < l.size(); i++) {
-            if (l.get(i).getData(NODEKEY_ID) == ID) {
+            if (l.get(i).containsData(NODEKEY_ID) ? l.get(i).getData(NODEKEY_ID) == ID : false) {
                 return i;
             }
         }
@@ -686,7 +698,7 @@ public class SourceFileTree extends SourceFile {
         List<BlockStmt> l = compilationUnit.getChildNodesByType(BlockStmt.class);
 
         for (int i = 0; i < l.size(); i++) {
-            if (l.get(i).getData(NODEKEY_ID) == ID) {
+            if (l.get(i).containsData(NODEKEY_ID) ? l.get(i).getData(NODEKEY_ID) == ID : false) {
                 return i;
             }
         }
@@ -747,7 +759,8 @@ public class SourceFileTree extends SourceFile {
      * @param cu to CompilationUnit to clone
      * @return the clone
      * */
-    private static CompilationUnit cloneCompilationUnitWithIDs(CompilationUnit cu) {
+    @SuppressWarnings("unused")
+	private static CompilationUnit cloneCompilationUnitWithIDs(CompilationUnit cu) {
         CompilationUnit rval = (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(), null));
         return rval;
     }
@@ -758,8 +771,8 @@ public class SourceFileTree extends SourceFile {
      * @return the clone
      */
     private static CompilationUnit cloneCompilationUnitWithIDs(CompilationUnit cu, Map<Integer, Node> nodesToReplace) {
-        CompilationUnit rval = (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(nodesToReplace), null));
-        return rval;
+    	CompilationUnit rval = (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(nodesToReplace), null));
+	    return rval;
     }
 
     

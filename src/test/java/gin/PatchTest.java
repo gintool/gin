@@ -201,12 +201,12 @@ public class PatchTest {
                 "    public static void Dummy() {\n" +
                 "        if ((a < b) || (a > c)) {\n" + 
                 "            c++;\n" + 
-                "        }" +
+                "        }\n" +
                 "        int b = 2;\n" +
                 "        int c = a + b;\n" +
                 "        int a = 1;\n" +
                 "    }\n" +
-                "}";
+                "}";      
         String swappedSource2 = swapPatch2.apply();
         assertEqualsWithoutWhitespace(swapExpected2, swappedSource2);
         

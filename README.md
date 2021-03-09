@@ -256,8 +256,8 @@ projectnameforgin='spatial4j'; editType='STATEMENT'; patchSize='1'; patchNumber=
 
 ## Contributing
 
-As Gin is still very much in an early stage of development, no process is yet in place for contribution. Please feel free to open issues and submit pull requests. If you'd like to aid in the development of Gin more generally, please get in touch with [Sandy Brownlee](mailto:sbr@cs.stir.ac.uk) or [Justyna Petke](mailto:j.petke@ucl.ac.uk) .
+Please feel free to open issues and submit pull requests. If you'd like to aid in the development of Gin more generally, please get in touch with [Sandy Brownlee](mailto:sbr@cs.stir.ac.uk) or [Justyna Petke](mailto:j.petke@ucl.ac.uk). 
 
 ## License
 
-This project is licensed under the MIT License. Please see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License. Please see the [LICENSE.md](LICENSE.md) file for details. By submitting a pull request, you agree to license your contribution under the MIT license to this project.

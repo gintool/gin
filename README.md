@@ -2,13 +2,15 @@
 
 # Gin: A Tool for Experimentation with GI
 
-Gin is a [Genetic Improvement](https://en.wikipedia.org/wiki/Genetic_improvement_(computer_science)) (GI) tool. Genetic Improvement is the application of [Genetic Programming](https://en.wikipedia.org/wiki/Genetic_programming) and other [Metaheuristics](https://en.wikipedia.org/wiki/Metaheuristic) to existing software, to improve it in some way. In its initial incarnation, Gin was designed to reduce the execution time of Java code by modifying source files whilst preserving functionality as embodied by a set of JUnit tests.
+Gin is a [Genetic Improvement](https://en.wikipedia.org/wiki/Genetic_improvement_(computer_science)) (GI) tool. Genetic Improvement is the application of [Genetic Programming](https://en.wikipedia.org/wiki/Genetic_programming) and other [Metaheuristics](https://en.wikipedia.org/wiki/Metaheuristic) to existing software, to improve it in some way. In its initial incarnation, Gin was designed to reduce the execution time of Java code by modifying source files whilst preserving functionality as embodied by a set of JUnit tests. 
 
-This repository was created based on a private development repo and is still undergoing development. Please raise an issue if you have a specific request or notice a bug.
+This repository is still undergoing development. Please raise an issue if you have a specific request or notice a bug. If you want to learn more about GI, please see the dedicated [Genetic Improvement website](http://geneticimprovementofsoftware.com/).
 
 Please cite the following papers, if you use Gin for academic purposes: <br>
-["GI in No Time"](https://github.com/gintool/gin/blob/master/doc/gin.pdf), David R. White, 3rd International GI Workshop, GECCO Companion Material Proceedings, 2017. <br>
-["Gin: Genetic Improvement Research Made Easy"](https://github.com/gintool/gin/blob/master/doc/gin2.pdf), Alexander E.I. Brownlee, Justyna Petke, Brad Alexander, Earl T. Barr, Markus Wagner, and David R. White, GECCO Proceedings, 2019. 
+- release 2 and newer: ["Gin: Genetic Improvement Research Made Easy"](https://github.com/gintool/gin/blob/master/doc/gin2.pdf), Alexander E.I. Brownlee, Justyna Petke, Brad Alexander, Earl T. Barr, Markus Wagner, and David R. White, GECCO Proceedings, 2019. <br>
+- release 1: ["GI in No Time"](https://github.com/gintool/gin/blob/master/doc/gin.pdf), David R. White, 3rd International GI Workshop, GECCO Companion Material Proceedings, 2017. 
+
+Extensions:
 
 Please cite the following paper, if using the edits from the [insert](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/insert) folder:
 ["Injecting Shortcuts for Faster Running Java Code"](https://ieeexplore.ieee.org/document/9185708), Alexander E. I. Brownlee, Justyna Petke, Anna F. Rasburn, CEC 2020.

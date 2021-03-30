@@ -34,6 +34,8 @@ import com.github.javaparser.ast.comments.Comment;
  */
 public class SourceFileLine extends SourceFile {
 
+    private static final long serialVersionUID = -4661893718115291631L;
+
     /**the raw lines in the source*/
     private SortedMap<LineID, String> lines;
 

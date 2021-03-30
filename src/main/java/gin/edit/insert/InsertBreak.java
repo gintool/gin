@@ -18,6 +18,7 @@ import gin.edit.Edit;
  */
 public class InsertBreak extends InsertStatementEdit {
 
+    private static final long serialVersionUID = -3984837967904703375L;
     public String destinationFilename;
     public int destinationBlock;
     public int destinationChildInBlock;

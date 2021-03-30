@@ -24,6 +24,8 @@ import gin.test.UnitTestResultSet;
 
 public class GPFix extends GPSimple {
 
+    private static final long serialVersionUID = 1043876194620277519L;
+    
     @Argument(alias = "rec", description = "Record all fitness values in a HashMap")
     protected Boolean record = false;
 

@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serializable;
 import java.text.ParseException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,8 +9,9 @@ import org.junit.runner.notification.Failure;
 /**
  * Represents a result of repNumber run of UnitTest
  */
-public class UnitTestResult {
+public class UnitTestResult implements Serializable {
 
+    private static final long serialVersionUID = -1929539166632146849L;
     private UnitTest test;
     private int repNumber;
 

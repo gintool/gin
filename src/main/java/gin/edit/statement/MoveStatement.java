@@ -11,6 +11,7 @@ import gin.misc.BlockedByJavaParserException;
 
 public class MoveStatement extends StatementEdit {
 
+    private static final long serialVersionUID = 7928960721990003574L;
     private String sourceFilename;
     private int sourceStatement;
     private String destinationFilename;

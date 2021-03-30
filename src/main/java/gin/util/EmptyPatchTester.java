@@ -16,6 +16,8 @@ import gin.test.UnitTestResultSet;
  */
 public class EmptyPatchTester extends Sampler{
 
+    private static final long serialVersionUID = 833946988361588298L;
+
     public static void main(String[] args) {
         EmptyPatchTester sampler = new EmptyPatchTester(args);
         sampler.sampleMethods();

@@ -31,7 +31,9 @@ import org.apache.commons.lang3.SystemUtils;
  *
  * @author Giovani
  */
-public class RTSProfiler {
+public class RTSProfiler implements Serializable {
+
+    private static final long serialVersionUID = 6763826827126978230L;
 
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)

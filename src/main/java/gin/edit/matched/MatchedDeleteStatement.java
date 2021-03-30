@@ -12,6 +12,8 @@ import gin.edit.statement.DeleteStatement;
  */
 public class MatchedDeleteStatement extends DeleteStatement {
 
+    private static final long serialVersionUID = 6177385671420449098L;
+
     /**
      * This is our attempt at a Java-specific grammar aware operator.
      * Delete a given statement

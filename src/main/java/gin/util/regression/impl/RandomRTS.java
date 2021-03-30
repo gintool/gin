@@ -21,6 +21,8 @@ import org.apache.commons.math3.random.RandomGeneratorFactory;
  */
 public class RandomRTS extends RTSStrategy {
 
+    private static final long serialVersionUID = -1347083983560579003L;
+    
     /**
      * Random generator for selecting the test cases.
      */
@@ -58,7 +60,7 @@ public class RandomRTS extends RTSStrategy {
                 selectedTests = selectedTests.subList(0, testsToSelect);
             }
             // Save the selection
-            results.put(targetClass, new HashSet(selectedTests));
+            results.put(targetClass, new HashSet<>(selectedTests));
         }
         return results;
     }

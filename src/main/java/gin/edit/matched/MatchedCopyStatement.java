@@ -12,6 +12,8 @@ import gin.edit.statement.CopyStatement;
  */
 public class MatchedCopyStatement extends CopyStatement {
     
+    private static final long serialVersionUID = -8219981780665785484L;
+
     /**
      * @param sourceFile to create an edit for
      * @param rng random number generator, used to choose the target statements

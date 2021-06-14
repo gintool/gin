@@ -45,10 +45,10 @@ public class SourceFileTree extends SourceFile {
 
     private static final long serialVersionUID = -7236253343894593247L;
 
-    /**the key used to track IDs in JavaParser nodes; nodes in original source have ID>=0*/
+    /**the key used to track IDs in JavaParser nodes; nodes in original source have ID greater or equal to 0*/
     public static final DataKey<Integer> NODEKEY_ID = new DataKey<Integer>() { };
 
-    /**all nodes from the original source have ID >=0*/
+    /**all nodes from the original source have ID greater or equal to 0*/
     public static final int NODE_NULL_ID = -1; 
     
     /**

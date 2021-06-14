@@ -1,24 +1,25 @@
 package gin.util;
 
 import com.opencsv.CSVWriter;
-
-import java.io.*;
-import java.util.*;
-
-import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
-
+import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
 import gin.util.regression.RTSFactory;
-import java.nio.charset.Charset;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import gin.util.regression.RTSStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
-import gin.util.regression.RTSStrategy;
-import org.apache.commons.lang3.SystemUtils;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Profiler for mvn/gradle projects to find the "hot" methods of a test suite
@@ -77,8 +78,8 @@ public class RTSProfiler implements Serializable {
 
     @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
     private String hprofFileName = "java.hprof.txt";
-    
-    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
+
+    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
 
     // Constants
@@ -123,7 +124,7 @@ public class RTSProfiler implements Serializable {
                 project.setMavenHome(this.mavenHome);
             }
         }
-        
+
         // Adds the interval provided by the user
         HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
     }
@@ -225,7 +226,10 @@ public class RTSProfiler implements Serializable {
     private void writeResults(List<HotMethod> hotMethods) {
         CSVWriter writer = null;
         try {
-            this.outputFile.getParentFile().mkdirs();
+            File parentFile = this.outputFile.getParentFile();
+            if (parentFile != null) {
+                parentFile.mkdirs();
+            }
             writer = new CSVWriter(new FileWriter(this.outputFile));
             writer.writeNext(HEADER);
 
@@ -235,10 +239,10 @@ public class RTSProfiler implements Serializable {
                         .collect(Collectors.joining(","));
 
                 String[] row = {this.projectName,
-                    Integer.toString(hotMethod.hashCode()),
-                    hotMethod.getFullMethodName(),
-                    Integer.toString(hotMethod.getCount()),
-                    allTestNames
+                        Integer.toString(hotMethod.hashCode()),
+                        hotMethod.getFullMethodName(),
+                        Integer.toString(hotMethod.getCount()),
+                        allTestNames
                 };
 
                 writer.writeNext(row);

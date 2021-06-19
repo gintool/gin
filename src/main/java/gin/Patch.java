@@ -266,6 +266,22 @@ public class Patch {
     public List<Boolean> getEditsInvalidOnLastApply() {
         return editsValidOnLastApply;
     }
+    
+    public List<Integer> getEditedLines()
+    {
+    	List<Integer> result;
+    	
+    	if (sourceFile instanceof SourceFileLine)
+    	{
+    		result = ((SourceFileLine)sourceFile).getEditedLines();
+    	}
+    	else
+    	{
+    		result = Collections.emptyList();
+    	}
+    	
+    	return result;
+    }
 
     @Override
     public String toString() {

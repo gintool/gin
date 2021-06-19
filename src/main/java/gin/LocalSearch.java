@@ -1,9 +1,13 @@
 package gin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.rng.simple.JDKRandomBridge;
@@ -55,6 +59,9 @@ public class LocalSearch {
     
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
+    
+    @Argument(alias = "hom", description = "Way of search. When argument is set, it will be searched for Higher-Order-Mutations")
+    protected boolean homEnabled;
     
     /**allowed edit types for sampling: parsed from editType*/
     protected List<Class<? extends Edit>> editTypes;
@@ -128,9 +135,65 @@ public class LocalSearch {
         return resultSet.totalExecutionTime() / WARMUP_REPS;
 
     }
+    
+    private void search()
+    {
+    	if(homEnabled) {
+    		searchWithHOM();
+    	}
+    	else {
+    		searchWithoutHOM();
+    	}
+    }
 
+    private void searchWithHOM()
+    {
+    	List<Patch> fitterPatches = getFitterPatches();
+    	Set<Integer> modifiedLines = getModifiedLines(fitterPatches);
+    	
+    	//TODO HOM to be implemented
+    	
+    }
+    
+    private List<Patch> getFitterPatches()
+    {
+    	List<Patch> fitterPatches = new ArrayList<Patch>();
+    	
+        Logger.info(String.format("Localsearch on file: %s method: %s with HOM", filename, methodSignature));
+
+        // Time original code
+        long origTime = timeOriginalCode();
+        Logger.info("Original execution time: " + origTime + "ns");
+
+        // Start with empty patch
+        Patch origPatch = new Patch(this.sourceFile);
+
+        for (int step = 1; step <= numSteps; step++) {
+
+            Patch neighbour = neighbour(origPatch);
+            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, 1);
+
+            StringBuilder msg = new StringBuilder();
+            
+            if(checkIfPatchIsFitter(neighbour, testResultSet, origTime, msg)) {
+                fitterPatches.add(neighbour);
+                msg.append("Found fitter Patch with time: ").append(testResultSet.totalExecutionTime()).append("(ns)");
+            }
+
+            Logger.info(String.format("Step: %d, Patch: %s, %s ", step, neighbour, msg));
+
+        }
+    	
+    	return fitterPatches;
+    }
+    
+    private Set<Integer> getModifiedLines(List<Patch> patches)
+    {
+    	return patches.parallelStream().map(p -> p.getEditedLines()).flatMap(l -> l.stream()).collect(Collectors.toSet());
+    }
+    
     // Simple local search
-    private void search() {
+    private void searchWithoutHOM() {
 
         Logger.info(String.format("Localsearch on file: %s method: %s", filename, methodSignature));
 
@@ -147,20 +210,12 @@ public class LocalSearch {
             Patch neighbour = neighbour(bestPatch);
             UnitTestResultSet testResultSet = testRunner.runTests(neighbour, 1);
 
-            String msg;
-
-            if (!testResultSet.getValidPatch()) {
-                msg = "Patch invalid";
-            } else if (!testResultSet.getCleanCompile()) {
-                msg = "Failed to compile";
-            } else if (!testResultSet.allTestsSuccessful()) {
-                msg = ("Failed to pass all tests");
-            } else if (testResultSet.totalExecutionTime() >= bestTime) {
-                msg = "Time: " + testResultSet.totalExecutionTime() + "ns";
-            } else {
+            StringBuilder msg = new StringBuilder();
+            
+            if(checkIfPatchIsFitter(neighbour, testResultSet, bestTime, msg)) {
                 bestPatch = neighbour;
                 bestTime = testResultSet.totalExecutionTime();
-                msg = "New best time: " + bestTime + "(ns)";
+                msg.append("New best time: ").append(bestTime).append("(ns)");
             }
 
             Logger.info(String.format("Step: %d, Patch: %s, %s ", step, neighbour, msg));
@@ -174,6 +229,24 @@ public class LocalSearch {
 
         bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
+    }
+    
+    private boolean checkIfPatchIsFitter(Patch patch, UnitTestResultSet testResultSet, Long origTime, StringBuilder msg) {
+
+        if (!testResultSet.getValidPatch()) {
+            msg.append("Patch invalid");
+        } else if (!testResultSet.getCleanCompile()) {
+            msg.append("Failed to compile");
+        } else if (!testResultSet.allTestsSuccessful()) {
+            msg.append("Failed to pass all tests");
+        } else if (testResultSet.totalExecutionTime() >= origTime) {
+            msg.append("Time: ").append(testResultSet.totalExecutionTime()).append("ns");
+        } else {
+        	return true;
+        }
+        
+        return false;
+        
     }
 
 
@@ -195,6 +268,4 @@ public class LocalSearch {
         return neighbour;
 
     }
-
-
 }

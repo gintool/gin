@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -326,6 +327,12 @@ public class SourceFileLine extends SourceFile {
         return Collections.unmodifiableList(new ArrayList<>(allLineIDs));
     }
 
+    
+    public List<Integer> getEditedLines()
+    {
+    	return lines.keySet().stream().filter(l -> !l.isOriginalLine()).map(LineID::getLineNumber).collect(Collectors.toList());
+    }
+    
  
     /*============== the following are some helper methods and classes ==============*/
      
@@ -343,7 +350,19 @@ public class SourceFileLine extends SourceFile {
             this.offset = offset;
         }
         
-        @Override
+        public boolean isOriginalLine() {
+			return isOriginalLine;
+		}
+
+		public int getLineNumber() {
+			return lineNumber;
+		}
+
+		public int getOffset() {
+			return offset;
+		}
+
+		@Override
         public int compareTo(LineID that) {
             if (isOriginalLine || (this.lineNumber != that.lineNumber)) {
                 return Integer.compare(this.lineNumber, that.lineNumber);

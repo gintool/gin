@@ -63,6 +63,15 @@ public class LocalSearch {
     @Argument(alias = "hom", description = "Way of search. When argument is set, it will be searched for Higher-Order-Mutations")
     protected boolean homEnabled;
     
+    @Argument(alias = "i", description = "Number of iterations for evolutionary search")
+    protected Integer numIterations = 50;
+    
+    @Argument(alias = "p", description = "Population size for evolutionary search")
+    protected Integer populationSize = 100;	//TODO set populationSize as relational to size of input program
+    
+    @Argument(alias = "e", description = "Number of elites for evolutionary search")
+    protected Integer eliteSize = 10;
+    
     /**allowed edit types for sampling: parsed from editType*/
     protected List<Class<? extends Edit>> editTypes;
     
@@ -151,8 +160,39 @@ public class LocalSearch {
     	List<Patch> fitterPatches = getFitterPatches();
     	Set<Integer> modifiedLines = getModifiedLines(fitterPatches);
     	
-    	//TODO HOM to be implemented
+    	List<Patch> firstPopulation = getFirstPopulation(fitterPatches);
+    	//Logger.info(String.format("First Generation. found: %d Patches",firstPopulation.size()));
+    	List<Patch> population = EvolutionarySearch(firstPopulation);
+    	//Logger.info(String.format("Finished. found: %d Patches",population.size()));
     	
+    	
+    }
+    
+    //Evolutionary Algorithm for building new population based on given parent population
+    private List<Patch> EvolutionarySearch(List<Patch> parentPatches){
+    	//get testresult for patches and make list of UnitTestResultSets from only successful Patches
+    	List<UnitTestResultSet> testResultSets = new ArrayList<UnitTestResultSet>();
+    	for(Patch parentPatch : parentPatches) {
+    		UnitTestResultSet testResultSet = testRunner.runTests(parentPatch, 1);
+    		if(testResultSet.getValidPatch() && testResultSet.getCleanCompile() && testResultSet.allTestsSuccessful()) {
+    			testResultSets.add(testResultSet);
+    		}
+    	}
+    	//Logger.info(String.format("After deleting : %d HMOs", testResultSets.size()));
+    	
+    	//sort the beginning of the list to finnd k elites (k is parameter eliteSite)
+    	kthSmallest(testResultSets,0,testResultSets.size()-1,testResultSets.size()>eliteSize?eliteSize:testResultSets.size());
+    	
+    	//add kth best Patches (elites) to childPopulation
+    	List<Patch> childGeneration=new ArrayList<Patch>();
+    	for (int i=0;i<(testResultSets.size()<eliteSize?testResultSets.size():eliteSize);++i) {
+    		childGeneration.add(testResultSets.get(i).getPatch());
+    	}
+    	
+    	//TODO generate more mutants by Crossover and Poitmutation
+    	//TODO recursively call EvolutionarySearch, decrease numIterations by 1 each Recursion, Exit & print result when numIteraions hits 0
+    	
+    	return childGeneration;
     }
     
     private List<Patch> getFitterPatches()
@@ -185,6 +225,48 @@ public class LocalSearch {
         }
     	
     	return fitterPatches;
+    }
+    
+  //merge multiple Patches to one Patch
+    private Patch mergePatches(List<Patch> patches)
+    {
+    	if(patches==null || patches.isEmpty()){
+    		return new Patch(this.sourceFile);
+        }
+        else if(patches.size()==1){
+        	return patches.get(0);
+        }
+        else{
+        	Patch newPatch = new Patch(this.sourceFile);
+        	for(Patch patch : patches){
+        		List<Edit> edits = patch.getEdits();
+        		for(Edit edit : edits){
+            		newPatch.add(edit);
+            	}
+        	}
+          return newPatch;
+        }
+     }
+    //create the first HOM-Population by Combining FOM-Patches
+    private List<Patch> getFirstPopulation(List<Patch> FOMPatches)
+    {
+    	List<Patch> firstPopulation = new ArrayList<Patch>();
+    	Random rand = new Random();
+    	
+    	for(int i=0; i<populationSize; ++i) {
+    		List<Patch> HOMPatches = new ArrayList<Patch>();
+    		
+    		if(FOMPatches.size()<=1)	return FOMPatches;
+    		//select multiple (minimum 2) FOM-Patches to merge into a HOM Patch 
+    		for (int j=0; j<rand.nextInt((FOMPatches.size()-1))+1; j++) {
+                int randomIndex = rand.nextInt(FOMPatches.size());
+                Patch randomPatch = FOMPatches.get(randomIndex);
+                HOMPatches.add(randomPatch);
+            }
+    		Patch mergedHOMPatch = mergePatches(HOMPatches);
+    		firstPopulation.add(mergedHOMPatch);
+    	}
+    	return firstPopulation;
     }
     
     private Set<Integer> getModifiedLines(List<Patch> patches)
@@ -267,5 +349,51 @@ public class LocalSearch {
         
         return neighbour;
 
+    }
+    
+    
+    //QUICKSELECT METHODS
+    //Quickselect algorithm similar to Quicksort
+    
+    /**
+     * @param testResults List of UnitTestResults
+     * @param low lowest position of list (0 for calling)
+     * @param high highest position of list (list.size()-1)
+     * @param k element until which alues should be sorted (between 1 and list.size()) 
+     */
+    public int kthSmallest(List<UnitTestResultSet> testResults, int low, int high, int k)
+    {
+        int partition = partition(testResults, low, high);
+ 
+
+        if (partition == k - 1)
+            return 0;
+ 
+        else if (partition < k - 1)
+            return kthSmallest(testResults, partition + 1, high, k);
+ 
+        else
+            return kthSmallest(testResults, low, partition - 1, k);
+    }
+    public int partition(List<UnitTestResultSet> testResults, int low, int high)
+    {
+        long pivot = testResults.get(high).totalExecutionTime();
+        int pivotlocation = low;
+        for (int i = low; i <= high; i++) {
+            // inserting testSets with lower runtime to the left
+            if (testResults.get(i).totalExecutionTime() < pivot) {
+                UnitTestResultSet temp = testResults.get(i);
+                testResults.set(i,testResults.get(pivotlocation));
+                testResults.set(pivotlocation,temp);
+                pivotlocation++;
+            }
+        }
+ 
+        // swapping pivot to the final pivot location
+        UnitTestResultSet temp = testResults.get(high);
+        testResults.set(high,testResults.get(pivotlocation));
+        testResults.set(pivotlocation,temp);
+ 
+        return pivotlocation;
     }
 }

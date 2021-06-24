@@ -67,10 +67,13 @@ public class LocalSearch {
     protected Integer numIterations = 50;
     
     @Argument(alias = "p", description = "Population size for evolutionary search")
-    protected Integer populationSize = 100;	//TODO set populationSize as relational to size of input program
+    protected Integer populationSize = 50;	//TODO set populationSize as relational to size of input program
     
     @Argument(alias = "e", description = "Number of elites for evolutionary search")
     protected Integer eliteSize = 10;
+    
+    @Argument(alias = "ts", description = "Tournament size for evolutionary search")
+    protected Integer tournamentSize = 5;
     
     /**allowed edit types for sampling: parsed from editType*/
     protected List<Class<? extends Edit>> editTypes;
@@ -161,16 +164,26 @@ public class LocalSearch {
     	Set<Integer> modifiedLines = getModifiedLines(fitterPatches);
     	
     	List<Patch> firstPopulation = getFirstPopulation(fitterPatches);
-    	//Logger.info(String.format("First Generation. found: %d Patches",firstPopulation.size()));
-    	List<Patch> population = EvolutionarySearch(firstPopulation);
-    	//Logger.info(String.format("Finished. found: %d Patches",population.size()));
-    	
-    	
+    	List<Patch> finalPopulation = EvolutionarySearch(firstPopulation, numIterations);
+    	//find Patch with lowest runtime
+    	List<UnitTestResultSet> finalTestResultSets = new ArrayList<UnitTestResultSet>();
+    	for(Patch patch : finalPopulation) {
+    		UnitTestResultSet testResultSet = testRunner.runTests(patch, 1);
+    		finalTestResultSets.add(testResultSet);
+    	}
+    	//order list to have best element on index 0
+    	kthSmallest(finalTestResultSets, 0,finalTestResultSets.size()-1,1);
+    	Patch finalPatch = finalTestResultSets.get(0).getPatch();
+    	long origTime = timeOriginalCode();
+    	long bestTime = finalTestResultSets.get(0).totalExecutionTime();
+    	Logger.info(String.format("Finished Evolutionary Search. Best time: %d (ns), Speedup (%%): %.2f, Patch: %s",
+                bestTime, 100.0f *((origTime - bestTime)/(1.0f * origTime)), finalPatch));
+    	finalPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
     }
     
     //Evolutionary Algorithm for building new population based on given parent population
-    private List<Patch> EvolutionarySearch(List<Patch> parentPatches){
-    	//get testresult for patches and make list of UnitTestResultSets from only successful Patches
+    private List<Patch> EvolutionarySearch(List<Patch> parentPatches, int iterationCounter){
+    	//get testResultSet for patches and make list of UnitTestResultSets from only successful Patches
     	List<UnitTestResultSet> testResultSets = new ArrayList<UnitTestResultSet>();
     	for(Patch parentPatch : parentPatches) {
     		UnitTestResultSet testResultSet = testRunner.runTests(parentPatch, 1);
@@ -178,9 +191,24 @@ public class LocalSearch {
     			testResultSets.add(testResultSet);
     		}
     	}
-    	//Logger.info(String.format("After deleting : %d HMOs", testResultSets.size()));
     	
-    	//sort the beginning of the list to finnd k elites (k is parameter eliteSite)
+    	//TODO what happens if list is empty because every HOM-Patch failed
+    	//current soltion: return list with just original Patch
+    	if(testResultSets.size()==0) {
+    		List<Patch> originalPatch = new ArrayList<Patch>();
+    		originalPatch.add(new Patch(this.sourceFile));
+    		return originalPatch;
+    	}
+    	//if iteration counter hits 0: leave recursion, return current population (after sorting out invalid patches above)
+    	if(iterationCounter==0) {
+    		List<Patch> finalPatches = new ArrayList<Patch>();
+    		for(UnitTestResultSet testResultSet : testResultSets) {
+    			finalPatches.add(testResultSet.getPatch());
+    		}
+    		return finalPatches;
+    	}
+    	
+    	//sort the beginning of the list to find k elites (k is parameter eliteSite)
     	kthSmallest(testResultSets,0,testResultSets.size()-1,testResultSets.size()>eliteSize?eliteSize:testResultSets.size());
     	
     	//add kth best Patches (elites) to childPopulation
@@ -189,10 +217,36 @@ public class LocalSearch {
     		childGeneration.add(testResultSets.get(i).getPatch());
     	}
     	
-    	//TODO generate more mutants by Crossover and Poitmutation
-    	//TODO recursively call EvolutionarySearch, decrease numIterations by 1 each Recursion, Exit & print result when numIteraions hits 0
+    	//Crossover probability is set to 0.8
+    	//Tournament selection for selecting crossovers:
+    	for(int i=0; i<0.8*(populationSize-eliteSize); ++i) {
+    		List<UnitTestResultSet> tournamentList = new ArrayList<UnitTestResultSet>();
+	    	for(int j=0; j<tournamentSize;++j) {
+	    		tournamentList.add(testResultSets.get(rng.nextInt(testResultSets.size())));
+	    	}
+	    	//order list for two elements with best fitness, perform crossover on these two patches
+	    	kthSmallest(tournamentList,0,tournamentSize-1,2);
+	    	childGeneration.add(crossover(tournamentList.get(0).getPatch(),tournamentList.get(1).getPatch()));
+    	}
+    	//Mutation Probability is 0.2
+    	//find random Patches, perform Pointmutations and add them in the childGeneraion
+    	for(int i=0; i<0.2*(populationSize-eliteSize); ++i) {
+    		Patch patchToMutate = testResultSets.get(rng.nextInt(testResultSets.size())).getPatch();
+    		childGeneration.add(pointMutation(patchToMutate));
+    	}
     	
-    	return childGeneration;
+    	return EvolutionarySearch(childGeneration, --iterationCounter);
+    }
+    
+    //dummy for crossover method
+    private Patch crossover(Patch p1, Patch p2) {
+    	if(rng.nextBoolean())	return p1;
+    	else	return p2;
+    }
+    //dummy for pointMutation method
+    private Patch pointMutation(Patch patch) {
+    	patch.addRandomEditOfClasses(rng, editTypes);
+    	return patch;
     }
     
     private List<Patch> getFitterPatches()
@@ -250,16 +304,38 @@ public class LocalSearch {
     //create the first HOM-Population by Combining FOM-Patches
     private List<Patch> getFirstPopulation(List<Patch> FOMPatches)
     {
-    	List<Patch> firstPopulation = new ArrayList<Patch>();
-    	Random rand = new Random();
+    	List<UnitTestResultSet> testResultSets = new ArrayList<UnitTestResultSet>();
+    	for(Patch FOMPatch : FOMPatches) {
+    		UnitTestResultSet testResultSet = testRunner.runTests(FOMPatch, 1);
+    		if(testResultSet.getValidPatch() && testResultSet.getCleanCompile() && testResultSet.allTestsSuccessful()) {
+    			testResultSets.add(testResultSet);
+    		}
+    	}
+    	//TODO what to do if no patch is valid
+    	if(testResultSets.size()==0) {
+    		Logger.info(String.format("Found no valid FOM Patches"));
+    		return FOMPatches;
+    	}
+    	//sort the beginning of the list to find k elites (k is parameter eliteSite)
+    	kthSmallest(testResultSets,0,testResultSets.size()-1,testResultSets.size()>eliteSize?eliteSize:testResultSets.size());
     	
-    	for(int i=0; i<populationSize; ++i) {
+    	List<Patch> firstPopulation = new ArrayList<Patch>();
+    	
+    	//add kth best FOM-Patches (elites) to firstPopulation
+    	for (int i=0;i<(testResultSets.size()<eliteSize?testResultSets.size():eliteSize);++i) {
+    		firstPopulation.add(testResultSets.get(i).getPatch());
+    	}
+    	
+    	for(int i=0; i<populationSize-eliteSize; ++i) {
     		List<Patch> HOMPatches = new ArrayList<Patch>();
     		
-    		if(FOMPatches.size()<=1)	return FOMPatches;
-    		//select multiple (minimum 2) FOM-Patches to merge into a HOM Patch 
-    		for (int j=0; j<rand.nextInt((FOMPatches.size()-1))+1; j++) {
-                int randomIndex = rand.nextInt(FOMPatches.size());
+    		if(FOMPatches.size()<=1) {
+    			Logger.info(String.format("Found no FOM Patches to merge"));
+    			return FOMPatches;
+    		}
+    		//select multiple (minimum 1, maximum 5) FOM-Patches to merge into a HOM Patch 
+    		for (int j=0; j<rng.nextInt(((FOMPatches.size()>5?5:FOMPatches.size())-1))+1; j++) {
+                int randomIndex = rng.nextInt(FOMPatches.size());
                 Patch randomPatch = FOMPatches.get(randomIndex);
                 HOMPatches.add(randomPatch);
             }
@@ -354,6 +430,7 @@ public class LocalSearch {
     
     //QUICKSELECT METHODS
     //Quickselect algorithm similar to Quicksort
+    //changes order of list elements so that lowest k elements are in the lowest k inices
     
     /**
      * @param testResults List of UnitTestResults
@@ -364,13 +441,12 @@ public class LocalSearch {
     public int kthSmallest(List<UnitTestResultSet> testResults, int low, int high, int k)
     {
         int partition = partition(testResults, low, high);
- 
 
-        if (partition == k - 1)
+        if (partition == k-1)
             return 0;
  
-        else if (partition < k - 1)
-            return kthSmallest(testResults, partition + 1, high, k);
+        else if (partition < k-1)
+            return kthSmallest(testResults, partition+1, high, k);
  
         else
             return kthSmallest(testResults, low, partition - 1, k);
@@ -395,5 +471,32 @@ public class LocalSearch {
         testResults.set(pivotlocation,temp);
  
         return pivotlocation;
+    }
+    
+    //TODO methods for testing purpose, delete later!
+    public void printUnitTestResults(List<UnitTestResultSet> testResults) {
+    	long origTime = timeOriginalCode();
+    	Logger.info(String.format("#################### Printing list ##########################"));
+    	for(int i=0;i<testResults.size();++i) {
+    		if(!(testResults.get(i).getValidPatch() && testResults.get(i).getCleanCompile() && testResults.get(i).allTestsSuccessful())) {
+    			continue;
+    		}
+    		
+    		long bestTime = testResults.get(i).totalExecutionTime();
+        			
+	    	Logger.info(String.format("List item %d. Best time: %d (ns), Speedup (%%): %.2f,",
+	                i, bestTime,100.0f *((origTime - bestTime)/(1.0f * origTime))));
+    	}
+    	Logger.info(String.format("#################### Done Printing list ##########################"));
+    }
+    
+    public void printPatches(List<Patch> patches, int k) {
+    	if(patches.size()>k)	patches = patches.subList(0, k);
+    	List<UnitTestResultSet> testResultSets = new ArrayList<UnitTestResultSet>();
+    	for(Patch patch : patches) {
+    		UnitTestResultSet testResultSet = testRunner.runTests(patch, 1);
+    		testResultSets.add(testResultSet);
+    	}
+    	printUnitTestResults(testResultSets);
     }
 }

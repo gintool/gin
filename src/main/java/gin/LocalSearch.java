@@ -87,6 +87,11 @@ public class LocalSearch {
     InternalTestRunner testRunner;
     protected Random rng;
 
+    /**
+     * Variable used in HOM genetic algorithm to store the best current patch
+     */
+    private UnitTestResultSet bestPatchResultSet;
+
     // Instantiate a class and call search
     public static void main(String[] args) {
         LocalSearch simpleLocalSearch = new LocalSearch(args);
@@ -165,17 +170,18 @@ public class LocalSearch {
     	
     	List<Patch> firstPopulation = getFirstPopulation(fitterPatches);
     	List<Patch> finalPopulation = EvolutionarySearch(firstPopulation, numIterations);
-    	//find Patch with lowest runtime
-    	List<UnitTestResultSet> finalTestResultSets = new ArrayList<UnitTestResultSet>();
-    	for(Patch patch : finalPopulation) {
-    		UnitTestResultSet testResultSet = testRunner.runTests(patch, 1);
-    		finalTestResultSets.add(testResultSet);
-    	}
+
+    	//List<UnitTestResultSet> finalTestResultSets = new ArrayList<UnitTestResultSet>();
+    	//for(Patch patch : finalPopulation) {
+    	//	UnitTestResultSet testResultSet = testRunner.runTests(patch, 1);
+    	//	finalTestResultSets.add(testResultSet);
+    	//}
     	//order list to have best element on index 0
-    	kthSmallest(finalTestResultSets, 0,finalTestResultSets.size()-1,1);
-    	Patch finalPatch = finalTestResultSets.get(0).getPatch();
+    	//kthSmallest(finalTestResultSets, 0,finalTestResultSets.size()-1,1);
+
+    	Patch finalPatch = this.bestPatchResultSet.getPatch();
     	long origTime = timeOriginalCode();
-    	long bestTime = finalTestResultSets.get(0).totalExecutionTime();
+    	long bestTime = this.bestPatchResultSet.totalExecutionTime();
     	Logger.info(String.format("Finished Evolutionary Search. Best time: %d (ns), Speedup (%%): %.2f, Patch: %s",
                 bestTime, 100.0f *((origTime - bestTime)/(1.0f * origTime)), finalPatch));
     	finalPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
@@ -186,9 +192,13 @@ public class LocalSearch {
     	//get testResultSet for patches and make list of UnitTestResultSets from only successful Patches
     	List<UnitTestResultSet> testResultSets = new ArrayList<UnitTestResultSet>();
     	for(Patch parentPatch : parentPatches) {
+    	    if (parentPatch.testPassed()){
+    	        testResultSets.add(parentPatch.getTestResultSet());
+            }
     		UnitTestResultSet testResultSet = testRunner.runTests(parentPatch, 1);
     		if(testResultSet.getValidPatch() && testResultSet.getCleanCompile() && testResultSet.allTestsSuccessful()) {
     			testResultSets.add(testResultSet);
+    			parentPatch.setTestPass(testResultSet);
     		}
     	}
     	
@@ -210,6 +220,12 @@ public class LocalSearch {
     	
     	//sort the beginning of the list to find k elites (k is parameter eliteSite)
     	kthSmallest(testResultSets,0,testResultSets.size()-1,testResultSets.size()>eliteSize?eliteSize:testResultSets.size());
+
+    	// update the current best patch if necessary
+        UnitTestResultSet bestIndividual = testResultSets.get(0);
+    	if (bestIndividual.totalExecutionTime() < bestPatchResultSet.totalExecutionTime()){
+    	    this.bestPatchResultSet = bestIndividual;
+        }
     	
     	//add kth best Patches (elites) to childPopulation
     	List<Patch> childGeneration=new ArrayList<Patch>();
@@ -309,6 +325,7 @@ public class LocalSearch {
     		UnitTestResultSet testResultSet = testRunner.runTests(FOMPatch, 1);
     		if(testResultSet.getValidPatch() && testResultSet.getCleanCompile() && testResultSet.allTestsSuccessful()) {
     			testResultSets.add(testResultSet);
+    			FOMPatch.setTestPass(testResultSet);
     		}
     	}
     	//TODO what to do if no patch is valid
@@ -318,6 +335,7 @@ public class LocalSearch {
     	}
     	//sort the beginning of the list to find k elites (k is parameter eliteSite)
     	kthSmallest(testResultSets,0,testResultSets.size()-1,testResultSets.size()>eliteSize?eliteSize:testResultSets.size());
+    	this.bestPatchResultSet = testResultSets.get(0);
     	
     	List<Patch> firstPopulation = new ArrayList<Patch>();
     	
@@ -436,7 +454,7 @@ public class LocalSearch {
      * @param testResults List of UnitTestResults
      * @param low lowest position of list (0 for calling)
      * @param high highest position of list (list.size()-1)
-     * @param k element until which alues should be sorted (between 1 and list.size()) 
+     * @param k element until which values should be sorted (between 1 and list.size())
      */
     public int kthSmallest(List<UnitTestResultSet> testResults, int low, int high, int k)
     {

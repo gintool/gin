@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import gin.test.UnitTest;
+import gin.test.UnitTestResult;
+import gin.test.UnitTestResultSet;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
 
@@ -40,14 +43,33 @@ public class Patch {
     /**
      * identifies individual edits that were applied successfully (true) or failed due to JP (false)
      */
-    List<Boolean> editsValidOnLastApply; 
+    List<Boolean> editsValidOnLastApply;
+
+    /**
+     * used in HOM genetic approach to avoid multiple test runs for the same mutant
+     * true if tests are passed, false if no tests were conducted
+     */
+    boolean testPassed;
+    UnitTestResultSet results;
 
     public Patch(SourceFile sourceFile) {
         this.sourceFile = sourceFile;
         this.superClassOfEdits = null;
         this.lastApplyWasValid = false;
         this.editsValidOnLastApply = Collections.emptyList();
+        this.testPassed = false;
     }
+
+    /**
+     * methods for setting and getting the testPassed field and the test result set
+     * used in the HOM approach
+     */
+    public void setTestPass(UnitTestResultSet results) {
+        this.testPassed = true;
+        this.results = results;
+    }
+    public boolean testPassed() { return this.testPassed; }
+    public UnitTestResultSet getTestResultSet(){ return this.results; }
 
     @SuppressWarnings("unchecked")
     public Patch clone() {

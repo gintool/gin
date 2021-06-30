@@ -19,8 +19,8 @@ import java.util.TreeSet;
 
 import org.pmw.tinylog.Logger;
 
-import com.github.javaparser.JavaParser;
 import com.github.javaparser.Position;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;
@@ -113,7 +113,7 @@ public class SourceFileLine extends SourceFile {
     private void populateIDLists() {
 
         // A JavaParser CU is used to find the lines for the methods
-        CompilationUnit compilationUnit = JavaParser.parse(this.getSource().toString());
+        CompilationUnit compilationUnit = StaticJavaParser.parse(this.getSource().toString());
         
         this.lineIDsInTargetMethod = new ArrayList<>();
 

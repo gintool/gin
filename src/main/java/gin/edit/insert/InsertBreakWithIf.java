@@ -55,8 +55,8 @@ public class InsertBreakWithIf extends InsertStatementEdit {
         this.destinationChildInBlock = insertStatementID;
         
         BreakStmt stmt = new BreakStmt();
-            stmt.removeLabel(); // a bit weird but if we don't do this we get "break empty;"
-            
+        stmt.removeLabel(); // a bit weird but if we don't do this we get "break empty;"  
+        
         // get vars in scope
         List<VariableTypeAndName> vds = sf.getPrimitiveVariablesInScopeForStatement(insertStatementID);
         if (!vds.isEmpty()) {
@@ -158,7 +158,7 @@ public class InsertBreakWithIf extends InsertStatementEdit {
                 stmt = ifs;
             } else {
                     BreakStmt bstmt = new BreakStmt();
-                    bstmt.removeLabel(); 
+                    bstmt.removeLabel();
                     stmt = bstmt;
             }
             

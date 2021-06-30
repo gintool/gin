@@ -10,6 +10,7 @@ import org.apache.commons.collections4.map.HashedMap;
 import com.github.javaparser.ast.ArrayCreationLevel;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.AnnotationDeclaration;
@@ -22,6 +23,7 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.InitializerDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.ReceiverParameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.BlockComment;
 import com.github.javaparser.ast.comments.JavadocComment;
@@ -56,6 +58,8 @@ import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
 import com.github.javaparser.ast.expr.SuperExpr;
+import com.github.javaparser.ast.expr.SwitchExpr;
+import com.github.javaparser.ast.expr.TextBlockLiteralExpr;
 import com.github.javaparser.ast.expr.ThisExpr;
 import com.github.javaparser.ast.expr.TypeExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
@@ -75,19 +79,20 @@ import com.github.javaparser.ast.stmt.DoStmt;
 import com.github.javaparser.ast.stmt.EmptyStmt;
 import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
-import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.ForEachStmt;
+import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.LabeledStmt;
 import com.github.javaparser.ast.stmt.LocalClassDeclarationStmt;
 import com.github.javaparser.ast.stmt.ReturnStmt;
-import com.github.javaparser.ast.stmt.SwitchEntryStmt;
+import com.github.javaparser.ast.stmt.SwitchEntry;
 import com.github.javaparser.ast.stmt.SwitchStmt;
 import com.github.javaparser.ast.stmt.SynchronizedStmt;
 import com.github.javaparser.ast.stmt.ThrowStmt;
 import com.github.javaparser.ast.stmt.TryStmt;
 import com.github.javaparser.ast.stmt.UnparsableStmt;
 import com.github.javaparser.ast.stmt.WhileStmt;
+import com.github.javaparser.ast.stmt.YieldStmt;
 import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.IntersectionType;
@@ -95,6 +100,7 @@ import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.type.UnionType;
 import com.github.javaparser.ast.type.UnknownType;
+import com.github.javaparser.ast.type.VarType;
 import com.github.javaparser.ast.type.VoidType;
 import com.github.javaparser.ast.type.WildcardType;
 import com.github.javaparser.ast.visitor.CloneVisitor;
@@ -848,11 +854,11 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
     }
 
     @Override
-    public Visitable visit(final SwitchEntryStmt n, final Object arg) {
+    public Visitable visit(final SwitchEntry n, final Object arg) {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SwitchEntryStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SwitchEntry)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1112,6 +1118,72 @@ public class CloneVisitorCopyIDs extends CloneVisitor {
         if (r == null) {
             r = super.visit(n, arg);
             ((UnparsableStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(Modifier n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((Modifier)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(ReceiverParameter n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((ReceiverParameter)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(SwitchExpr n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((SwitchExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(TextBlockLiteralExpr n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((TextBlockLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(VarType n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((VarType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        }
+
+        return r;
+    }
+    
+    @Override
+    public Visitable visit(YieldStmt n, Object arg) {
+    	Visitable r = checkForReplacement(n);
+        if (r == null) {
+            r = super.visit(n, arg);
+            ((YieldStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;

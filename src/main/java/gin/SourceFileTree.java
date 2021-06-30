@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 import org.pmw.tinylog.Logger;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
 import com.github.javaparser.ast.Node;
@@ -29,7 +29,6 @@ import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 
 import gin.misc.BlockedByJavaParserException;
 import gin.misc.CloneVisitorCopyIDs;
@@ -144,7 +143,7 @@ public class SourceFileTree extends SourceFile {
         try {
             
             // make the CU
-            compilationUnit = JavaParser.parse(file);
+            compilationUnit = StaticJavaParser.parse(file);
             
             // assign the IDs - they start at zero
             int id = 0;
@@ -295,6 +294,17 @@ public class SourceFileTree extends SourceFile {
         for (BlockStmt block : list) {
             output.append("[").append(counter).append("] ").append(block.toString()).append("\n"); // can't use indexof as may appear > once
             counter++;
+        }
+        return output.toString();
+    }
+
+    public String nodeListWithIDs() {
+    	List<Integer> ids = new ArrayList<>(allNodes.keySet());
+    	Collections.sort(ids);
+        StringBuilder output = new StringBuilder();
+        for (Integer id : ids) {
+            Node node = getNode(id);
+            output.append("[").append(id).append("] ").append(node.toString()).append("\n");
         }
         return output.toString();
     }

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -16,7 +17,9 @@ import java.util.Map;
  * Intercept classloading of JUnitBridge, and provide access to class from the
  * target system Also allow overlaying of the modified classes.F
  */
-public class CacheClassLoader extends URLClassLoader {
+public class CacheClassLoader extends URLClassLoader implements Serializable {
+
+    private static final long serialVersionUID = -9181563170107783961L;
 
     private static final String BRIDGE_CLASS_NAME = gin.test.JUnitBridge.class.getName();
 

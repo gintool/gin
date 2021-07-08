@@ -30,6 +30,7 @@ import gin.edit.Edit;
  */
 public class InsertContinueWithIf extends InsertStatementEdit {
 
+    private static final long serialVersionUID = -4419249667163580559L;
     public String destinationFilename;
     public int destinationBlock;
     public int destinationChildInBlock;

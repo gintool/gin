@@ -18,6 +18,7 @@ import gin.edit.Edit;
  */
 public class InsertReturn extends InsertStatementEdit {
 
+    private static final long serialVersionUID = -8583902144286150020L;
     public String destinationFilename;
     public int destinationBlock;
     public int destinationChildInBlock;

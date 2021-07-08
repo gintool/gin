@@ -9,6 +9,7 @@ import gin.edit.Edit;
 
 public class SwapLine extends LineEdit {
 
+    private static final long serialVersionUID = -5440774476269461819L;
     public String sourceFile;
     public int sourceLine;
     public String destinationFile;

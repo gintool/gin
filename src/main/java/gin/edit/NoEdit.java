@@ -7,6 +7,8 @@ import gin.SourceFile;
  */
 public class NoEdit extends Edit {
 
+    private static final long serialVersionUID = 3415362789416357180L;
+
     @Override
     public EditType getEditType() {
         return null;

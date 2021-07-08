@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
  */
 public class NoneRTS extends RTSStrategy {
 
+    private static final long serialVersionUID = -8965975698685542627L;
+
     @Override
     public void linkTestsToMethods(Collection<HotMethod> targetMethods, Collection<UnitTest> tests) {
         // If no RTS strategy is selected, all target methods use all

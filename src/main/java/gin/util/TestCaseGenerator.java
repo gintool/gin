@@ -1,35 +1,30 @@
 package gin.util;
 
-import com.sampullara.cli.Argument;
-import com.sampullara.cli.Args;
-
-import org.pmw.tinylog.Logger;
-
 import java.io.File;
-import java.io.IOException;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
-
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
-import java.lang.InterruptedException;
-
-import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
-import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.ProcessResult;
-import org.zeroturnaround.exec.stream.LogOutputStream;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.apache.maven.model.Dependency;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.pmw.tinylog.Logger;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.stream.LogOutputStream;
+import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 
 /**
  * EvoSuite test generator.
@@ -37,7 +32,9 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
  * Generates unit tests for Maven and Gradle projects.
  * Runs generated tests for Maven projects.
  */
-public class TestCaseGenerator {
+public class TestCaseGenerator implements Serializable {
+
+    private static final long serialVersionUID = -2311248061581562068L;
 
     @Argument(alias = "d", description = "Project directory: required", required=true)
     protected File projectDir;

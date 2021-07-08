@@ -10,6 +10,7 @@ import gin.edit.Edit;
 
 public class ReplaceStatement extends StatementEdit {
 
+    private static final long serialVersionUID = -647745057930821451L;
     public String sourceFilename;
     public int sourceStatement;
     public String destinationFilename;

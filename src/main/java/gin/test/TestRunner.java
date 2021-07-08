@@ -1,6 +1,7 @@
 package gin.test;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,8 +18,9 @@ import gin.Patch;
  * run. Once instantiated for a set of tests, it can be repeatedly invoked to
  * run tests against new patches.
  */
-public abstract class TestRunner {
+public abstract class TestRunner implements Serializable {
 
+    private static final long serialVersionUID = 1333408488557880918L;
     private final String packageName;
     private final String className;
     private final String classPath;

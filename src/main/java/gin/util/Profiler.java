@@ -21,7 +21,9 @@ import org.pmw.tinylog.Logger;
  *
  * You provide the project directory, output file, number of reps.... the Profiler does the rest.
  */
-public class Profiler {
+public class Profiler implements Serializable {
+
+    private static final long serialVersionUID = 766201566071524493L;
 
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)

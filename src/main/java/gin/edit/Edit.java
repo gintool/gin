@@ -1,5 +1,6 @@
 package gin.edit;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +38,9 @@ import gin.edit.statement.SwapStatement;
  * Furthermore, every edit needs a (SourceFile,Random) constructor for the places that
  * a new edit is created
  */
-public abstract class Edit {
+public abstract class Edit implements Serializable {
+
+    private static final long serialVersionUID = 4390559803708644574L;
 
     public enum EditType { LINE, STATEMENT, MODIFY_STATEMENT, MATCHED_STATEMENT, INSERT_STATEMENT}
 

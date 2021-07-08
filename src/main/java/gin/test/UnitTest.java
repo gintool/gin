@@ -1,6 +1,7 @@
 package gin.test;
 
 import java.io.File;
+import java.io.Serializable;
 import java.text.ParseException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,7 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Represents a test that needs to be run by Gin.
  */
-public class UnitTest implements Comparable<UnitTest> {
+public class UnitTest implements Comparable<UnitTest>, Serializable {
+
+    private static final long serialVersionUID = -3894012530058369753L;
 
     public static long defaultTimeoutMS = 10000L;
 

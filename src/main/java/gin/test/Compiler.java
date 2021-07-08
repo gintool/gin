@@ -2,6 +2,7 @@ package gin.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +18,9 @@ import org.pmw.tinylog.Logger;
 /**
  * Wraps the InMemoryJavaCompiler to compile a class given its name and a classpath.
  */
-public class Compiler {
+public class Compiler implements Serializable {
+
+    private static final long serialVersionUID = -5411786808143665676L;
 
     /**
      * Compile a class to bytecode, given the fully qualified classname, a source string, and an optional classpath.

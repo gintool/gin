@@ -43,6 +43,8 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class EkstaziRTS extends RTSStrategy {
 
+    private static final long serialVersionUID = 2828162141766700048L;
+
     /**
      * The directory containing Ekstazi's dependency information.
      */

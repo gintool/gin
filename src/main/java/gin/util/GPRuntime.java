@@ -15,6 +15,8 @@ import gin.test.UnitTestResultSet;
 
 public class GPRuntime extends GPSimple {
     
+    private static final long serialVersionUID = 2553742317029378882L;
+
     public static void main(String[] args) {
         GPRuntime sampler = new GPRuntime(args);
         sampler.sampleMethods();

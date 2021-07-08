@@ -2,6 +2,8 @@ package gin.util.regression;
 
 import gin.util.HotMethod;
 import gin.test.UnitTest;
+
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +20,9 @@ import java.util.stream.Collectors;
  *
  * @author Giovani
  */
-public abstract class RTSStrategy {
+public abstract class RTSStrategy implements Serializable {
+
+    private static final long serialVersionUID = 7815012376032989736L;
 
     /**
      * Gets the argument line to inject the RTS technique with the execution of

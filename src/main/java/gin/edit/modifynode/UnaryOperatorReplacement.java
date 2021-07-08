@@ -15,6 +15,8 @@ import gin.SourceFileTree;
 import gin.edit.Edit;
 
 public class UnaryOperatorReplacement extends ModifyNodeEdit {
+    
+    private static final long serialVersionUID = -3582626839165494107L;
     public String targetFilename;
     private final int targetNode;
     private final Operator source;

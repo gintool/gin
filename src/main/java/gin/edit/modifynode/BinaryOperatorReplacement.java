@@ -16,6 +16,7 @@ import gin.edit.Edit;
 
 public class BinaryOperatorReplacement extends ModifyNodeEdit {
     
+    private static final long serialVersionUID = 3685538795989546595L;
     public String targetFilename;
     private final int targetNode;
     private final Operator source;

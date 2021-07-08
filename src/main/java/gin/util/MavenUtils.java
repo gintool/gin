@@ -1,6 +1,8 @@
 package gin.util;
 
 import java.io.File;
+import java.io.Serializable;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -9,7 +11,9 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author Giovani
  */
-public class MavenUtils {
+public class MavenUtils implements Serializable {
+
+    private static final long serialVersionUID = 6646703137441264344L;
 
     /**
      * Finds the path to maven home in the System variables, if any. This is the

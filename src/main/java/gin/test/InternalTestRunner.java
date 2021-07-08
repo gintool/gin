@@ -16,6 +16,8 @@ import java.io.IOException;
  */
 public class InternalTestRunner extends TestRunner {
 
+    private static final long serialVersionUID = -2348071089493178903L;
+
     public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
 
     private CacheClassLoader classLoader;

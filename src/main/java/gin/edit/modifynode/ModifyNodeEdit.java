@@ -6,6 +6,9 @@ import org.apache.commons.lang3.NotImplementedException;
 
 
 public abstract class ModifyNodeEdit extends StatementEdit {
+    
+    private static final long serialVersionUID = -2535228434612243480L;
+
     @Override
     public String toString() {
         return this.getClass().getCanonicalName() + " ";

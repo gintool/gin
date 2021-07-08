@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.ParseException;
@@ -16,8 +17,9 @@ import org.pmw.tinylog.Logger;
 /** 
  * Runs a given test request. Uses sockets to communicate with ExternalTestRunner.
  */
-public class TestHarness {
+public class TestHarness implements Serializable {
 
+    private static final long serialVersionUID = -6547478455821943382L;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;

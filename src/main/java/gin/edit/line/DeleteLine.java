@@ -9,6 +9,7 @@ import gin.edit.Edit;
 
 public class DeleteLine extends LineEdit {
 
+    private static final long serialVersionUID = -101392700158097478L;
     public String file;
     public int lineToDelete;
 

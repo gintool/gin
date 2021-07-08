@@ -9,6 +9,7 @@ import gin.edit.Edit;
 
 public class MoveLine extends LineEdit {
 
+    private static final long serialVersionUID = 3879542500715518150L;
     public String sourceFile;
     public int sourceLine;
     public String destinationFile;

@@ -9,6 +9,7 @@ import gin.misc.BlockedByJavaParserException;
 
 public class DeleteStatement extends StatementEdit {
 
+    private static final long serialVersionUID = -8946372835353498185L;
     private String sourceFilename;
     private int statementToDelete;
 

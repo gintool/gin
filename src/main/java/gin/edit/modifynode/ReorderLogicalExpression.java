@@ -19,6 +19,8 @@ import gin.SourceFileTree;
  * this would then capture this kind of thing: (a || b) || c
  */
 public class ReorderLogicalExpression extends ModifyNodeEdit {
+    
+    private static final long serialVersionUID = 5174511673772025047L;
     private final int targetNode;
     
     /**

@@ -2,6 +2,7 @@ package gin.misc;
 
 
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 
@@ -112,8 +113,9 @@ import gin.SourceFileTree;
  * A visitor that clones (copies) a node and all its children.
  * Extended to copy IDs as well.
  */
-public class CloneVisitorCopyIDs extends CloneVisitor {
+public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
 
+    private static final long serialVersionUID = -7030362755496561991L;
     private Map<Integer,Node> nodesToReplace;
 
     public CloneVisitorCopyIDs() {

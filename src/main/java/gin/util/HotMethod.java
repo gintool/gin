@@ -1,6 +1,8 @@
 package gin.util;
 
 import gin.test.UnitTest;
+
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -10,7 +12,9 @@ import java.util.Set;
  *
  * @author Giovani
  */
-public class HotMethod implements Comparable<HotMethod> {
+public class HotMethod implements Comparable<HotMethod>, Serializable {
+
+    private static final long serialVersionUID = 853623680385176566L;
 
     /**
      * The fully qualified class name.

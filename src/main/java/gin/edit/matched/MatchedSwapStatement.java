@@ -12,6 +12,8 @@ import gin.edit.statement.SwapStatement;
  */
 public class MatchedSwapStatement extends SwapStatement {
     
+    private static final long serialVersionUID = -5831284385801518450L;
+
     /**
      * This is our attempt at a Java-specific grammar aware operator.
      * Swap one statement with another one of the same type

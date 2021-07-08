@@ -5,6 +5,7 @@ package gin.test;
  */
 public class HangingThreadsException extends RuntimeException {
 
+    private static final long serialVersionUID = 3285010916124484883L;
     int threadsBefore;
     int threadsAfter;
 

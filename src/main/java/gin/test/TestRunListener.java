@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.List;
@@ -15,7 +16,9 @@ import org.pmw.tinylog.Logger;
  * assumes one test case is run through JUnitCore at a time
  * ignored tests and tests with assumption violations are considered successful (following JUnit standard)
  */
-public class TestRunListener extends RunListener {
+public class TestRunListener extends RunListener implements Serializable {
+
+    private static final long serialVersionUID = -1768323084872818847L;
 
     private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 

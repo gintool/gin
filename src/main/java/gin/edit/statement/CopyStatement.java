@@ -11,6 +11,7 @@ import gin.edit.Edit;
 
 public class CopyStatement extends StatementEdit {
 
+    private static final long serialVersionUID = 5742471997384065345L;
     public String sourceFilename;
     public int sourceStatement;
     public String destinationFilename;

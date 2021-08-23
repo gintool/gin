@@ -15,7 +15,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 
@@ -43,10 +43,10 @@ public class FullyQualifiedNamesTest {
 
     @Before
     public void setup() throws FileNotFoundException {
-        compilationUnitNoPackage = JavaParser.parse(new File(exampleSourceNoPackageFilename));
-        compilationUnitWithPackage = JavaParser.parse(new File(exampleSourceWithPackageFilename));
-        compilationUnitWithInnerClasses = JavaParser.parse(new File(exampleSourceWithInnerClasses));
-        compilationUnitEnum = JavaParser.parse(new File(exampleSourceEnum));
+        compilationUnitNoPackage = StaticJavaParser.parse(new File(exampleSourceNoPackageFilename));
+        compilationUnitWithPackage = StaticJavaParser.parse(new File(exampleSourceWithPackageFilename));
+        compilationUnitWithInnerClasses = StaticJavaParser.parse(new File(exampleSourceWithInnerClasses));
+        compilationUnitEnum = StaticJavaParser.parse(new File(exampleSourceEnum));
     }
 
     @Test

@@ -105,22 +105,22 @@ public class SourceFileTreeTest {
     
     @Test
     public void statementListMethod() throws Exception {
-        List<Integer> expected = Arrays.asList(new Integer[] {168, 169, 170, 171, 182});
+        List<Integer> expected = Arrays.asList(new Integer[] {181, 182, 183, 184, 195});
         assertEquals(expected, sourceFileWithMethod.getStatementIDsInTargetMethod());
     }
     
     @Test
     public void statementNumberFromID() throws Exception {
-        assertEquals(0, sourceFileSmall.getStatementNumberForNodeID(7)); // whole class block statement
-        assertEquals(1, sourceFileSmall.getStatementNumberForNodeID(8)); // a=1
-        assertEquals(2, sourceFileSmall.getStatementNumberForNodeID(14)); // b=2
-        assertEquals(3, sourceFileSmall.getStatementNumberForNodeID(20)); // c=a+b
+        assertEquals(0, sourceFileSmall.getStatementNumberForNodeID(10)); // whole class block statement
+        assertEquals(1, sourceFileSmall.getStatementNumberForNodeID(11)); // a=1
+        assertEquals(2, sourceFileSmall.getStatementNumberForNodeID(17)); // b=2
+        assertEquals(3, sourceFileSmall.getStatementNumberForNodeID(23)); // c=a+b
     }
     
     @Test
     public void blockNumberFromID() throws Exception {
-        assertEquals(0, sourceFileSmall.getBlockNumberForNodeID(7)); // whole class block statement
-        assertEquals(1, sourceFileSmall.getBlockNumberForNodeID(44)); // if... block statement
+        assertEquals(0, sourceFileSmall.getBlockNumberForNodeID(10)); // whole class block statement
+        assertEquals(1, sourceFileSmall.getBlockNumberForNodeID(47)); // if... block statement
     }
     
     @Test
@@ -141,13 +141,13 @@ public class SourceFileTreeTest {
         // We expect 8,14,20,45 to be matched with each other, and 7 to match 44, and 30 to match only itself
         
     Map<Integer, List<Integer>> expected = new HashMap<>();
-    expected.put(7, Arrays.asList(new Integer[] {7, 44}));
-    expected.put(8, Arrays.asList(new Integer[] {8, 14, 20, 45}));
-    expected.put(14, Arrays.asList(new Integer[] {8, 14, 20, 45}));
-    expected.put(20, Arrays.asList(new Integer[] {8, 14, 20, 45}));
-    expected.put(30, Arrays.asList(new Integer[] {30}));
-    expected.put(44, Arrays.asList(new Integer[] {7, 44}));
-    expected.put(45, Arrays.asList(new Integer[] {8, 14, 20, 45}));
+    expected.put(10, Arrays.asList(new Integer[] {10, 47}));
+    expected.put(11, Arrays.asList(new Integer[] {11, 17, 23, 48}));
+    expected.put(17, Arrays.asList(new Integer[] {11, 17, 23, 48}));
+    expected.put(23, Arrays.asList(new Integer[] {11, 17, 23, 48}));
+    expected.put(33, Arrays.asList(new Integer[] {33}));
+    expected.put(47, Arrays.asList(new Integer[] {10, 47}));
+    expected.put(48, Arrays.asList(new Integer[] {11, 17, 23, 48}));
     
         assertEquals(expected, sourceFileSmall.getMatchedStatementLists(true, true));
         assertEquals(expected, sourceFileSmall.getMatchedStatementLists(false, true));
@@ -156,17 +156,17 @@ public class SourceFileTreeTest {
     @Test
     public void findNodesByClass() throws Exception {
         List<Integer> expected;
-        expected = Arrays.asList(new Integer[] {168, 170, 182});
+        expected = Arrays.asList(new Integer[] {181, 183, 195});
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, BlockStmt.class));
-        expected = Arrays.asList(new Integer[] {34, 44, 70, 96, 125, 141, 157, 161, 168, 170, 182});
+        expected = Arrays.asList(new Integer[] {45, 55, 81, 107, 136, 152, 168, 172, 181, 183, 195});
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, BlockStmt.class));
         expected = Collections.emptyList();
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, IfStmt.class));
-        expected = Arrays.asList(new Integer[] {38, 64, 90, 116, 129, 145});
+        expected = Arrays.asList(new Integer[] {49, 75, 101, 127, 140, 156});
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, IfStmt.class));
-        expected = Arrays.asList(new Integer[] {169});
+        expected = Arrays.asList(new Integer[] {182});
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, TryStmt.class));
-        expected = Arrays.asList(new Integer[] {169});
+        expected = Arrays.asList(new Integer[] {182});
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, TryStmt.class));
     }
 

@@ -3,6 +3,7 @@ package gin.edit.insert;
 import java.util.List;
 import java.util.Random;
 
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.stmt.BreakStmt;
 
 import gin.SourceFile;

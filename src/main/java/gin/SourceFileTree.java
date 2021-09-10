@@ -454,7 +454,7 @@ public class SourceFileTree extends SourceFile {
      */
     public Statement getStatement(int ID) {
         if (this.allNodes.containsKey(ID)) {
-            Statement s = (Statement)(this.allNodes.get(ID).clone());
+            Statement s = (Statement)(this.allNodes.get(ID).accept(new CloneVisitorCopyIDs(), null));
             s.setData(NODEKEY_ID, ID);
             return s;
         } else {
@@ -468,7 +468,7 @@ public class SourceFileTree extends SourceFile {
      */
     public Node getNode(int ID) {
         if (this.allNodes.containsKey(ID)) {
-            Node n = this.allNodes.get(ID).clone();
+        	Node n = (Node)(this.allNodes.get(ID).accept(new CloneVisitorCopyIDs(), null));
             n.setData(NODEKEY_ID, ID);
             return n;
         } else {

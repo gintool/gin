@@ -22,6 +22,7 @@ public class UnitTestResult {
 
     private long executionTime = 0;
     private long cpuTime = 0;
+    private long memoryUsage = 0;
 
     
     public UnitTestResult(UnitTest test, int rep) {
@@ -71,6 +72,10 @@ public class UnitTestResult {
         return cpuTime;
     }
 
+    public long getMemoryUsage() {
+        return memoryUsage;
+    }
+
     /*============== setters  ==============*/
 
     public void setPassed(boolean passed) {
@@ -103,6 +108,10 @@ public class UnitTestResult {
 
     public void setCPUTime(long testCPUTime)  {
         this.cpuTime = testCPUTime;
+    }
+
+    public void setMemoryUsage(long testMemoryUsage)  {
+        this.cpuTime = testMemoryUsage;
     }
 
     /*============== process failure  ==============*/

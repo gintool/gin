@@ -28,6 +28,10 @@ public class TestRunListener extends RunListener implements Serializable {
 
     private long startCPUTime = 0;
 
+    private long startMemoryUsage = 0;
+
+    private static final long MB = 1024*1024;
+
     public TestRunListener(UnitTestResult unitTestResult) {
         this.unitTestResult = unitTestResult;
     }
@@ -46,6 +50,8 @@ public class TestRunListener extends RunListener implements Serializable {
         Logger.debug("Test " + description + " finished.");
         long endTime = System.nanoTime();
         long endCPUTime = threadMXBean.getCurrentThreadCpuTime();
+        Runtime runtime = Runtime.getRuntime();
+        long endMemoryUsage = (runtime.totalMemory() - runtime.freeMemory())/MB;
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
     }
@@ -68,6 +74,8 @@ public class TestRunListener extends RunListener implements Serializable {
         Logger.debug("Test " + description + " started.");
         this.startTime = System.nanoTime();
         this.startCPUTime = threadMXBean.getCurrentThreadCpuTime();
+        Runtime runtime = Runtime.getRuntime();
+        this.startMemoryUsage = (runtime.totalMemory() - runtime.freeMemory())/MB;
     }
 
 }

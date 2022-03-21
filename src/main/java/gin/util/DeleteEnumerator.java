@@ -31,6 +31,8 @@ import gin.test.UnitTestResultSet;
  */
 public class DeleteEnumerator extends Sampler {
     
+    private static final long serialVersionUID = 2138053210278989403L;
+
     @Argument(alias = "ps", description = "Patch size")
     protected Integer patchSize = 1;
 

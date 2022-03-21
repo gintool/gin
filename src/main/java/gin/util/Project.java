@@ -1,10 +1,6 @@
 package gin.util;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -60,7 +56,9 @@ import gin.test.UnitTest;
 /**
  * Handy class for analysing Maven and Gradle projects.
  */
-public class Project {
+public class Project implements Serializable {
+
+    private static final long serialVersionUID = -7683615011351128680L;
 
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 

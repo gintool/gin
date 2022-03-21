@@ -25,6 +25,8 @@ import gin.test.UnitTestResultSet;
 
 public abstract class GPSimple extends GP {
     
+    private static final long serialVersionUID = -3339464277865429122L;
+
     public GPSimple(String[] args) {
         super(args);
     }   

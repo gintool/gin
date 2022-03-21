@@ -1,11 +1,9 @@
 package gin.misc;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-import org.pmw.tinylog.Logger;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
@@ -16,12 +14,16 @@ import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 
+import org.pmw.tinylog.Logger;
+
 /**
  * This class provides utility methods to annotate JavaParser method AST nodes
  * with their fully qualified names. Call annotateCompilationUnit() to do the
  * grunt work.
  */
-public class FullyQualifiedNames {
+public class FullyQualifiedNames implements Serializable {
+
+    private static final long serialVersionUID = 8560370140644331137L;
 
     /**
      * the key used to track fully qualified names for methods in JavaParser nodes

@@ -1,6 +1,7 @@
 package gin;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -24,7 +25,9 @@ import gin.test.UnitTestResultSet;
  * Assumes the existence of accompanying Test Class.
  * The class must be in the top level package, if classPath not provided.
  */
-public class LocalSearch {
+public class LocalSearch implements Serializable {
+
+    private static final long serialVersionUID = -92020344633720482L;
 
     private static final int WARMUP_REPS = 10;
 

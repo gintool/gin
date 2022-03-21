@@ -13,8 +13,9 @@ import java.util.stream.Collectors;
 /**
  * Used by gin.util.Profiler.
  */
-public class Trace {
+public class Trace implements Serializable {
 
+    private static final long serialVersionUID = -4519079857156034044L;
     private UnitTest test;
     Map<String, Integer> methodCounts;
 

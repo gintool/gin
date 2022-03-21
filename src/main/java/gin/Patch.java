@@ -2,6 +2,7 @@ package gin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,8 +22,9 @@ import gin.edit.statement.StatementEdit;
 /**
  * Represents a patch, a potential set of changes to a sourcefile.
  */
-public class Patch {
+public class Patch implements Serializable {
 
+    private static final long serialVersionUID = 1645891147232089192L;
     protected LinkedList<Edit> edits = new LinkedList<>();
     protected SourceFile sourceFile;
     private Class<?> superClassOfEdits;

@@ -27,6 +27,8 @@ import gin.test.UnitTestResultSet;
 
 public class RandomSampler extends Sampler {
     
+    private static final long serialVersionUID = 5754760811598365140L;
+
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
     

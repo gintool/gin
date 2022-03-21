@@ -1,5 +1,7 @@
 package gin.util.regression;
 
+import java.io.Serializable;
+
 import gin.util.regression.impl.EkstaziRTS;
 import gin.util.regression.impl.NoneRTS;
 import gin.util.regression.impl.RandomRTS;
@@ -14,7 +16,9 @@ import gin.util.regression.impl.STARTSRTS;
  * @see RTSStrategy
  * @see EkstaziRTS
  */
-public class RTSFactory {
+public class RTSFactory implements Serializable {
+
+    private static final long serialVersionUID = -1494331220800782829L;
 
     /**
      * The identifier of {@link EkstaziRTS}. This should be given as input to

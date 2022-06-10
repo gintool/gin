@@ -1,39 +1,18 @@
 package gin.util;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
+import gin.test.UnitTest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.DefaultInvoker;
-import org.apache.maven.shared.invoker.InvocationOutputHandler;
-import org.apache.maven.shared.invoker.InvocationRequest;
-import org.apache.maven.shared.invoker.InvocationResult;
-import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.apache.maven.shared.invoker.*;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.gradle.tooling.BuildException;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.TestExecutionException;
-import org.gradle.tooling.TestLauncher;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -45,13 +24,15 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.pmw.tinylog.Logger;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.ClassPath;
-
-import gin.test.UnitTest;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Handy class for analysing Maven and Gradle projects.
@@ -63,26 +44,80 @@ public class Project implements Serializable {
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
     private static final boolean DEBUG = false;
-
-    public enum BuildType {
-        GRADLE, MAVEN
-
-    }
-
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
     private String gradleVersion = null;
-
     private File projectDir;
     private String projectName;
     private BuildType buildType;
-
     private List<File> moduleDirs = new LinkedList<>();
+    private List<File> mainSourceDirs = new LinkedList<>();
+    private List<File> testSourceDirs = new LinkedList<>();
+    private List<File> mainClassDirs = new LinkedList<>();
+    private List<File> testClassDirs = new LinkedList<>();
+
+    // Only constructor
+    public Project(File directory, String name) {
+        projectDir = directory.getAbsoluteFile();
+        projectName = name;
+        detectBuildType();
+        detectDirs();
+    }
+
+    private static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
+
+        String pathToSource = className.replace(".", File.separator) + ".java";
+        File sourceFile = new File(srcDir, pathToSource);
+
+        if (!sourceFile.exists()) {
+            return null;
+        }
+
+        CompilationUnit unit = null;
+        try {
+            unit = StaticJavaParser.parse(sourceFile);
+        } catch (FileNotFoundException e) {
+            Logger.error("Cannot find source file: " + sourceFile);
+            System.exit(-1);
+        }
+
+        // Get all methods in the compilation unit
+        List<MethodDeclaration> nodes = unit.getChildNodesByType(MethodDeclaration.class);
+
+        for (MethodDeclaration m : nodes) {
+
+            String name = m.getNameAsString();
+
+            int start = m.getRange().get().begin.line;
+            int end = m.getRange().get().end.line;
+
+            if (name.equals(methodName) && (start <= lineNumber) && (lineNumber <= end)) {
+
+                String methodSignature;
+                methodSignature = m.getDeclarationAsString(false, false, false);
+
+                // Strip out return type if provided
+                String prefix = methodSignature.substring(0, methodSignature.indexOf("("));
+                if (prefix.contains(" ")) {
+                    String returnType = prefix.split("\\s")[0];
+                    methodSignature = StringUtils.replaceOnce(methodSignature, returnType, "").trim();
+                }
+
+                // Remove all spaces
+                methodSignature = methodSignature.replaceAll("\\s", "");
+
+                return className + "." + methodSignature;
+
+            }
+
+        }
+
+        return null;
+
+    }
 
     public List<File> getMainSourceDirs() {
         return mainSourceDirs;
     }
-
-    private List<File> mainSourceDirs = new LinkedList<>();
 
     public List<File> getTestSourceDirs() {
         return testSourceDirs;
@@ -94,20 +129,6 @@ public class Project implements Serializable {
 
     public List<File> getTestClassDirs() {
         return testClassDirs;
-    }
-
-    private List<File> testSourceDirs = new LinkedList<>();
-
-    private List<File> mainClassDirs = new LinkedList<>();
-    private List<File> testClassDirs = new LinkedList<>();
-
-
-    // Only constructor
-    public Project(File directory, String name) {
-        projectDir = directory.getAbsoluteFile();
-        projectName = name;
-        detectBuildType();
-        detectDirs();
     }
 
     public File getProjectDir() {
@@ -142,7 +163,7 @@ public class Project implements Serializable {
     // Calculate classpath for project
     public String classpath() {
         List<String> classDirNames = new LinkedList<>();
-        for (File classDir: this.allClassDirs()) {
+        for (File classDir : this.allClassDirs()) {
             classDirNames.add(classDir.getAbsolutePath());
         }
         String[] classDirNamesArray = classDirNames.toArray(new String[0]);
@@ -177,7 +198,7 @@ public class Project implements Serializable {
 
         String pathToSource = className.replace(".", File.separator) + ".java";
 
-        for (File dir: mainSourceDirs) {
+        for (File dir : mainSourceDirs) {
             File sourceFile = new File(dir, pathToSource);
             if (sourceFile.exists()) {
                 return sourceFile;
@@ -237,7 +258,7 @@ public class Project implements Serializable {
         IdeaProject project = connection.getModel(IdeaProject.class);
         GradleProject gradleProject = connection.getModel(GradleProject.class);
 
-        for(IdeaModule module : project.getModules()) {
+        for (IdeaModule module : project.getModules()) {
 
             File outputDir = module.getCompilerOutput().getOutputDir();
             if (outputDir != null) {
@@ -249,7 +270,7 @@ public class Project implements Serializable {
                 this.testClassDirs.add(testDir);
             }
 
-            for(IdeaContentRoot root:   module.getContentRoots()) {
+            for (IdeaContentRoot root : module.getContentRoots()) {
 
                 File moduleDir = root.getRootDirectory();
                 this.moduleDirs.add(moduleDir);
@@ -262,11 +283,11 @@ public class Project implements Serializable {
                 this.mainClassDirs.add(mainDir);
                 this.testClassDirs.add(testDir);
 
-                for (IdeaSourceDirectory dir: root.getSourceDirectories()) {
+                for (IdeaSourceDirectory dir : root.getSourceDirectories()) {
                     this.mainSourceDirs.add(dir.getDirectory());
                 }
 
-                for (IdeaSourceDirectory dir: root.getTestDirectories()) {
+                for (IdeaSourceDirectory dir : root.getTestDirectories()) {
                     this.testSourceDirs.add(dir.getDirectory());
                 }
             }
@@ -322,7 +343,7 @@ public class Project implements Serializable {
         }
 
         if (source == null) {
-            source = "src"+ File.separator +"main"+ File.separator +"java";
+            source = "src" + File.separator + "main" + File.separator + "java";
         }
 
         File sourceDir = new File(dir, source);
@@ -335,7 +356,7 @@ public class Project implements Serializable {
             test = model.getBuild().getTestSourceDirectory();
         }
         if (test == null) {
-            test = "src"+ File.separator +"test"+ File.separator +"java";
+            test = "src" + File.separator + "test" + File.separator + "java";
         }
         File testDir = new File(dir, test);
         if (testDir.exists()) {
@@ -347,7 +368,7 @@ public class Project implements Serializable {
             output = model.getBuild().getOutputDirectory();
         }
         if (output == null) {
-            output = "target"+ File.separator +"classes";
+            output = "target" + File.separator + "classes";
         }
         File mainClassDir = new File(dir, output);
         this.mainClassDirs.add(mainClassDir);
@@ -357,17 +378,16 @@ public class Project implements Serializable {
             model.getBuild().getTestOutputDirectory();
         }
         if (outputTest == null) {
-            outputTest = "target"+ File.separator +"test-classes";
+            outputTest = "target" + File.separator + "test-classes";
         }
         File testClassDir = new File(dir, outputTest);
         this.testClassDirs.add(testClassDir);
 
         // Now any modules
-        for (String module: model.getModules()) {
+        for (String module : model.getModules()) {
             File subdir = new File(dir, module);
             this.addDirMaven(subdir);
         }
-
 
 
     }
@@ -377,25 +397,25 @@ public class Project implements Serializable {
         StringBuilder dependencies = new StringBuilder();
         try {
             InvocationRequest request = new DefaultInvocationRequest();
-            
+
             File pomFile = new File(projectDir, "pom.xml");
             request.setPomFile(pomFile);
-            
+
             request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
-            
+
             File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
-            
+
             Properties properties = new Properties();
             properties.setProperty("outputFile", depOutput.getCanonicalPath());
             properties.setProperty("appendOutput", "true");
             properties.setProperty("outputAbsoluteArtifactFilename", "true");
             request.setProperties(properties);
-            
+
             Invoker invoker = new DefaultInvoker();
             invoker.setMavenHome(mavenHome);
-            
+
             InvocationResult result = null;
-            
+
             // Extremely detailed debug output.
             if (this.DEBUG) {
                 request.setErrorHandler(new InvocationOutputHandler() {
@@ -405,31 +425,31 @@ public class Project implements Serializable {
                     }
                 });
             }
-            
+
             request.setOutputHandler(new InvocationOutputHandler() {
                 @Override
                 public void consumeLine(String line) throws IOException {
                     // silent output on stdout
                 }
             });
-            
+
             try {
                 result = invoker.execute(request);
             } catch (MavenInvocationException e) {
                 Logger.error(e, "Error invoking maven.");
                 System.exit(-1);
             }
-            
+
             if (result.getExitCode() != 0) {
                 Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
                 System.exit(-1);
             }
-            
+
             List<String> output = new LinkedList<String>();
             Path path = depOutput.toPath();
             output = Files.readAllLines(path);
             Files.deleteIfExists(depOutput.toPath());
-            
+
             if (!output.isEmpty()) {
                 for (String jar : output) {
                     Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
@@ -452,7 +472,7 @@ public class Project implements Serializable {
         if (isMavenProject()) {
             runAllUnitTestsMaven(task, mavenProfile, new Properties());
         } else {
-            runAllUnitTestsGradle();
+            runAllUnitTestsGradle(new Properties());
         }
 
     }
@@ -462,7 +482,7 @@ public class Project implements Serializable {
         if (isMavenProject()) {
             runAllUnitTestsMaven(task, mavenProfile, properties);
         } else {
-            Logger.error("Test run with the extra properties parameter is currently not supported for Gradle projects.");
+            runAllUnitTestsGradle(properties);
         }
 
     }
@@ -521,15 +541,15 @@ public class Project implements Serializable {
 
         if (result.getExitCode() != 0) {
             Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
+            Logger.error(result.getExecutionException().toString());
             System.exit(-1);
         }
-
 
 
     }
 
     // Gradle
-    private void runAllUnitTestsGradle() {
+    private void runAllUnitTestsGradle(Properties properties) {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
 
@@ -541,7 +561,9 @@ public class Project implements Serializable {
 
         TestLauncher launcher = connection.newTestLauncher();
 
-        launcher.withJvmTestClasses("*");
+        launcher = launcher.withJvmTestClasses("*");
+        if (properties.containsKey("argLine"))
+            launcher = launcher.setJvmArguments(properties.getProperty("argLine").split(" "));
 
         try {
             launcher.run();
@@ -603,7 +625,7 @@ public class Project implements Serializable {
                 String innerClassName = "";
 
                 if (className.contains("$")) {
-                    innerClassName = StringUtils.substringAfter(className,"$");
+                    innerClassName = StringUtils.substringAfter(className, "$");
                     className = StringUtils.substringBefore(className, "$");
                 }
 
@@ -852,7 +874,7 @@ public class Project implements Serializable {
 
         Set<String> mainClasses = new HashSet<>();
 
-        for (File classDir: this.mainClassDirs) {
+        for (File classDir : this.mainClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             mainClasses.addAll(classes);
         }
@@ -866,7 +888,7 @@ public class Project implements Serializable {
 
         Set<String> testClasses = new HashSet<>();
 
-        for (File classDir: this.testClassDirs) {
+        for (File classDir : this.testClassDirs) {
             Set<String> classes = listOfClassesInDir(classDir);
             testClasses.addAll(classes);
         }
@@ -899,7 +921,7 @@ public class Project implements Serializable {
 
         ImmutableSet<ClassPath.ClassInfo> classes = guavaClassPathUtility.getAllClasses();
 
-        for (ClassPath.ClassInfo classInfo: classes) {
+        for (ClassPath.ClassInfo classInfo : classes) {
             classNames.add(classInfo.getName());
         }
 
@@ -928,60 +950,13 @@ public class Project implements Serializable {
 
     }
 
-    private static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
-
-        String pathToSource = className.replace(".", File.separator) + ".java";
-        File sourceFile = new File(srcDir, pathToSource);
-
-        if (!sourceFile.exists()) {
-            return null;
-        }
-
-        CompilationUnit unit = null;
-        try {
-            unit = StaticJavaParser.parse(sourceFile);
-        } catch (FileNotFoundException e) {
-            Logger.error("Cannot find source file: " + sourceFile);
-            System.exit(-1);
-        }
-
-        // Get all methods in the compilation unit
-        List<MethodDeclaration> nodes = unit.getChildNodesByType(MethodDeclaration.class);
-
-        for (MethodDeclaration m : nodes) {
-
-            String name = m.getNameAsString();
-
-            int start = m.getRange().get().begin.line;
-            int end = m.getRange().get().end.line;
-
-            if (name.equals(methodName) && (start <= lineNumber) && (lineNumber <= end)) {
-
-                String methodSignature;
-                methodSignature = m.getDeclarationAsString(false, false, false);
-
-                // Strip out return type if provided
-                String prefix = methodSignature.substring(0, methodSignature.indexOf("("));
-                if (prefix.contains(" ")) {
-                    String returnType = prefix.split("\\s")[0];
-                    methodSignature = StringUtils.replaceOnce(methodSignature, returnType, "").trim();
-                }
-
-                // Remove all spaces
-                methodSignature = methodSignature.replaceAll("\\s", "");
-
-                return className + "." + methodSignature;
-
-            }
-
-        }
-
-        return null;
-
-    }
-
     public String toString() {
         return this.projectName;
+    }
+
+    public enum BuildType {
+        GRADLE, MAVEN
+
     }
 
 }

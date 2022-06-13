@@ -1,4 +1,4 @@
-JAVA PROFILE 1.0.1, created Fri Jun 10 12:28:52 2022
+JAVA PROFILE 1.0.1, created Fri Jun 10 18:19:30 2022
 
 Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
 
@@ -96,75 +96,66 @@ THREAD END (id = 200004)
 THREAD START (obj=5000023f, id = 200006, name="Thread-0", group="main")
 THREAD END (id = 200006)
 THREAD END (id = 200001)
-TRACE 300195:
+TRACE 300180:
 	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
-TRACE 300364:
-	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
-TRACE 300143:
-	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
-TRACE 300374:
-	org.ekstazi.asm.ClassWriter.visitEnd(<Unknown Source>:Unknown line)
-TRACE 300373:
-	java.lang.System.currentTimeMillis(System.java:Unknown line)
-TRACE 300386:
-	java.util.zip.Inflater.reset(Inflater.java:Unknown line)
-TRACE 300334:
-	java.io.ByteArrayOutputStream.write(ByteArrayOutputStream.java:135)
-TRACE 300295:
-	sun.net.www.MessageHeader.grow(MessageHeader.java:377)
-TRACE 300281:
-	java.util.zip.ZipCoder.getBytes(ZipCoder.java:86)
-TRACE 300392:
-	java.lang.Class.isArray(Class.java:Unknown line)
-TRACE 300377:
-	sun.reflect.ConstantPool.getUTF8At0(ConstantPool.java:Unknown line)
-TRACE 300194:
-	java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:657)
-TRACE 300179:
-	java.util.zip.ZipFile.getEntryFlag(ZipFile.java:Unknown line)
-TRACE 300178:
-	java.util.zip.ZipFile.getEntryTime(ZipFile.java:Unknown line)
-TRACE 300170:
-	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
-TRACE 300169:
-	java.util.ServiceLoader.parseLine(ServiceLoader.java:274)
-TRACE 300149:
-	org.apache.maven.surefire.booter.BooterDeserializer.deserialize(BooterDeserializer.java:137)
-TRACE 300393:
-	sun.misc.URLClassPath$FileLoader.getResource(URLClassPath.java:1397)
-TRACE 300125:
-	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
-TRACE 300121:
-	java.lang.Object.getClass(Object.java:Unknown line)
-TRACE 300096:
-	org.ekstazi.Config.createDepenencyAnalyzer(<Unknown Source>:Unknown line)
-TRACE 300069:
-	java.util.zip.ZipFile.freeEntry(ZipFile.java:Unknown line)
 TRACE 300064:
 	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
-CPU SAMPLES BEGIN (total = 37) Fri Jun 10 12:28:53 2022
+TRACE 300122:
+	java.lang.System.nanoTime(System.java:Unknown line)
+TRACE 300145:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+TRACE 300335:
+	java.util.zip.ZipFile.getEntry(ZipFile.java:Unknown line)
+TRACE 300293:
+	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
+TRACE 300235:
+	java.util.ResourceBundle$Control.<clinit>(ResourceBundle.java:2387)
+TRACE 300384:
+	java.util.TreeMap.navigableKeySet(TreeMap.java:825)
+TRACE 300369:
+	java.util.zip.Inflater.reset(Inflater.java:Unknown line)
+TRACE 300179:
+	org.ekstazi.asm.Type.getArgumentsAndReturnSizes(<Unknown Source>:Unknown line)
+TRACE 300169:
+	java.lang.System.currentTimeMillis(System.java:Unknown line)
+TRACE 300165:
+	sun.misc.URLClassPath.findResources(URLClassPath.java:266)
+TRACE 300149:
+	org.ekstazi.asm.ClassReader.<init>(<Unknown Source>:Unknown line)
+TRACE 300381:
+	java.lang.ClassLoader.loadClass(ClassLoader.java:409)
+TRACE 300140:
+	org.ekstazi.asm.ByteVector.putByteArray(<Unknown Source>:Unknown line)
+TRACE 300372:
+	org.junit.internal.runners.rules.RuleMemberValidator$Builder.withValidator(RuleMemberValidator.java:128)
+TRACE 300120:
+	sun.net.www.ParseUtil.encodePath(ParseUtil.java:105)
+TRACE 300093:
+	sun.net.www.protocol.jar.JarFileFactory.get(JarFileFactory.java:94)
+TRACE 300069:
+	org.ekstazi.agent.EkstaziAgent.premain(<Unknown Source>:Unknown line)
+TRACE 300387:
+	java.lang.StringCoding.decode(StringCoding.java:215)
+CPU SAMPLES BEGIN (total = 38) Fri Jun 10 18:19:30 2022
 rank   self  accum   count trace method
-   1 35.14% 35.14%      13 300195 java.io.FileInputStream.readBytes
-   2  5.41% 40.54%       2 300364 java.io.WinNTFileSystem.getBooleanAttributes
-   3  5.41% 45.95%       2 300143 java.util.zip.Inflater.inflateBytes
-   4  2.70% 48.65%       1 300374 org.ekstazi.asm.ClassWriter.visitEnd
-   5  2.70% 51.35%       1 300373 java.lang.System.currentTimeMillis
-   6  2.70% 54.05%       1 300386 java.util.zip.Inflater.reset
-   7  2.70% 56.76%       1 300334 java.io.ByteArrayOutputStream.write
-   8  2.70% 59.46%       1 300295 sun.net.www.MessageHeader.grow
-   9  2.70% 62.16%       1 300281 java.util.zip.ZipCoder.getBytes
-  10  2.70% 64.86%       1 300392 java.lang.Class.isArray
-  11  2.70% 67.57%       1 300377 sun.reflect.ConstantPool.getUTF8At0
-  12  2.70% 70.27%       1 300194 java.text.SimpleDateFormat.initializeCalendar
-  13  2.70% 72.97%       1 300179 java.util.zip.ZipFile.getEntryFlag
-  14  2.70% 75.68%       1 300178 java.util.zip.ZipFile.getEntryTime
-  15  2.70% 78.38%       1 300170 java.security.AccessController.doPrivileged
-  16  2.70% 81.08%       1 300169 java.util.ServiceLoader.parseLine
-  17  2.70% 83.78%       1 300149 org.apache.maven.surefire.booter.BooterDeserializer.deserialize
-  18  2.70% 86.49%       1 300393 sun.misc.URLClassPath$FileLoader.getResource
-  19  2.70% 89.19%       1 300125 java.io.WinNTFileSystem.canonicalize0
-  20  2.70% 91.89%       1 300121 java.lang.Object.getClass
-  21  2.70% 94.59%       1 300096 org.ekstazi.Config.createDepenencyAnalyzer
-  22  2.70% 97.30%       1 300069 java.util.zip.ZipFile.freeEntry
-  23  2.70% 100.00%       1 300064 java.lang.ClassLoader.defineClass1
+   1 36.84% 36.84%      14 300180 java.io.FileInputStream.readBytes
+   2  7.89% 44.74%       3 300064 java.lang.ClassLoader.defineClass1
+   3  5.26% 50.00%       2 300122 java.lang.System.nanoTime
+   4  5.26% 55.26%       2 300145 java.io.WinNTFileSystem.getBooleanAttributes
+   5  5.26% 60.53%       2 300335 java.util.zip.ZipFile.getEntry
+   6  2.63% 63.16%       1 300293 java.io.WinNTFileSystem.canonicalize0
+   7  2.63% 65.79%       1 300235 java.util.ResourceBundle$Control.<clinit>
+   8  2.63% 68.42%       1 300384 java.util.TreeMap.navigableKeySet
+   9  2.63% 71.05%       1 300369 java.util.zip.Inflater.reset
+  10  2.63% 73.68%       1 300179 org.ekstazi.asm.Type.getArgumentsAndReturnSizes
+  11  2.63% 76.32%       1 300169 java.lang.System.currentTimeMillis
+  12  2.63% 78.95%       1 300165 sun.misc.URLClassPath.findResources
+  13  2.63% 81.58%       1 300149 org.ekstazi.asm.ClassReader.<init>
+  14  2.63% 84.21%       1 300381 java.lang.ClassLoader.loadClass
+  15  2.63% 86.84%       1 300140 org.ekstazi.asm.ByteVector.putByteArray
+  16  2.63% 89.47%       1 300372 org.junit.internal.runners.rules.RuleMemberValidator$Builder.withValidator
+  17  2.63% 92.11%       1 300120 sun.net.www.ParseUtil.encodePath
+  18  2.63% 94.74%       1 300093 sun.net.www.protocol.jar.JarFileFactory.get
+  19  2.63% 97.37%       1 300069 org.ekstazi.agent.EkstaziAgent.premain
+  20  2.63% 100.00%       1 300387 java.lang.StringCoding.decode
 CPU SAMPLES END

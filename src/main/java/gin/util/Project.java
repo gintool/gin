@@ -565,6 +565,7 @@ public class Project implements Serializable {
         if (properties.containsKey("argLine"))
             launcher = launcher.setJvmArguments(properties.getProperty("argLine").split(" "));
 
+
         try {
             launcher.run();
         } catch (TestExecutionException exception) {
@@ -577,11 +578,10 @@ public class Project implements Serializable {
                 Logger.error("TestExecutionException from \"gradle test\" command when running test suite.");
                 Logger.error("Message: " + exception.getMessage());
                 Logger.error("Cause: " + exception.getCause());
-                System.exit(-1);
             }
+        } finally {
+            connection.close();
         }
-
-        connection.close();
 
     }
 

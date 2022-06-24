@@ -541,7 +541,7 @@ public class Project implements Serializable {
 
         if (result.getExitCode() != 0) {
             Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
-            Logger.error(result.getExecutionException().toString());
+            Logger.error(result.getExecutionException());
             System.exit(-1);
         }
 

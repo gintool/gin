@@ -35,82 +35,49 @@ import java.util.stream.Collectors;
 public class RTSProfiler implements Serializable {
 
     private static final long serialVersionUID = 6763826827126978230L;
-
+    // Constants
+    private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
+    private static final String HPROF_DIR = "hprof";
+    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
-
     @Argument(alias = "d", description = "Project Directory, reuqired", required = true)
     protected File projectDir;
-
     @Argument(alias = "o", description = "Results file hot methods")
     protected File outputFile = new File("./profile_results.csv");
-
     @Argument(alias = "to", description = "Output file for storing the execution time")
     protected File timingOutputFile = new File("profile_timing.csv");
-
     @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
     protected File mavenHome;  // default on OS X
-
     @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
     protected Boolean excludeProfiler = false;
-
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
-
     @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
     protected String mavenProfile = "";
-
     @Argument(alias = "threads", description = "Number of threads to be used by Maven.")
     protected String threads = "1";
-
     @Argument(alias = "prop", description = "Additional properties to pass to maven. Properties are divided by comma on a 'key=value' format."
             + "For example: \"property1=true,property2=false\"."
             + "If you are using Apache Commons projects, add the \"rat.skip=true\" property, otherwise the projects won't work with Gin.")
     protected String[] additionalProperties = new String[]{};
-
     @Argument(description = "The Regression Test Selection (RTS) mechanism used to collect test cases for each method. "
             + "WARNING: starts does not work on Windows. "
             + "Use 'none' for avoiding RTS altogether. "
             + "Available: 'none', 'ekstazi', 'starts', 'random'. "
             + "Default: 'ekstazi'.")
     protected String rts = "ekstazi";
-
-    @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private String hprofFileName = "java.hprof.txt";
-
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
-
-    // Constants
-    private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String HPROF_DIR = "hprof";
-    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
-
+    @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
+    private String hprofFileName = "java.hprof.txt";
     // Instance Members
     private File hprofDir;
     private Project project;
 
-    public static void main(String args[]) {
-        StopWatch watch = StopWatch.createStarted();
-        RTSProfiler profiler = new RTSProfiler(args);
-        profiler.profile();
-        watch.stop();
-        profiler.writeTimingResults(watch);
-    }
-
     public RTSProfiler(String[] args) {
         Args.parseOrExit(this, args);
-
-        if (this.rts.equals(RTSFactory.STARTS)
-                && SystemUtils.IS_OS_WINDOWS) {
-            // STARTS fails on Windows
-            // https://github.com/TestingResearchIllinois/starts/issues/12
-            // Although the author claims the tests pass, they actually don't
-            throw new IllegalArgumentException("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.");
-        }
-
-        this.hprofDir = new File(projectDir, HPROF_DIR);
 
         project = new Project(projectDir, projectName);
         if (this.mavenHome != null) {
@@ -125,8 +92,28 @@ public class RTSProfiler implements Serializable {
             }
         }
 
+        if (this.rts.equals(RTSFactory.STARTS)) {
+            if (SystemUtils.IS_OS_WINDOWS) {
+                // STARTS fails on Windows
+                // https://github.com/TestingResearchIllinois/starts/issues/12
+                // Although the author claims the tests pass, they actually don't
+                throw new IllegalArgumentException("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.");
+            } else if (this.project.isGradleProject()) {
+                throw new IllegalArgumentException("STARTS will not work with Gradle projects. Please, use 'ekstazi' as an alternative.");
+            }
+        }
+
         // Adds the interval provided by the user
+        this.hprofDir = new File(projectDir, HPROF_DIR);
         HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+    }
+
+    public static void main(String args[]) {
+        StopWatch watch = StopWatch.createStarted();
+        RTSProfiler profiler = new RTSProfiler(args);
+        profiler.profile();
+        watch.stop();
+        profiler.writeTimingResults(watch);
     }
 
     // Main Profile Method

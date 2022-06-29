@@ -515,6 +515,10 @@ public class Project implements Serializable {
         }
 
         request.setProperties(properties);
+        Logger.info("Running MVN project with properties: ");
+        for (String property : properties.stringPropertyNames()) {
+            Logger.info(property + "=" + properties.getProperty(property));
+        }
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);

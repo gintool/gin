@@ -1,4 +1,4 @@
-JAVA PROFILE 1.0.1, created Fri Jun 10 18:19:30 2022
+JAVA PROFILE 1.0.1, created Fri Jun 24 13:12:22 2022
 
 Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
 
@@ -96,66 +96,75 @@ THREAD END (id = 200004)
 THREAD START (obj=5000023f, id = 200006, name="Thread-0", group="main")
 THREAD END (id = 200006)
 THREAD END (id = 200001)
-TRACE 300180:
+TRACE 300183:
 	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
+TRACE 300373:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+TRACE 300374:
+	java.lang.Object.hashCode(Object.java:Unknown line)
+TRACE 300376:
+	org.ekstazi.asm.MethodWriter.<init>(<Unknown Source>:Unknown line)
+TRACE 300378:
+	org.ekstazi.asm.ClassWriter.newMethodItem(<Unknown Source>:Unknown line)
+TRACE 300364:
+	org.ekstazi.asm.ClassWriter.newStringishItem(<Unknown Source>:Unknown line)
+TRACE 300296:
+	java.io.WinNTFileSystem.normalize(WinNTFileSystem.java:86)
+TRACE 300295:
+	java.lang.String.<init>(String.java:325)
+TRACE 300239:
+	sun.util.resources.LocaleData$1.run(LocaleData.java:167)
+TRACE 300389:
+	java.util.HashMap.getNode(HashMap.java:572)
+TRACE 300393:
+	org.apache.maven.surefire.shared.codec.binary.Base64.encode(Base64.java:380)
+TRACE 300182:
+	org.ekstazi.asm.ClassReader.accept(<Unknown Source>:Unknown line)
+TRACE 300177:
+	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
+TRACE 300171:
+	org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn(<Unknown Source>:Unknown line)
+TRACE 300160:
+	org.ekstazi.asm.MethodVisitor.visitVarInsn(<Unknown Source>:Unknown line)
+TRACE 300147:
+	java.util.zip.ZipFile.getEntryBytes(ZipFile.java:Unknown line)
+TRACE 300144:
+	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
+TRACE 300129:
+	java.util.Hashtable.rehash(Hashtable.java:402)
+TRACE 300123:
+	org.ekstazi.asm.Item.isEqualTo(<Unknown Source>:Unknown line)
+TRACE 300121:
+	java.util.Arrays.copyOfRange(Arrays.java:3664)
+TRACE 300090:
+	java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:68)
+TRACE 300069:
+	sun.misc.Unsafe.getObjectVolatile(Unsafe.java:Unknown line)
 TRACE 300064:
 	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
-TRACE 300122:
-	java.lang.System.nanoTime(System.java:Unknown line)
-TRACE 300145:
-	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
-TRACE 300335:
-	java.util.zip.ZipFile.getEntry(ZipFile.java:Unknown line)
-TRACE 300293:
-	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
-TRACE 300235:
-	java.util.ResourceBundle$Control.<clinit>(ResourceBundle.java:2387)
-TRACE 300384:
-	java.util.TreeMap.navigableKeySet(TreeMap.java:825)
-TRACE 300369:
-	java.util.zip.Inflater.reset(Inflater.java:Unknown line)
-TRACE 300179:
-	org.ekstazi.asm.Type.getArgumentsAndReturnSizes(<Unknown Source>:Unknown line)
-TRACE 300169:
-	java.lang.System.currentTimeMillis(System.java:Unknown line)
-TRACE 300165:
-	sun.misc.URLClassPath.findResources(URLClassPath.java:266)
-TRACE 300149:
-	org.ekstazi.asm.ClassReader.<init>(<Unknown Source>:Unknown line)
-TRACE 300381:
-	java.lang.ClassLoader.loadClass(ClassLoader.java:409)
-TRACE 300140:
-	org.ekstazi.asm.ByteVector.putByteArray(<Unknown Source>:Unknown line)
-TRACE 300372:
-	org.junit.internal.runners.rules.RuleMemberValidator$Builder.withValidator(RuleMemberValidator.java:128)
-TRACE 300120:
-	sun.net.www.ParseUtil.encodePath(ParseUtil.java:105)
-TRACE 300093:
-	sun.net.www.protocol.jar.JarFileFactory.get(JarFileFactory.java:94)
-TRACE 300069:
-	org.ekstazi.agent.EkstaziAgent.premain(<Unknown Source>:Unknown line)
-TRACE 300387:
-	java.lang.StringCoding.decode(StringCoding.java:215)
-CPU SAMPLES BEGIN (total = 38) Fri Jun 10 18:19:30 2022
+CPU SAMPLES BEGIN (total = 38) Fri Jun 24 13:12:22 2022
 rank   self  accum   count trace method
-   1 36.84% 36.84%      14 300180 java.io.FileInputStream.readBytes
-   2  7.89% 44.74%       3 300064 java.lang.ClassLoader.defineClass1
-   3  5.26% 50.00%       2 300122 java.lang.System.nanoTime
-   4  5.26% 55.26%       2 300145 java.io.WinNTFileSystem.getBooleanAttributes
-   5  5.26% 60.53%       2 300335 java.util.zip.ZipFile.getEntry
-   6  2.63% 63.16%       1 300293 java.io.WinNTFileSystem.canonicalize0
-   7  2.63% 65.79%       1 300235 java.util.ResourceBundle$Control.<clinit>
-   8  2.63% 68.42%       1 300384 java.util.TreeMap.navigableKeySet
-   9  2.63% 71.05%       1 300369 java.util.zip.Inflater.reset
-  10  2.63% 73.68%       1 300179 org.ekstazi.asm.Type.getArgumentsAndReturnSizes
-  11  2.63% 76.32%       1 300169 java.lang.System.currentTimeMillis
-  12  2.63% 78.95%       1 300165 sun.misc.URLClassPath.findResources
-  13  2.63% 81.58%       1 300149 org.ekstazi.asm.ClassReader.<init>
-  14  2.63% 84.21%       1 300381 java.lang.ClassLoader.loadClass
-  15  2.63% 86.84%       1 300140 org.ekstazi.asm.ByteVector.putByteArray
-  16  2.63% 89.47%       1 300372 org.junit.internal.runners.rules.RuleMemberValidator$Builder.withValidator
-  17  2.63% 92.11%       1 300120 sun.net.www.ParseUtil.encodePath
-  18  2.63% 94.74%       1 300093 sun.net.www.protocol.jar.JarFileFactory.get
-  19  2.63% 97.37%       1 300069 org.ekstazi.agent.EkstaziAgent.premain
-  20  2.63% 100.00%       1 300387 java.lang.StringCoding.decode
+   1 36.84% 36.84%      14 300183 java.io.FileInputStream.readBytes
+   2  7.89% 44.74%       3 300373 java.io.WinNTFileSystem.getBooleanAttributes
+   3  2.63% 47.37%       1 300374 java.lang.Object.hashCode
+   4  2.63% 50.00%       1 300376 org.ekstazi.asm.MethodWriter.<init>
+   5  2.63% 52.63%       1 300378 org.ekstazi.asm.ClassWriter.newMethodItem
+   6  2.63% 55.26%       1 300364 org.ekstazi.asm.ClassWriter.newStringishItem
+   7  2.63% 57.89%       1 300296 java.io.WinNTFileSystem.normalize
+   8  2.63% 60.53%       1 300295 java.lang.String.<init>
+   9  2.63% 63.16%       1 300239 sun.util.resources.LocaleData$1.run
+  10  2.63% 65.79%       1 300389 java.util.HashMap.getNode
+  11  2.63% 68.42%       1 300393 org.apache.maven.surefire.shared.codec.binary.Base64.encode
+  12  2.63% 71.05%       1 300182 org.ekstazi.asm.ClassReader.accept
+  13  2.63% 73.68%       1 300177 java.io.WinNTFileSystem.canonicalize0
+  14  2.63% 76.32%       1 300171 org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn
+  15  2.63% 78.95%       1 300160 org.ekstazi.asm.MethodVisitor.visitVarInsn
+  16  2.63% 81.58%       1 300147 java.util.zip.ZipFile.getEntryBytes
+  17  2.63% 84.21%       1 300144 org.ekstazi.asm.ClassReader.copyPool
+  18  2.63% 86.84%       1 300129 java.util.Hashtable.rehash
+  19  2.63% 89.47%       1 300123 org.ekstazi.asm.Item.isEqualTo
+  20  2.63% 92.11%       1 300121 java.util.Arrays.copyOfRange
+  21  2.63% 94.74%       1 300090 java.lang.AbstractStringBuilder.<init>
+  22  2.63% 97.37%       1 300069 sun.misc.Unsafe.getObjectVolatile
+  23  2.63% 100.00%       1 300064 java.lang.ClassLoader.defineClass1
 CPU SAMPLES END

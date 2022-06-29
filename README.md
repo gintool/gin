@@ -145,13 +145,13 @@ Before you run the below, please make sure you have Maven installed. The default
 java -cp build/gin.jar gin.util.Profiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome>
 ```
 
-In case you want to use a Regression Test Selection (RTS) technique to speed up the profiling phase, you can use the `gin.util.RTSProfiler` class instead. RTS is fully supported for Maven projects and partially supported for Gradle projects.
+In case you want to use a Regression Test Selection (RTS) technique to speed up the profiling phase, you can use the `gin.util.RTSProfiler` class instead. RTS is fully supported for Maven projects.
 
 ```
 java -cp build/gin.jar gin.util.RTSProfiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome> -rts ekstazi
 ```
 
-Gin integrates 3 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default), [STARTS](https://github.com/TestingResearchIllinois/starts) (`-rts starts`), and a Random selection (`-rts random` - not recommended). STARTS is not supported on Windows and Gradle projects. To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
+Gin integrates 3 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default), [STARTS](https://github.com/TestingResearchIllinois/starts) (`-rts starts`), and a Random selection (`-rts random` - not recommended). STARTS is not supported on Windows. To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
 
 The output is saved in profiler_output.csv. Note that this is empty for the simple project above as Profiler depends on hprof and inherits its constraints.
 

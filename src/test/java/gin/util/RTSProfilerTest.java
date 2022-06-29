@@ -41,14 +41,14 @@ public class RTSProfilerTest {
         assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
     }
 
-    @Test
-    public void testMainWithEkstaziGradle() {
-        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
-        RTSProfiler.main(args);
-
-        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "hprof").list().length);
-        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
-    }
+//    @Test
+//    public void testMainWithEkstaziGradle() {
+//        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
+//        RTSProfiler.main(args);
+//
+//        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "hprof").list().length);
+//        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
+//    }
 
     @Test
     public void testMainWithSTARTS() {

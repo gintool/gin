@@ -36,7 +36,6 @@ tasks.withType(JavaCompile) {
 }
 
 test {
-    jvmArgs "-javaagent:C:\\Users\\Giovani\\.gradle\\caches\\modules-2\\files-2.1\\org.ekstazi\\org.ekstazi.core\\5.3.0\\1f4542f715705ffb7aa43f44c67cd2feb167c7bd\\org.ekstazi.core-5.3.0.jar=mode=junit,force.all=true,root.dir=C:\\Users\\Giovani\\Projects\\gin\\examples\\unittests\\ekstazi_gradle\\.ekstazi"
     testLogging {
         events "PASSED", "STARTED", "FAILED", "SKIPPED"
         //showStandardStreams = true

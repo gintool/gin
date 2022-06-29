@@ -566,8 +566,10 @@ public class Project implements Serializable {
         TestLauncher launcher = connection.newTestLauncher();
 
         launcher = launcher.withJvmTestClasses("*");
-        if (properties.containsKey("argLine"))
+        if (properties.containsKey("argLine")) {
+            Logger.info("Running Gradle profile with argument line: " + properties.getProperty("argLine"));
             launcher = launcher.setJvmArguments(properties.getProperty("argLine").split(" "));
+        }
 
 
         try {

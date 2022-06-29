@@ -123,6 +123,7 @@ public class RTSProfiler implements Serializable {
         Properties properties = new Properties();
         File hprofFile = FileUtils.getFile(hprofDir, hprofFileName);
         // Create RTS strategy if any
+        Logger.info("Initialised: " + rts);
         RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, this.projectDir.getAbsolutePath());
         // Execute profiler
         if (!this.excludeProfiler) {

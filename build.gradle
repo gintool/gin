@@ -22,7 +22,7 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '30.1-jre'
     compile group: 'junit', name: 'junit', version: '4.13.1'
     compile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
-    compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.22.1'
+    compile group: 'com.github.javaparser', name: 'javaparser-core', version: '3.24.0'
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     compile group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.3'
     compile group: 'org.apache.commons', name: 'commons-rng-core', version: '1.3'
@@ -38,10 +38,10 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.ekstazi/org.ekstazi.core
     compile group: 'org.ekstazi', name: 'org.ekstazi.core', version: '5.3.0'
-    
+
     // https://mvnrepository.com/artifact/edu.illinois/starts-core
     compile group: 'edu.illinois', name: 'starts-core', version: '1.3'
-    
+
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
 
@@ -72,6 +72,17 @@ dependencies {
 
     // build example project so main project unit tests (e.g. profiler) will pass!
     compile project(':gradle-simple')
+}
+
+jar {
+    manifest {
+        attributes(
+                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+                'Premain-Class': "org.ekstazi.agent.EkstaziAgent",
+                "Can-Redefine-Classes": "true",
+                "Can-Retransform-Classes": "true"
+        )
+    }
 }
 
 // This is handy to copy dependencies into a folder, for use in an IDE etc.

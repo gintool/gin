@@ -1,0 +1,170 @@
+JAVA PROFILE 1.0.1, created Fri Jun 24 13:12:22 2022
+
+Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Oracle nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=5000023f, id = 200001, name="main", group="main")
+THREAD START (obj=5000023f, id = 200004, name="surefire-forkedjvm-command-thread", group="main")
+THREAD START (obj=5000023f, id = 200005, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
+THREAD END (id = 200004)
+THREAD START (obj=5000023f, id = 200006, name="Thread-0", group="main")
+THREAD END (id = 200006)
+THREAD END (id = 200001)
+TRACE 300183:
+	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
+TRACE 300373:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+TRACE 300374:
+	java.lang.Object.hashCode(Object.java:Unknown line)
+TRACE 300376:
+	org.ekstazi.asm.MethodWriter.<init>(<Unknown Source>:Unknown line)
+TRACE 300378:
+	org.ekstazi.asm.ClassWriter.newMethodItem(<Unknown Source>:Unknown line)
+TRACE 300364:
+	org.ekstazi.asm.ClassWriter.newStringishItem(<Unknown Source>:Unknown line)
+TRACE 300296:
+	java.io.WinNTFileSystem.normalize(WinNTFileSystem.java:86)
+TRACE 300295:
+	java.lang.String.<init>(String.java:325)
+TRACE 300239:
+	sun.util.resources.LocaleData$1.run(LocaleData.java:167)
+TRACE 300389:
+	java.util.HashMap.getNode(HashMap.java:572)
+TRACE 300393:
+	org.apache.maven.surefire.shared.codec.binary.Base64.encode(Base64.java:380)
+TRACE 300182:
+	org.ekstazi.asm.ClassReader.accept(<Unknown Source>:Unknown line)
+TRACE 300177:
+	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
+TRACE 300171:
+	org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn(<Unknown Source>:Unknown line)
+TRACE 300160:
+	org.ekstazi.asm.MethodVisitor.visitVarInsn(<Unknown Source>:Unknown line)
+TRACE 300147:
+	java.util.zip.ZipFile.getEntryBytes(ZipFile.java:Unknown line)
+TRACE 300144:
+	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
+TRACE 300129:
+	java.util.Hashtable.rehash(Hashtable.java:402)
+TRACE 300123:
+	org.ekstazi.asm.Item.isEqualTo(<Unknown Source>:Unknown line)
+TRACE 300121:
+	java.util.Arrays.copyOfRange(Arrays.java:3664)
+TRACE 300090:
+	java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:68)
+TRACE 300069:
+	sun.misc.Unsafe.getObjectVolatile(Unsafe.java:Unknown line)
+TRACE 300064:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+CPU SAMPLES BEGIN (total = 38) Fri Jun 24 13:12:22 2022
+rank   self  accum   count trace method
+   1 36.84% 36.84%      14 300183 java.io.FileInputStream.readBytes
+   2  7.89% 44.74%       3 300373 java.io.WinNTFileSystem.getBooleanAttributes
+   3  2.63% 47.37%       1 300374 java.lang.Object.hashCode
+   4  2.63% 50.00%       1 300376 org.ekstazi.asm.MethodWriter.<init>
+   5  2.63% 52.63%       1 300378 org.ekstazi.asm.ClassWriter.newMethodItem
+   6  2.63% 55.26%       1 300364 org.ekstazi.asm.ClassWriter.newStringishItem
+   7  2.63% 57.89%       1 300296 java.io.WinNTFileSystem.normalize
+   8  2.63% 60.53%       1 300295 java.lang.String.<init>
+   9  2.63% 63.16%       1 300239 sun.util.resources.LocaleData$1.run
+  10  2.63% 65.79%       1 300389 java.util.HashMap.getNode
+  11  2.63% 68.42%       1 300393 org.apache.maven.surefire.shared.codec.binary.Base64.encode
+  12  2.63% 71.05%       1 300182 org.ekstazi.asm.ClassReader.accept
+  13  2.63% 73.68%       1 300177 java.io.WinNTFileSystem.canonicalize0
+  14  2.63% 76.32%       1 300171 org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn
+  15  2.63% 78.95%       1 300160 org.ekstazi.asm.MethodVisitor.visitVarInsn
+  16  2.63% 81.58%       1 300147 java.util.zip.ZipFile.getEntryBytes
+  17  2.63% 84.21%       1 300144 org.ekstazi.asm.ClassReader.copyPool
+  18  2.63% 86.84%       1 300129 java.util.Hashtable.rehash
+  19  2.63% 89.47%       1 300123 org.ekstazi.asm.Item.isEqualTo
+  20  2.63% 92.11%       1 300121 java.util.Arrays.copyOfRange
+  21  2.63% 94.74%       1 300090 java.lang.AbstractStringBuilder.<init>
+  22  2.63% 97.37%       1 300069 sun.misc.Unsafe.getObjectVolatile
+  23  2.63% 100.00%       1 300064 java.lang.ClassLoader.defineClass1
+CPU SAMPLES END

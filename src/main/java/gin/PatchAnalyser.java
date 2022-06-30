@@ -2,30 +2,32 @@ package gin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-import gin.edit.Edit;
-import gin.test.InternalTestRunner;
-import gin.test.UnitTestResult;
-import gin.test.UnitTestResultSet;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.pmw.tinylog.Logger;
 
-import com.sampullara.cli.Args;
-import com.sampullara.cli.Argument;
-
+import gin.edit.Edit;
 import gin.edit.Edit.EditType;
+import gin.test.InternalTestRunner;
+import gin.test.UnitTestResult;
+import gin.test.UnitTestResultSet;
 
 /**
  *   A handy utility for analysing patches. Not part of the main gin system.
  */
-public class PatchAnalyser {
+public class PatchAnalyser implements Serializable {
+
+    private static final long serialVersionUID = -3749197264292832819L;
 
     private static final int REPS = 10;
 

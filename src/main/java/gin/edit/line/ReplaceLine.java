@@ -9,6 +9,7 @@ import gin.edit.Edit;
 
 public class ReplaceLine extends LineEdit {
 
+    private static final long serialVersionUID = 3306639963790671488L;
     public String sourceFile;
     public int sourceLine;
     public String destinationFile;

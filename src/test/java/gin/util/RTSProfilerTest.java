@@ -16,12 +16,16 @@ import org.junit.Test;
  */
 public class RTSProfilerTest {
 
-    private static final String PROJECT_PATH = TestConfiguration.EXAMPLE_DIR_NAME + "ekstazi_mvn";
-    private static final File PROJECT_DIR = FileUtils.getFile(PROJECT_PATH);
-    private static final String OUTPUT_CSV_PATH = PROJECT_PATH + File.separator + "output_file.csv";
+    private static final String PROJECT_PATH_MAVEN = TestConfiguration.EXAMPLE_DIR_NAME + "ekstazi_mvn";
+    private static final File PROJECT_DIR_MAVEN = FileUtils.getFile(PROJECT_PATH_MAVEN);
+    private static final String OUTPUT_CSV_PATH_MAVEN = PROJECT_PATH_MAVEN + File.separator + "output_file.csv";
+
+    private static final String PROJECT_PATH_GRADLE = TestConfiguration.EXAMPLE_DIR_NAME + "ekstazi_gradle";
+    private static final File PROJECT_DIR_GRADLE = FileUtils.getFile(PROJECT_PATH_GRADLE);
+    private static final String OUTPUT_CSV_PATH_GRADLE = PROJECT_PATH_GRADLE + File.separator + "output_file.csv";
 
     @Test
-    public void testMainWithEkstazi() {
+    public void testMainWithEkstaziMaven() {
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
         // not be executed
@@ -30,12 +34,21 @@ public class RTSProfilerTest {
                 || FileUtils.getFile(mavenHome, "bin/mvn.cmd").exists()
                 || FileUtils.getFile(mavenHome, "mvn.cmd").exists());
 
-        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH};
+        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_MAVEN};
         RTSProfiler.main(args);
 
-        assertEquals(1, FileUtils.getFile(PROJECT_DIR, "hprof").list().length);
-        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH).exists());
+        assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "hprof").list().length);
+        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
     }
+
+//    @Test
+//    public void testMainWithEkstaziGradle() {
+//        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
+//        RTSProfiler.main(args);
+//
+//        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "hprof").list().length);
+//        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
+//    }
 
     @Test
     public void testMainWithSTARTS() {
@@ -48,11 +61,11 @@ public class RTSProfilerTest {
                 || FileUtils.getFile(mavenHome, "mvn.cmd").exists());
 
         try {
-            String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH, "-rts", "starts", "-o", OUTPUT_CSV_PATH};
+            String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "starts", "-o", OUTPUT_CSV_PATH_MAVEN};
             RTSProfiler.main(args);
 
-            assertEquals(1, FileUtils.getFile(PROJECT_DIR, "hprof").list().length);
-            assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH).exists());
+            assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "hprof").list().length);
+            assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
         } catch (IllegalArgumentException ex) {
             if (SystemUtils.IS_OS_WINDOWS) {
                 assertEquals("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.", ex.getMessage());

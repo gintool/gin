@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,9 @@ import gin.Patch;
  * This class holds commonalities between tests relating to patch compilation;
  * the rest of the data is held in a list of UnitTestResult.
  */
-public class UnitTestResultSet {
+public class UnitTestResultSet implements Serializable {
+
+    private static final long serialVersionUID = 672861195212496772L;
 
     private List<UnitTestResult> results;
 
@@ -75,6 +78,14 @@ public class UnitTestResultSet {
             totalTime += testResult.getExecutionTime();
         }
         return totalTime;
+    }
+
+    public long totalMemoryUsage() {
+        long totalMemory = 0;
+        for (UnitTestResult testResult : results) {
+            totalMemory += testResult.getMemoryUsage();
+        }
+        return totalMemory;
     }
 
     ////  Could be used to set timeout for individual tests. Unused at the moment.

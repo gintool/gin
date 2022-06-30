@@ -50,6 +50,13 @@ examples/unittests/ekstazi_mvn/target/
 examples/unittests/ekstazi_mvn/.ekstazi/
 examples/unittests/ekstazi_mvn/.starts/
 examples/unittests/ekstazi_mvn/jdeps-cache/
+examples/unittests/ekstazi_mvn/hprof/
 examples/unittests/ekstazi_mvn/output_file.csv
+examples/unittests/ekstazi_gradle/target/
+examples/unittests/ekstazi_gradle/.ekstazi/
+examples/unittests/ekstazi_gradle/.starts/
+examples/unittests/ekstazi_gradle/jdeps-cache/
+examples/unittests/ekstazi_gradle/hprof/
+examples/unittests/ekstazi_gradle/output_file.csv
 profile_timing.csv
 sampler_timing.csv

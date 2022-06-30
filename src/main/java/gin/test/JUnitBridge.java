@@ -3,6 +3,7 @@ package gin.test;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Executable;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -16,8 +17,9 @@ import org.pmw.tinylog.Logger;
 /** 
  * Runs a given test in the same JVM as this class.
  */
-public class JUnitBridge {
+public class JUnitBridge implements Serializable {
 
+    private static final long serialVersionUID = -1984013159496571086L;
     public static final String BRIDGE_METHOD_NAME = "runTest";
 
     /**

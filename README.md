@@ -34,7 +34,7 @@ These instructions will show you how to build Gin and run a simple local search 
 
 Gin requires:
 
-* JDK 1.8.x  *note: there is currently a known issue that prevents Gin running on JDK 9 and above*
+* JDK 1.8.x  *note: there is currently a known [issue](https://github.com/gintool/gin/issues/29) that prevents Gin running on JDK 9 and above*
 * Gradle (tested with version 6.8.2)
 * A number of dependencies, which can be downloaded manually or via Gradle (recommended)
 * For Maven projects: make sure the Java version is set to 1.8.x
@@ -44,6 +44,8 @@ JDK downloads:<http://www.oracle.com/technetwork/java/javase/downloads/index.htm
 Gradle can be downloaded from their website:<https://gradle.org/install>
 
 The library dependencies can be found in the build.gradle file.
+
+If you have multiple JREs on your system, you may need to call something like `export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64/jre"` as well as `switch-alternatives` to ensure that Gradle uses Java 8.
 
 ### Installing and Building gin
 
@@ -143,13 +145,13 @@ Before you run the below, please make sure you have Maven installed. The default
 java -cp build/gin.jar gin.util.Profiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome>
 ```
 
-In case you want to use a Regression Test Selection (RTS) technique to speed up the profiling phase, you can use the `gin.util.RTSProfiler` class instead. RTS is fully supported for Maven projects only.
+In case you want to use a Regression Test Selection (RTS) technique to speed up the profiling phase, you can use the `gin.util.RTSProfiler` class instead. RTS is fully supported for Maven projects.
 
 ```
 java -cp build/gin.jar gin.util.RTSProfiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome> -rts ekstazi
 ```
 
-Gin integrates 3 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default), [STARTS](https://github.com/TestingResearchIllinois/starts) (`-rts starts`), and a Random selection (`-rts random` - not recommended). To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
+Gin integrates 3 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default), [STARTS](https://github.com/TestingResearchIllinois/starts) (`-rts starts`), and a Random selection (`-rts random` - not recommended). STARTS is not supported on Windows. To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
 
 The output is saved in profiler_output.csv. Note that this is empty for the simple project above as Profiler depends on hprof and inherits its constraints.
 

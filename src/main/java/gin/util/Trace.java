@@ -13,8 +13,9 @@ import java.util.stream.Collectors;
 /**
  * Used by gin.util.Profiler.
  */
-public class Trace {
+public class Trace implements Serializable {
 
+    private static final long serialVersionUID = -4519079857156034044L;
     private UnitTest test;
     Map<String, Integer> methodCounts;
 
@@ -158,32 +159,33 @@ public class Trace {
         Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);;
         Matcher m = p.matcher(hprof);
 
-        m.find();
-        String table = m.group(1);
+        if(m.find()) {
+            String table = m.group(1);
 
-        // Iterate over rows, separate by whitespace, get name and count
+            // Iterate over rows, separate by whitespace, get name and count
 
-        BufferedReader bufReader = new BufferedReader(new StringReader(table));
-        String row;
-        try {
-            while ((row = bufReader.readLine()) != null) {
-                if (!row.equals("")) {
-                    String[] fields = row.trim().split("\\s+");
-                    String methodName = fields[5];
-                    int count = Integer.parseInt(fields[3]);
-                    int tracePointNumber = Integer.parseInt(fields[4]);
-                    int lineNumber = tracePoints.get(tracePointNumber).lineNumber;
-                    String fullMethodName = methodName;
-                    if (lineNumber != -1) {
-                        fullMethodName += ":" + lineNumber;
+            BufferedReader bufReader = new BufferedReader(new StringReader(table));
+            String row;
+            try {
+                while ((row = bufReader.readLine()) != null) {
+                    if (!row.equals("")) {
+                        String[] fields = row.trim().split("\\s+");
+                        String methodName = fields[5];
+                        int count = Integer.parseInt(fields[3]);
+                        int tracePointNumber = Integer.parseInt(fields[4]);
+                        int lineNumber = tracePoints.get(tracePointNumber).lineNumber;
+                        String fullMethodName = methodName;
+                        if (lineNumber != -1) {
+                            fullMethodName += ":" + lineNumber;
+                        }
+                        samples.put(fullMethodName, count);
                     }
-                    samples.put(fullMethodName, count);
                 }
+            } catch (IOException e) {
+                Logger.error("Error reading enumerate table from hprof file.");
+                Logger.trace(e);
+                System.exit(-1);
             }
-        } catch (IOException e) {
-            Logger.error("Error reading enumerate table from hprof file.");
-            Logger.trace(e);
-            System.exit(-1);
         }
 
         return samples;

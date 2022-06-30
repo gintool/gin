@@ -1,0 +1,170 @@
+JAVA PROFILE 1.0.1, created Fri Jun 10 12:28:52 2022
+
+Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Oracle nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=5000023f, id = 200001, name="main", group="main")
+THREAD START (obj=5000023f, id = 200004, name="surefire-forkedjvm-command-thread", group="main")
+THREAD START (obj=5000023f, id = 200005, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
+THREAD END (id = 200004)
+THREAD START (obj=5000023f, id = 200006, name="Thread-0", group="main")
+THREAD END (id = 200006)
+THREAD END (id = 200001)
+TRACE 300195:
+	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
+TRACE 300364:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+TRACE 300143:
+	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
+TRACE 300374:
+	org.ekstazi.asm.ClassWriter.visitEnd(<Unknown Source>:Unknown line)
+TRACE 300373:
+	java.lang.System.currentTimeMillis(System.java:Unknown line)
+TRACE 300386:
+	java.util.zip.Inflater.reset(Inflater.java:Unknown line)
+TRACE 300334:
+	java.io.ByteArrayOutputStream.write(ByteArrayOutputStream.java:135)
+TRACE 300295:
+	sun.net.www.MessageHeader.grow(MessageHeader.java:377)
+TRACE 300281:
+	java.util.zip.ZipCoder.getBytes(ZipCoder.java:86)
+TRACE 300392:
+	java.lang.Class.isArray(Class.java:Unknown line)
+TRACE 300377:
+	sun.reflect.ConstantPool.getUTF8At0(ConstantPool.java:Unknown line)
+TRACE 300194:
+	java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:657)
+TRACE 300179:
+	java.util.zip.ZipFile.getEntryFlag(ZipFile.java:Unknown line)
+TRACE 300178:
+	java.util.zip.ZipFile.getEntryTime(ZipFile.java:Unknown line)
+TRACE 300170:
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300169:
+	java.util.ServiceLoader.parseLine(ServiceLoader.java:274)
+TRACE 300149:
+	org.apache.maven.surefire.booter.BooterDeserializer.deserialize(BooterDeserializer.java:137)
+TRACE 300393:
+	sun.misc.URLClassPath$FileLoader.getResource(URLClassPath.java:1397)
+TRACE 300125:
+	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
+TRACE 300121:
+	java.lang.Object.getClass(Object.java:Unknown line)
+TRACE 300096:
+	org.ekstazi.Config.createDepenencyAnalyzer(<Unknown Source>:Unknown line)
+TRACE 300069:
+	java.util.zip.ZipFile.freeEntry(ZipFile.java:Unknown line)
+TRACE 300064:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+CPU SAMPLES BEGIN (total = 37) Fri Jun 10 12:28:53 2022
+rank   self  accum   count trace method
+   1 35.14% 35.14%      13 300195 java.io.FileInputStream.readBytes
+   2  5.41% 40.54%       2 300364 java.io.WinNTFileSystem.getBooleanAttributes
+   3  5.41% 45.95%       2 300143 java.util.zip.Inflater.inflateBytes
+   4  2.70% 48.65%       1 300374 org.ekstazi.asm.ClassWriter.visitEnd
+   5  2.70% 51.35%       1 300373 java.lang.System.currentTimeMillis
+   6  2.70% 54.05%       1 300386 java.util.zip.Inflater.reset
+   7  2.70% 56.76%       1 300334 java.io.ByteArrayOutputStream.write
+   8  2.70% 59.46%       1 300295 sun.net.www.MessageHeader.grow
+   9  2.70% 62.16%       1 300281 java.util.zip.ZipCoder.getBytes
+  10  2.70% 64.86%       1 300392 java.lang.Class.isArray
+  11  2.70% 67.57%       1 300377 sun.reflect.ConstantPool.getUTF8At0
+  12  2.70% 70.27%       1 300194 java.text.SimpleDateFormat.initializeCalendar
+  13  2.70% 72.97%       1 300179 java.util.zip.ZipFile.getEntryFlag
+  14  2.70% 75.68%       1 300178 java.util.zip.ZipFile.getEntryTime
+  15  2.70% 78.38%       1 300170 java.security.AccessController.doPrivileged
+  16  2.70% 81.08%       1 300169 java.util.ServiceLoader.parseLine
+  17  2.70% 83.78%       1 300149 org.apache.maven.surefire.booter.BooterDeserializer.deserialize
+  18  2.70% 86.49%       1 300393 sun.misc.URLClassPath$FileLoader.getResource
+  19  2.70% 89.19%       1 300125 java.io.WinNTFileSystem.canonicalize0
+  20  2.70% 91.89%       1 300121 java.lang.Object.getClass
+  21  2.70% 94.59%       1 300096 org.ekstazi.Config.createDepenencyAnalyzer
+  22  2.70% 97.30%       1 300069 java.util.zip.ZipFile.freeEntry
+  23  2.70% 100.00%       1 300064 java.lang.ClassLoader.defineClass1
+CPU SAMPLES END

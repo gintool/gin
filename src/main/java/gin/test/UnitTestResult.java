@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serializable;
 import java.text.ParseException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,8 +9,9 @@ import org.junit.runner.notification.Failure;
 /**
  * Represents a result of repNumber run of UnitTest
  */
-public class UnitTestResult {
+public class UnitTestResult implements Serializable {
 
+    private static final long serialVersionUID = -1929539166632146849L;
     private UnitTest test;
     private int repNumber;
 
@@ -22,6 +24,7 @@ public class UnitTestResult {
 
     private long executionTime = 0;
     private long cpuTime = 0;
+    private long memoryUsage = 0;
 
     
     public UnitTestResult(UnitTest test, int rep) {
@@ -71,6 +74,10 @@ public class UnitTestResult {
         return cpuTime;
     }
 
+    public long getMemoryUsage() {
+        return memoryUsage;
+    }
+
     /*============== setters  ==============*/
 
     public void setPassed(boolean passed) {
@@ -103,6 +110,10 @@ public class UnitTestResult {
 
     public void setCPUTime(long testCPUTime)  {
         this.cpuTime = testCPUTime;
+    }
+
+    public void setMemoryUsage(long testMemoryUsage)  {
+        this.cpuTime = testMemoryUsage;
     }
 
     /*============== process failure  ==============*/

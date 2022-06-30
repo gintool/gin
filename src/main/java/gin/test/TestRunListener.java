@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.List;
@@ -15,7 +16,9 @@ import org.pmw.tinylog.Logger;
  * assumes one test case is run through JUnitCore at a time
  * ignored tests and tests with assumption violations are considered successful (following JUnit standard)
  */
-public class TestRunListener extends RunListener {
+public class TestRunListener extends RunListener implements Serializable {
+
+    private static final long serialVersionUID = -1768323084872818847L;
 
     private static ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
@@ -24,6 +27,10 @@ public class TestRunListener extends RunListener {
     private long startTime = 0;
 
     private long startCPUTime = 0;
+
+    private long startMemoryUsage = 0;
+
+    private static final long MB = 1024*1024;
 
     public TestRunListener(UnitTestResult unitTestResult) {
         this.unitTestResult = unitTestResult;
@@ -43,6 +50,8 @@ public class TestRunListener extends RunListener {
         Logger.debug("Test " + description + " finished.");
         long endTime = System.nanoTime();
         long endCPUTime = threadMXBean.getCurrentThreadCpuTime();
+        Runtime runtime = Runtime.getRuntime();
+        long endMemoryUsage = (runtime.totalMemory() - runtime.freeMemory())/MB;
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
     }
@@ -65,6 +74,8 @@ public class TestRunListener extends RunListener {
         Logger.debug("Test " + description + " started.");
         this.startTime = System.nanoTime();
         this.startCPUTime = threadMXBean.getCurrentThreadCpuTime();
+        Runtime runtime = Runtime.getRuntime();
+        this.startMemoryUsage = (runtime.totalMemory() - runtime.freeMemory())/MB;
     }
 
 }

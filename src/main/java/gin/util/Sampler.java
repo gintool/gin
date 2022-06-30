@@ -1,22 +1,27 @@
 package gin.util;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.sampullara.cli.Args;
-import com.sampullara.cli.Argument;
 import com.opencsv.CSVReaderHeaderAware;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+
 import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
@@ -27,9 +32,6 @@ import gin.test.InternalTestRunner;
 import gin.test.UnitTest;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Handy class for mutating and running tests on mutated code.
@@ -43,9 +45,11 @@ import java.util.Set;
  * Contains an option of running tests in a separate jvm. 
  *
  */
-public abstract class Sampler {
+public abstract class Sampler implements Serializable {
 
     /*============== Required  ==============*/
+
+    private static final long serialVersionUID = -567446476194791424L;
 
     @Argument(alias = "d", description = "Project directory, required", required = true)
     protected File projectDirectory;

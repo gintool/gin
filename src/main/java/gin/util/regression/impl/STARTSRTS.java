@@ -45,6 +45,8 @@ import org.pmw.tinylog.Logger;
  */
 public class STARTSRTS extends RTSStrategy {
 
+    private static final long serialVersionUID = -3844384837214338743L;
+    
     /**
      * The directory containing STARTS's dependency information.
      */

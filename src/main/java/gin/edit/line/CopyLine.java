@@ -9,6 +9,7 @@ import gin.edit.Edit;
 
 public class CopyLine extends LineEdit {
 
+    private static final long serialVersionUID = -5607219276266866878L;
     public String sourceFile;
     public int sourceLine;
     public String destinationFile;

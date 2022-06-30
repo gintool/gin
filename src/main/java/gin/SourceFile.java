@@ -1,6 +1,7 @@
 package gin;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,7 +25,9 @@ import gin.misc.FullyQualifiedNames;
  * is via the insert/delete line/statement/node or replaceNode methods, which
  * create and return a new SourceFile as part of their signature
  */
-public abstract class SourceFile {
+public abstract class SourceFile implements Serializable {
+
+    private static final long serialVersionUID = 4223075648256895407L;
 
     protected final String filename;
     

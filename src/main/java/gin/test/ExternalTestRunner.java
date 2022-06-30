@@ -26,6 +26,8 @@ import gin.Patch;
  */
 public class ExternalTestRunner extends TestRunner {
 
+    private static final long serialVersionUID = 2253018385180472967L;
+
     public static final String HARNESS_CLASS = "gin.test.TestHarness";
 
     private Path temporaryDirectory;

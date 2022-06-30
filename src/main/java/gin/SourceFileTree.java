@@ -697,12 +697,12 @@ public class SourceFileTree extends SourceFile {
     }
     
     /**
-     * @return the block index for the given statement ID, if the blocks were numbered 
-     * in the order returned by CompilationUnit.getChildNodesByType(BlockStmt.class)
+     * @return for the given block statement ID, return the index of that block
+     * in the list returned by CompilationUnit.getChildNodesByType(BlockStmt.class)
      * NOTE: this uses the current state! so returned IDs will be different once things
      * have been moved / deleted  
      * 
-     * returns -1 if not ID wasn't found (probably an ID for a non-statement node)
+     * returns -1 if ID wasn't found (probably an ID for a non-statement node)
      * 
      * @param ID the block index to return an ID for
      */

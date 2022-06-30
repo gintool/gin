@@ -80,7 +80,7 @@ public abstract class Sampler implements Serializable {
     protected CSVWriter outputFileWriter;
 
     @Argument(alias = "to", description = "Output file for storing the execution time")
-    protected File timingOutputFile = new File("profile_timing.csv");
+    protected File timingOutputFile = new File("sampler_timing.csv");
 
     @Argument(alias = "x", description = "Timeout in milliseconds")
     protected Long timeoutMS = 10000L;

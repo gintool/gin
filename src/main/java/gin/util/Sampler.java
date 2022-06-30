@@ -88,6 +88,9 @@ public abstract class Sampler implements Serializable {
     @Argument(alias = "r", description = "Repeat each test r times")
     protected Integer reps = 1;
 
+    @Argument(alias = "nm", description = "Number of methods from the method data to sample from. 0 for all.")
+    protected Integer numberOfMethodsToSample = 0;
+
     @Argument(alias = "j", description = "Run tests in a separate jvm")
     protected Boolean inSubprocess = false;
     
@@ -166,6 +169,8 @@ public abstract class Sampler implements Serializable {
         if (methodData.isEmpty()) {
             Logger.info("No methods to process.");
             System.exit(0);
+        } else if (numberOfMethodsToSample > 0 && this.numberOfMethodsToSample < this.methodData.size()) {
+            this.methodData = this.methodData.subList(0, this.numberOfMethodsToSample);
         }
     }
 

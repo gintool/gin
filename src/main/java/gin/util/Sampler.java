@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,13 +17,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.io.Files;
 import com.opencsv.CSVReaderHeaderAware;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -74,6 +78,9 @@ public abstract class Sampler implements Serializable {
     @Argument(alias = "o", description = "Output CSV file")
     protected File outputFile = new File("sampler_results.csv");
     protected CSVWriter outputFileWriter;
+
+    @Argument(alias = "to", description = "Output file for storing the execution time")
+    protected File timingOutputFile = new File("profile_timing.csv");
 
     @Argument(alias = "x", description = "Timeout in milliseconds")
     protected Long timeoutMS = 10000L;
@@ -221,7 +228,15 @@ public abstract class Sampler implements Serializable {
     /*============== sampleMethods calls the hook abstract method  ==============*/
     protected final void sampleMethods(){
         try {
+            StopWatch stopWatch = StopWatch.createStarted();
             this.sampleMethodsHook();
+            stopWatch.stop();
+            if (this.timingOutputFile != null){
+                FileUtils.forceMkdirParent(this.timingOutputFile);
+                FileUtils.writeStringToFile(this.timingOutputFile, Long.toString(stopWatch.getTime()), Charset.defaultCharset());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             this.close();
         }

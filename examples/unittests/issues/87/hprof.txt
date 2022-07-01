@@ -1,0 +1,338 @@
+JAVA PROFILE 1.0.1, created Wed Jun 29 19:32:22 2022
+
+Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Oracle nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=50000257, id = 200001, name="main", group="main")
+THREAD START (obj=50000257, id = 200004, name="surefire-forkedjvm-command-thread", group="main")
+THREAD START (obj=50000257, id = 200005, name="surefire-forkedjvm-ping-30s", group="main")
+THREAD START (obj=50000257, id = 200006, name="process reaper", group="system")
+THREAD START (obj=50000257, id = 200007, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
+THREAD END (id = 200005)
+THREAD END (id = 200001)
+TRACE 300152:
+	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
+TRACE 300488:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:781)
+TRACE 300149:
+	java.io.FileInputStream.open0(FileInputStream.java:Unknown line)
+TRACE 300140:
+	java.io.FileOutputStream.close0(FileOutputStream.java:Unknown line)
+TRACE 300138:
+	java.io.FileOutputStream.open0(FileOutputStream.java:Unknown line)
+TRACE 300487:
+	java.lang.System.identityHashCode(System.java:Unknown line)
+TRACE 300492:
+	org.jgrapht.demo.KnightTour$Node.<init>(WarnsdorffRuleKnightTourHeuristic.java:Unknown line)
+TRACE 300483:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:774)
+TRACE 300490:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.<init>(WarnsdorffRuleKnightTourHeuristic.java:456)
+TRACE 300098:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+TRACE 300480:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:766)
+TRACE 300481:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff(WarnsdorffRuleKnightTourHeuristic.java:522)
+TRACE 300484:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff(WarnsdorffRuleKnightTourHeuristic.java:528)
+TRACE 300466:
+	java.io.UnixFileSystem.getBooleanAttributes0(UnixFileSystem.java:Unknown line)
+TRACE 300485:
+	org.jgrapht.demo.KnightTour$DoublyLinkedList.add(WarnsdorffRuleKnightTourHeuristic.java:101)
+TRACE 300486:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.updateStructuredPosition(WarnsdorffRuleKnightTourHeuristic.java:678)
+TRACE 300113:
+	java.util.Arrays.copyOf(Arrays.java:3236)
+TRACE 300119:
+	java.lang.System.arraycopy(System.java:Unknown line)
+TRACE 300234:
+	java.lang.Object.hashCode(Object.java:Unknown line)
+TRACE 300282:
+	java.lang.UNIXProcess.forkAndExec(UNIXProcess.java:Unknown line)
+TRACE 300477:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:782)
+TRACE 300482:
+	java.util.Arrays.copyOf(Arrays.java:3181)
+TRACE 300489:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:816)
+TRACE 300495:
+	org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry(ParberryKnightTourTest.java:58)
+TRACE 300001:
+	java.lang.ClassLoader.findBootstrapClass(ClassLoader.java:Unknown line)
+TRACE 300043:
+	java.util.zip.ZipFile.open(ZipFile.java:Unknown line)
+TRACE 300067:
+	java.util.regex.Pattern.newSlice(Pattern.java:3375)
+TRACE 300093:
+	java.io.FilePermission.init(FilePermission.java:203)
+TRACE 300104:
+	java.lang.Thread.currentThread(Thread.java:Unknown line)
+TRACE 300142:
+	org.ekstazi.asm.ClassWriter.visitMethod(<Unknown Source>:Unknown line)
+TRACE 300144:
+	java.util.jar.Attributes.get(Attributes.java:97)
+TRACE 300146:
+	org.ekstazi.asm.ClassReader.readCode(<Unknown Source>:Unknown line)
+TRACE 300150:
+	org.ekstazi.asm.MethodWriter.put(<Unknown Source>:Unknown line)
+TRACE 300153:
+	java.util.zip.ZipFile.getEntrySize(ZipFile.java:Unknown line)
+TRACE 300182:
+	org.apache.maven.surefire.booter.ForkedBooter.setupBooter(ForkedBooter.java:94)
+TRACE 300183:
+	org.ekstazi.asm.FieldWriter.visitAnnotation(<Unknown Source>:Unknown line)
+TRACE 300193:
+	org.apache.maven.surefire.shade.org.apache.commons.lang3.SystemUtils.getJavaVersionMatches(SystemUtils.java:1520)
+TRACE 300244:
+	org.ekstazi.asm.ClassWriter.toByteArray(<Unknown Source>:Unknown line)
+TRACE 300245:
+	java.lang.Class.isArray(Class.java:Unknown line)
+TRACE 300248:
+	java.util.Collections.singleton(Collections.java:4667)
+TRACE 300249:
+	jdk.internal.org.objectweb.asm.Item.isEqualTo(Item.java:315)
+TRACE 300255:
+	java.lang.invoke.BoundMethodHandle$SpeciesData.get(BoundMethodHandle.java:383)
+TRACE 300265:
+	java.lang.invoke.InnerClassLambdaMetafactory.<clinit>(InnerClassLambdaMetafactory.java:91)
+TRACE 300266:
+	java.lang.System.nanoTime(System.java:Unknown line)
+TRACE 300281:
+	org.ekstazi.asm.MethodWriter.put(<Unknown Source>:Unknown line)
+TRACE 300286:
+	org.apache.maven.surefire.booter.PpidChecker$ProcessInfoConsumer.execute(PpidChecker.java:299)
+TRACE 300359:
+	java.util.ResourceBundle$Control$CandidateListCache.getDefaultList(ResourceBundle.java:2457)
+TRACE 300360:
+	org.ekstazi.monitor.CoverageMonitor.isWellKnownUrl(<Unknown Source>:Unknown line)
+TRACE 300393:
+	java.io.FileOutputStream.writeBytes(FileOutputStream.java:Unknown line)
+TRACE 300394:
+	java.util.HashMap.putVal(HashMap.java:663)
+TRACE 300432:
+	sun.misc.ProxyGenerator.generateClassFile(ProxyGenerator.java:475)
+TRACE 300459:
+	org.junit.runner.notification.RunNotifier.fireTestRunStarted(RunNotifier.java:88)
+TRACE 300461:
+	org.junit.runner.Request.aClass(Request.java:50)
+TRACE 300462:
+	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
+TRACE 300463:
+	org.junit.internal.builders.JUnit4Builder.runnerForClass(JUnit4Builder.java:10)
+TRACE 300464:
+	java.lang.ThreadLocal.getMap(ThreadLocal.java:233)
+TRACE 300475:
+	org.ekstazi.junit.JUnit4OutcomeListener.<init>(<Unknown Source>:Unknown line)
+TRACE 300478:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff(WarnsdorffRuleKnightTourHeuristic.java:517)
+TRACE 300479:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:774)
+TRACE 300491:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:734)
+TRACE 300493:
+	org.jgrapht.demo.KnightTour.toList(WarnsdorffRuleKnightTourHeuristic.java:327)
+TRACE 300494:
+	org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry(ParberryKnightTourTest.java:56)
+TRACE 300496:
+	org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry(ParberryKnightTourTest.java:58)
+TRACE 300497:
+	org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry(ParberryKnightTourTest.java:60)
+TRACE 300498:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:741)
+TRACE 300499:
+	org.jgrapht.demo.ParberryKnightTourTest.testParberry150x150(ParberryKnightTourTest.java:164)
+TRACE 300500:
+	org.jgrapht.demo.ParberryKnightTour.generateTour(ParberryKnightTour.java:207)
+TRACE 300501:
+	java.util.HashMap$TreeNode.treeify(HashMap.java:1907)
+TRACE 300502:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour(WarnsdorffRuleKnightTourHeuristic.java:782)
+TRACE 300503:
+	org.jgrapht.alg.util.Pair.<init>(Pair.java:Unknown line)
+TRACE 300504:
+	org.jgrapht.demo.KnightTour.toList(WarnsdorffRuleKnightTourHeuristic.java:328)
+TRACE 300505:
+	java.util.Arrays.hashCode(Arrays.java:4146)
+TRACE 300508:
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300509:
+	java.lang.UNIXProcess.waitForProcessExit(UNIXProcess.java:Unknown line)
+TRACE 300515:
+	org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristicTest.checkMoveCorrectness(WarnsdorffRuleKnightTourHeuristicTest.java:63)
+TRACE 300516:
+	java.util.Arrays.copyOfRange(Arrays.java:3592)
+TRACE 300517:
+	org.ekstazi.asm.ClassReader.readMethod(<Unknown Source>:Unknown line)
+TRACE 300518:
+	java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.cancel(ScheduledThreadPoolExecutor.java:279)
+TRACE 300519:
+	java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2088)
+CPU SAMPLES BEGIN (total = 790) Wed Jun 29 19:32:26 2022
+rank   self  accum   count trace method
+   1 49.75% 49.75%     393 300152 java.io.FileInputStream.readBytes
+   2 25.82% 75.57%     204 300488 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+   3  6.96% 82.53%      55 300149 java.io.FileInputStream.open0
+   4  1.14% 83.67%       9 300140 java.io.FileOutputStream.close0
+   5  0.89% 84.56%       7 300138 java.io.FileOutputStream.open0
+   6  0.89% 85.44%       7 300487 java.lang.System.identityHashCode
+   7  0.89% 86.33%       7 300492 org.jgrapht.demo.KnightTour$Node.<init>
+   8  0.76% 87.09%       6 300483 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+   9  0.76% 87.85%       6 300490 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.<init>
+  10  0.51% 88.35%       4 300098 java.lang.ClassLoader.defineClass1
+  11  0.51% 88.86%       4 300480 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  12  0.51% 89.37%       4 300481 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff
+  13  0.51% 89.87%       4 300484 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff
+  14  0.38% 90.25%       3 300466 java.io.UnixFileSystem.getBooleanAttributes0
+  15  0.38% 90.63%       3 300485 org.jgrapht.demo.KnightTour$DoublyLinkedList.add
+  16  0.38% 91.01%       3 300486 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.updateStructuredPosition
+  17  0.25% 91.27%       2 300113 java.util.Arrays.copyOf
+  18  0.25% 91.52%       2 300119 java.lang.System.arraycopy
+  19  0.25% 91.77%       2 300234 java.lang.Object.hashCode
+  20  0.25% 92.03%       2 300282 java.lang.UNIXProcess.forkAndExec
+  21  0.25% 92.28%       2 300477 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  22  0.25% 92.53%       2 300482 java.util.Arrays.copyOf
+  23  0.25% 92.78%       2 300489 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  24  0.25% 93.04%       2 300495 org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry
+  25  0.13% 93.16%       1 300001 java.lang.ClassLoader.findBootstrapClass
+  26  0.13% 93.29%       1 300043 java.util.zip.ZipFile.open
+  27  0.13% 93.42%       1 300067 java.util.regex.Pattern.newSlice
+  28  0.13% 93.54%       1 300093 java.io.FilePermission.init
+  29  0.13% 93.67%       1 300104 java.lang.Thread.currentThread
+  30  0.13% 93.80%       1 300142 org.ekstazi.asm.ClassWriter.visitMethod
+  31  0.13% 93.92%       1 300144 java.util.jar.Attributes.get
+  32  0.13% 94.05%       1 300146 org.ekstazi.asm.ClassReader.readCode
+  33  0.13% 94.18%       1 300150 org.ekstazi.asm.MethodWriter.put
+  34  0.13% 94.30%       1 300153 java.util.zip.ZipFile.getEntrySize
+  35  0.13% 94.43%       1 300182 org.apache.maven.surefire.booter.ForkedBooter.setupBooter
+  36  0.13% 94.56%       1 300183 org.ekstazi.asm.FieldWriter.visitAnnotation
+  37  0.13% 94.68%       1 300193 org.apache.maven.surefire.shade.org.apache.commons.lang3.SystemUtils.getJavaVersionMatches
+  38  0.13% 94.81%       1 300244 org.ekstazi.asm.ClassWriter.toByteArray
+  39  0.13% 94.94%       1 300245 java.lang.Class.isArray
+  40  0.13% 95.06%       1 300248 java.util.Collections.singleton
+  41  0.13% 95.19%       1 300249 jdk.internal.org.objectweb.asm.Item.isEqualTo
+  42  0.13% 95.32%       1 300255 java.lang.invoke.BoundMethodHandle$SpeciesData.get
+  43  0.13% 95.44%       1 300265 java.lang.invoke.InnerClassLambdaMetafactory.<clinit>
+  44  0.13% 95.57%       1 300266 java.lang.System.nanoTime
+  45  0.13% 95.70%       1 300281 org.ekstazi.asm.MethodWriter.put
+  46  0.13% 95.82%       1 300286 org.apache.maven.surefire.booter.PpidChecker$ProcessInfoConsumer.execute
+  47  0.13% 95.95%       1 300359 java.util.ResourceBundle$Control$CandidateListCache.getDefaultList
+  48  0.13% 96.08%       1 300360 org.ekstazi.monitor.CoverageMonitor.isWellKnownUrl
+  49  0.13% 96.20%       1 300393 java.io.FileOutputStream.writeBytes
+  50  0.13% 96.33%       1 300394 java.util.HashMap.putVal
+  51  0.13% 96.46%       1 300432 sun.misc.ProxyGenerator.generateClassFile
+  52  0.13% 96.58%       1 300459 org.junit.runner.notification.RunNotifier.fireTestRunStarted
+  53  0.13% 96.71%       1 300461 org.junit.runner.Request.aClass
+  54  0.13% 96.84%       1 300462 org.ekstazi.asm.ClassReader.copyPool
+  55  0.13% 96.96%       1 300463 org.junit.internal.builders.JUnit4Builder.runnerForClass
+  56  0.13% 97.09%       1 300464 java.lang.ThreadLocal.getMap
+  57  0.13% 97.22%       1 300475 org.ekstazi.junit.JUnit4OutcomeListener.<init>
+  58  0.13% 97.34%       1 300478 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getMoveWarnsdorff
+  59  0.13% 97.47%       1 300479 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  60  0.13% 97.59%       1 300491 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  61  0.13% 97.72%       1 300493 org.jgrapht.demo.KnightTour.toList
+  62  0.13% 97.85%       1 300494 org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry
+  63  0.13% 97.97%       1 300496 org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry
+  64  0.13% 98.10%       1 300497 org.jgrapht.demo.ParberryKnightTourTest.checkCorrectnessParberry
+  65  0.13% 98.23%       1 300498 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  66  0.13% 98.35%       1 300499 org.jgrapht.demo.ParberryKnightTourTest.testParberry150x150
+  67  0.13% 98.48%       1 300500 org.jgrapht.demo.ParberryKnightTour.generateTour
+  68  0.13% 98.61%       1 300501 java.util.HashMap$TreeNode.treeify
+  69  0.13% 98.73%       1 300502 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristic.getTour
+  70  0.13% 98.86%       1 300503 org.jgrapht.alg.util.Pair.<init>
+  71  0.13% 98.99%       1 300504 org.jgrapht.demo.KnightTour.toList
+  72  0.13% 99.11%       1 300505 java.util.Arrays.hashCode
+  73  0.13% 99.24%       1 300508 java.security.AccessController.doPrivileged
+  74  0.13% 99.37%       1 300509 java.lang.UNIXProcess.waitForProcessExit
+  75  0.13% 99.49%       1 300515 org.jgrapht.demo.WarnsdorffRuleKnightTourHeuristicTest.checkMoveCorrectness
+  76  0.13% 99.62%       1 300516 java.util.Arrays.copyOfRange
+  77  0.13% 99.75%       1 300517 org.ekstazi.asm.ClassReader.readMethod
+  78  0.13% 99.87%       1 300518 java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.cancel
+  79  0.13% 100.00%       1 300519 java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos
+CPU SAMPLES END

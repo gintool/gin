@@ -74,7 +74,7 @@ public class RTSProfiler implements Serializable {
     private String hprofFileName = "java.hprof.txt";
     // Instance Members
     private File hprofDir;
-    private Project project;
+    protected Project project;
 
     public RTSProfiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -188,7 +188,7 @@ public class RTSProfiler implements Serializable {
         writeResults(hotMethods);
     }
 
-    private List<HotMethod> getHotMethods(File hprofFile) {
+    protected List<HotMethod> getHotMethods(File hprofFile) {
         List<HotMethod> hotMethods = new ArrayList<>();
         if (hprofFile != null && hprofFile.exists()) {
             Map<String, Integer> methodCounts = Trace.fromFile(this.project, new UnitTest("", ""), hprofFile).methodCounts;

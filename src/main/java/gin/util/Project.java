@@ -63,7 +63,7 @@ public class Project implements Serializable {
         detectDirs();
     }
 
-    private static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
+    protected static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
 
         String pathToSource = className.replace(".", File.separator) + ".java";
         File sourceFile = new File(srcDir, pathToSource);
@@ -98,8 +98,8 @@ public class Project implements Serializable {
                 // Strip out return type if provided
                 String prefix = methodSignature.substring(0, methodSignature.indexOf("("));
                 if (prefix.contains(" ")) {
-                    String returnType = prefix.split("\\s")[0];
-                    methodSignature = StringUtils.replaceOnce(methodSignature, returnType, "").trim();
+                    int lastIndexOf = prefix.trim().lastIndexOf(" ");
+                    methodSignature = methodSignature.substring(lastIndexOf + 1).trim();
                 }
 
                 // Remove all spaces

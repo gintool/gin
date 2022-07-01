@@ -1,17 +1,18 @@
 package gin.util;
 
 import gin.TestConfiguration;
-import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
- *
  * @author Giovani
  */
 public class RTSProfilerTest {
@@ -74,5 +75,4 @@ public class RTSProfilerTest {
             }
         }
     }
-
 }

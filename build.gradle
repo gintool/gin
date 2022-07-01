@@ -72,6 +72,8 @@ dependencies {
 
     // build example project so main project unit tests (e.g. profiler) will pass!
     compile project(':gradle-simple')
+
+    testImplementation "org.mockito:mockito-core:3.+"
 }
 
 jar {

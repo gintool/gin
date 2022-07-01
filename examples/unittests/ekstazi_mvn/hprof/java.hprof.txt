@@ -1,4 +1,4 @@
-JAVA PROFILE 1.0.1, created Fri Jun 24 13:12:22 2022
+JAVA PROFILE 1.0.1, created Fri Jul  1 13:20:11 2022
 
 Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
 
@@ -91,80 +91,62 @@ Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
 
 THREAD START (obj=5000023f, id = 200001, name="main", group="main")
 THREAD START (obj=5000023f, id = 200004, name="surefire-forkedjvm-command-thread", group="main")
-THREAD START (obj=5000023f, id = 200005, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
 THREAD END (id = 200004)
+THREAD START (obj=5000023f, id = 200005, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
 THREAD START (obj=5000023f, id = 200006, name="Thread-0", group="main")
 THREAD END (id = 200006)
 THREAD END (id = 200001)
-TRACE 300183:
+TRACE 300180:
 	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
-TRACE 300373:
+TRACE 300370:
 	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
-TRACE 300374:
-	java.lang.Object.hashCode(Object.java:Unknown line)
-TRACE 300376:
-	org.ekstazi.asm.MethodWriter.<init>(<Unknown Source>:Unknown line)
-TRACE 300378:
-	org.ekstazi.asm.ClassWriter.newMethodItem(<Unknown Source>:Unknown line)
-TRACE 300364:
-	org.ekstazi.asm.ClassWriter.newStringishItem(<Unknown Source>:Unknown line)
-TRACE 300296:
-	java.io.WinNTFileSystem.normalize(WinNTFileSystem.java:86)
-TRACE 300295:
-	java.lang.String.<init>(String.java:325)
-TRACE 300239:
-	sun.util.resources.LocaleData$1.run(LocaleData.java:167)
-TRACE 300389:
-	java.util.HashMap.getNode(HashMap.java:572)
-TRACE 300393:
-	org.apache.maven.surefire.shared.codec.binary.Base64.encode(Base64.java:380)
-TRACE 300182:
-	org.ekstazi.asm.ClassReader.accept(<Unknown Source>:Unknown line)
-TRACE 300177:
-	java.io.WinNTFileSystem.canonicalize0(WinNTFileSystem.java:Unknown line)
-TRACE 300171:
-	org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn(<Unknown Source>:Unknown line)
-TRACE 300160:
-	org.ekstazi.asm.MethodVisitor.visitVarInsn(<Unknown Source>:Unknown line)
-TRACE 300147:
-	java.util.zip.ZipFile.getEntryBytes(ZipFile.java:Unknown line)
-TRACE 300144:
-	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
-TRACE 300129:
-	java.util.Hashtable.rehash(Hashtable.java:402)
-TRACE 300123:
-	org.ekstazi.asm.Item.isEqualTo(<Unknown Source>:Unknown line)
-TRACE 300121:
-	java.util.Arrays.copyOfRange(Arrays.java:3664)
-TRACE 300090:
-	java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:68)
-TRACE 300069:
-	sun.misc.Unsafe.getObjectVolatile(Unsafe.java:Unknown line)
 TRACE 300064:
 	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
-CPU SAMPLES BEGIN (total = 38) Fri Jun 24 13:12:22 2022
+TRACE 300383:
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300359:
+	java.io.ObjectStreamClass$3.run(ObjectStreamClass.java:520)
+TRACE 300294:
+	org.ekstazi.asm.ClassReader.readCode(<Unknown Source>:Unknown line)
+TRACE 300290:
+	java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.<init>(ScheduledThreadPoolExecutor.java:809)
+TRACE 300212:
+	sun.util.locale.provider.JRELocaleProviderAdapter.getLanguageTagSet(JRELocaleProviderAdapter.java:349)
+TRACE 300179:
+	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
+TRACE 300336:
+	java.util.LinkedHashMap$LinkedValues.iterator(LinkedHashMap.java:596)
+TRACE 300159:
+	java.lang.String.contains(String.java:2133)
+TRACE 300149:
+	org.ekstazi.asm.ClassReader.readMethod(<Unknown Source>:Unknown line)
+TRACE 300145:
+	org.ekstazi.asm.ClassReader.copyPool(<Unknown Source>:Unknown line)
+TRACE 300140:
+	java.lang.ref.Finalizer.register(Finalizer.java:91)
+TRACE 300122:
+	java.lang.System.nanoTime(System.java:Unknown line)
+TRACE 300120:
+	org.ekstazi.junit.JUnitCFT.transform(<Unknown Source>:Unknown line)
+TRACE 300088:
+	java.util.Vector.<init>(Vector.java:138)
+CPU SAMPLES BEGIN (total = 40) Fri Jul  1 13:20:12 2022
 rank   self  accum   count trace method
-   1 36.84% 36.84%      14 300183 java.io.FileInputStream.readBytes
-   2  7.89% 44.74%       3 300373 java.io.WinNTFileSystem.getBooleanAttributes
-   3  2.63% 47.37%       1 300374 java.lang.Object.hashCode
-   4  2.63% 50.00%       1 300376 org.ekstazi.asm.MethodWriter.<init>
-   5  2.63% 52.63%       1 300378 org.ekstazi.asm.ClassWriter.newMethodItem
-   6  2.63% 55.26%       1 300364 org.ekstazi.asm.ClassWriter.newStringishItem
-   7  2.63% 57.89%       1 300296 java.io.WinNTFileSystem.normalize
-   8  2.63% 60.53%       1 300295 java.lang.String.<init>
-   9  2.63% 63.16%       1 300239 sun.util.resources.LocaleData$1.run
-  10  2.63% 65.79%       1 300389 java.util.HashMap.getNode
-  11  2.63% 68.42%       1 300393 org.apache.maven.surefire.shared.codec.binary.Base64.encode
-  12  2.63% 71.05%       1 300182 org.ekstazi.asm.ClassReader.accept
-  13  2.63% 73.68%       1 300177 java.io.WinNTFileSystem.canonicalize0
-  14  2.63% 76.32%       1 300171 org.ekstazi.asm.MethodWriter.visitLookupSwitchInsn
-  15  2.63% 78.95%       1 300160 org.ekstazi.asm.MethodVisitor.visitVarInsn
-  16  2.63% 81.58%       1 300147 java.util.zip.ZipFile.getEntryBytes
-  17  2.63% 84.21%       1 300144 org.ekstazi.asm.ClassReader.copyPool
-  18  2.63% 86.84%       1 300129 java.util.Hashtable.rehash
-  19  2.63% 89.47%       1 300123 org.ekstazi.asm.Item.isEqualTo
-  20  2.63% 92.11%       1 300121 java.util.Arrays.copyOfRange
-  21  2.63% 94.74%       1 300090 java.lang.AbstractStringBuilder.<init>
-  22  2.63% 97.37%       1 300069 sun.misc.Unsafe.getObjectVolatile
-  23  2.63% 100.00%       1 300064 java.lang.ClassLoader.defineClass1
+   1 40.00% 40.00%      16 300180 java.io.FileInputStream.readBytes
+   2 12.50% 52.50%       5 300370 java.io.WinNTFileSystem.getBooleanAttributes
+   3 10.00% 62.50%       4 300064 java.lang.ClassLoader.defineClass1
+   4  5.00% 67.50%       2 300383 java.security.AccessController.doPrivileged
+   5  2.50% 70.00%       1 300359 java.io.ObjectStreamClass$3.run
+   6  2.50% 72.50%       1 300294 org.ekstazi.asm.ClassReader.readCode
+   7  2.50% 75.00%       1 300290 java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.<init>
+   8  2.50% 77.50%       1 300212 sun.util.locale.provider.JRELocaleProviderAdapter.getLanguageTagSet
+   9  2.50% 80.00%       1 300179 org.ekstazi.asm.ClassReader.copyPool
+  10  2.50% 82.50%       1 300336 java.util.LinkedHashMap$LinkedValues.iterator
+  11  2.50% 85.00%       1 300159 java.lang.String.contains
+  12  2.50% 87.50%       1 300149 org.ekstazi.asm.ClassReader.readMethod
+  13  2.50% 90.00%       1 300145 org.ekstazi.asm.ClassReader.copyPool
+  14  2.50% 92.50%       1 300140 java.lang.ref.Finalizer.register
+  15  2.50% 95.00%       1 300122 java.lang.System.nanoTime
+  16  2.50% 97.50%       1 300120 org.ekstazi.junit.JUnitCFT.transform
+  17  2.50% 100.00%       1 300088 java.util.Vector.<init>
 CPU SAMPLES END

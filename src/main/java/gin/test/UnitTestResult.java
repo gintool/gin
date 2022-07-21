@@ -113,7 +113,7 @@ public class UnitTestResult implements Serializable {
     }
 
     public void setMemoryUsage(long testMemoryUsage)  {
-        this.cpuTime = testMemoryUsage;
+        this.memoryUsage = testMemoryUsage;
     }
 
     /*============== process failure  ==============*/

@@ -54,6 +54,7 @@ public class TestRunListener extends RunListener implements Serializable {
         long endMemoryUsage = (runtime.totalMemory() - runtime.freeMemory())/MB;
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
+        unitTestResult.setMemoryUsage(endMemoryUsage - startMemoryUsage);
     }
 
     public void testIgnored(Description description) throws Exception {

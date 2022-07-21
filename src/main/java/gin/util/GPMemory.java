@@ -42,7 +42,7 @@ public class GPMemory extends GPSimple {
    
         double fitness = Double.MAX_VALUE;
         if (results.getCleanCompile() && results.allTestsSuccessful()) {
-            return (double) (results.totalMemoryUsage() / 1000000);
+            return (double) results.totalMemoryUsage();
         }
         return fitness;
     }   

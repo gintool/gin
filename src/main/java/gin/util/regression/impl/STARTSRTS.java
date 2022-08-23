@@ -5,7 +5,9 @@ import com.google.common.collect.Sets;
 import edu.illinois.starts.constants.StartsConstants;
 import gin.test.UnitTest;
 import gin.util.regression.RTSStrategy;
+import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
@@ -79,14 +81,16 @@ public class STARTSRTS extends RTSStrategy {
             final Map<String, Set<String>> classesToTestClasses = new HashMap<>();
             // If the file exists, it means that the results are contained in a single file, as default
             if (startsFile.exists()) {
+                System.out.println("Exists!");
                 // Read the lines of the file
                 classesToTestClasses.putAll(extractDependencyInformation(startsFile));
             }
             // We need to look into subdirectories to check for modules
-            Iterator<File> fileIterator = FileUtils.iterateFiles(this.startsDir.getParentFile(), new String[]{"deps.zlc"}, true);
-            for (Iterator<File> it = fileIterator; it.hasNext(); ) {
-                File subStartsFile = it.next();
-                classesToTestClasses.putAll(extractDependencyInformation(subStartsFile));
+            Iterator<File> fileIterator = FileUtils.iterateFiles(this.startsDir.getParentFile(), FileFilterUtils.nameFileFilter("deps.zlc"), FileFilterUtils.directoryFileFilter());
+            while (fileIterator.hasNext()) {
+                File subStartsFile = fileIterator.next();
+                Map<String, HashSet<String>> dependencyInformation = extractDependencyInformation(subStartsFile);
+                dependencyInformation.forEach((key, value) -> classesToTestClasses.merge(key, value, SetUtils::union));
             }
             Logger.debug("Reading done in " + Duration.ofMillis(stopWatch.getTime()));
             Logger.info("Transforming STARTS dependency information to Gin.");

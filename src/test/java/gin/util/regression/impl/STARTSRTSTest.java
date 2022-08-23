@@ -46,7 +46,7 @@ public class STARTSRTSTest {
     }
 
     @Test
-    public void testGetArgumentLine() throws IOException {
+    public void testGetArgumentLine() {
         String argLine = this.starts.getArgumentLine();
         assertTrue(argLine.isEmpty());
     }
@@ -224,6 +224,57 @@ public class STARTSRTSTest {
         assertNotNull(subsetTests);
         assertEquals(1, subsetTests.size());
         assertTrue(subsetTests.contains(ekstaziETest));
+    }
+
+    @Test
+    public void testMultipleModules() {
+        STARTSRTS localStarts = new STARTSRTS(TestConfiguration.EXAMPLE_DIR_NAME + File.separator + "starts_modules");
+        List<HotMethod> methods = new ArrayList<>();
+        HotMethod methodA = new HotMethod("EkstaziA", "methodA", 0, new HashSet<>());
+        HotMethod methodB = new HotMethod("EkstaziA", "methodB", 0, new HashSet<>());
+        HotMethod sum = new HotMethod("EkstaziB", "sum", 0, new HashSet<>());
+
+        methods.add(methodA);
+        methods.add(methodB);
+        methods.add(sum);
+
+        List<UnitTest> tests = new ArrayList<>();
+        UnitTest ekstaziATest1 = new UnitTest("EkstaziATest", "testMethodA1");
+        tests.add(ekstaziATest1);
+        UnitTest ekstaziATest2 = new UnitTest("EkstaziATest", "testMethodB1");
+        tests.add(ekstaziATest2);
+        UnitTest ekstaziBTest1 = new UnitTest("EkstaziBTest", "testSum1");
+        tests.add(ekstaziBTest1);
+        UnitTest ekstaziBTest2 = new UnitTest("EkstaziBTest", "testSum2");
+        tests.add(ekstaziBTest2);
+        UnitTest ekstaziBTest3 = new UnitTest("EkstaziBTest", "testSum3");
+        tests.add(ekstaziBTest3);
+
+        localStarts.linkTestsToMethods(methods, tests);
+
+        Set<UnitTest> subsetTests = methodA.getTests();
+        assertNotNull(subsetTests);
+        assertTrue(subsetTests.contains(ekstaziATest1));
+        assertTrue(subsetTests.contains(ekstaziATest2));
+        assertFalse(subsetTests.contains(ekstaziBTest1));
+        assertFalse(subsetTests.contains(ekstaziBTest2));
+        assertFalse(subsetTests.contains(ekstaziBTest3));
+
+        subsetTests = methodB.getTests();
+        assertNotNull(subsetTests);
+        assertTrue(subsetTests.contains(ekstaziATest1));
+        assertTrue(subsetTests.contains(ekstaziATest2));
+        assertFalse(subsetTests.contains(ekstaziBTest1));
+        assertFalse(subsetTests.contains(ekstaziBTest2));
+        assertFalse(subsetTests.contains(ekstaziBTest3));
+
+        subsetTests = sum.getTests();
+        assertNotNull(subsetTests);
+        assertTrue(subsetTests.contains(ekstaziATest1));
+        assertTrue(subsetTests.contains(ekstaziATest2));
+        assertTrue(subsetTests.contains(ekstaziBTest1));
+        assertTrue(subsetTests.contains(ekstaziBTest2));
+        assertTrue(subsetTests.contains(ekstaziBTest3));
     }
 
 }

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.text.ParseException;
 
+import gin.util.Project;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -99,21 +101,20 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
         return String.format("%s.%s [%s]", className, methodName, moduleName);
     }
 
-    public static UnitTest fromString(String test) throws ParseException {
-
+    public static UnitTest fromString(String test, Project project) throws ParseException {
         UnitTest ginTest = null;
 
         test = StringUtils.strip(test);
-        
+
         String[] testSplit = test.split(" ");
 
         if (testSplit.length == 2) {
-         
-             String testName = testSplit[0];
-             String moduleName = testSplit[1];
 
-             if ( (testName.contains(".")) && (moduleName.startsWith("[")) && (moduleName.endsWith("]")) ) {
-   
+            String testName = testSplit[0];
+            String moduleName = testSplit[1];
+
+            if ( (testName.contains(".")) && (moduleName.startsWith("[")) && (moduleName.endsWith("]")) ) {
+
                 String className = StringUtils.substringBeforeLast(testName, ".");
                 String methodName = StringUtils.substringAfterLast(testName, ".");
 
@@ -121,24 +122,28 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
                 if (moduleName.isEmpty()) {
                     ginTest = new UnitTest(className, methodName);
                 } else {
-                    File moduleDir = new File(moduleName);
+                    File moduleDir = project == null ? new File(moduleName) : FileUtils.getFile(project.getProjectDir(), moduleName);
                     if ( (moduleDir.exists()) && (moduleDir.isDirectory()) ) {
                         ginTest = new UnitTest(className, methodName, moduleName);
                     } else {
-                        throw new ParseException("UnitTest " + test + " not created as module directory " + moduleName + "does not exist.", 0);
+                        throw new ParseException("UnitTest " + test + " not created as module directory " + moduleName + " does not exist.", 0);
                     }
                 }
 
             } else {
                 throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
-                
+
             }
 
         } else {
-             throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
+            throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
         }
 
         return ginTest;
+    }
+
+    public static UnitTest fromString(String test) throws ParseException {
+        return fromString(test, null);
     }
 
 }

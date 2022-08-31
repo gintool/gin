@@ -401,7 +401,7 @@ public abstract class Sampler implements Serializable {
                 List<UnitTest> ginTests = new ArrayList();        
                 for (String test : tests) {
                     UnitTest ginTest = null;        
-                    ginTest = UnitTest.fromString(test);
+                    ginTest = UnitTest.fromString(test, project);
                     ginTest.setTimeoutMS(timeoutMS);
                     ginTests.add(ginTest);
                     testData.add(ginTest);

@@ -12,10 +12,14 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
 
@@ -222,8 +226,12 @@ public class ExternalTestRunner extends TestRunner {
         File jvm = new File(javaBin, "java");
 
         String classpath = this.getTemporaryDirectory() + File.pathSeparator +
-                           this.getClassPath() + File.pathSeparator +
-                           System.getProperty("java.class.path");
+                this.getClassPath() + File.pathSeparator +
+                System.getProperty("java.class.path");
+
+        classpath = Arrays.stream(classpath.split(File.pathSeparator))
+                .map(s -> Paths.get(s).normalize().toFile().getAbsolutePath())
+                .collect(Collectors.joining(File.pathSeparator));
 
         int index = 0;
 

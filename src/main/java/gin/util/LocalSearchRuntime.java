@@ -2,20 +2,17 @@ package gin.util;
 
 import gin.Patch;
 import gin.test.UnitTest;
+import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
+import org.pmw.tinylog.Logger;
+
 import java.io.File;
 import java.util.List;
 
 /**
- *
  * @author Giovani
  */
 public class LocalSearchRuntime extends LocalSearchSimple {
-
-    public static void main(String[] args) {
-        LocalSearchRuntime sampler = new LocalSearchRuntime(args);
-        sampler.sampleMethods();
-    }
 
     public LocalSearchRuntime(String[] args) {
         super(args);
@@ -26,9 +23,25 @@ public class LocalSearchRuntime extends LocalSearchSimple {
         super(projectDir, methodFile);
     }
 
+    public static void main(String[] args) {
+        LocalSearchRuntime sampler = new LocalSearchRuntime(args);
+        sampler.sampleMethods();
+    }
+
     /*============== Implementation of abstract methods  ==============*/
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
-        return testPatch(className, tests, origPatch);
+        UnitTestResultSet results = testPatch(className, tests, origPatch);
+        if (!results.allTestsSuccessful()) {
+            Logger.error("Original patch does not pass all tests. Cannot continue without a green test suite.");
+            UnitTestResult unitTestResult = results.getResults().stream()
+                    .filter(uResult -> !uResult.getPassed())
+                    .findFirst().get();
+            Logger.error("UnitTest: " + unitTestResult.getTest() +
+                    "\n\tException: " + unitTestResult.getExceptionMessage() +
+                    "\n\tAssertion (E/A): " + unitTestResult.getAssertionExpectedValue() + " / " + unitTestResult.getAssertionActualValue());
+            throw new RuntimeException("Failing test suite exception.");
+        }
+        return results;
     }
 
     // Calculate fitness

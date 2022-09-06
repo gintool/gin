@@ -275,7 +275,7 @@ public class ExternalTestRunner extends TestRunner {
                     int testIndex = index % this.getTests().size();
                     int rep = index / this.getTests().size();
                     UnitTest test = this.getTests().get(testIndex);
-                    Logger.info("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep + 1 + "/" + reps + ", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
+                    Logger.debug("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep + 1 + "/" + reps + ", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
 
                     long timeoutMS = test.getTimeoutMS();
                     String testName = test.toString();
@@ -287,7 +287,7 @@ public class ExternalTestRunner extends TestRunner {
                     String resp;
                     try {
                         resp = client.sendMessage(message);
-                        Logger.info("RESP: " + resp);
+                        Logger.debug("RESP: " + resp);
                     } catch (SocketTimeoutException e) {
                         resp = null;
                     }

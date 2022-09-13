@@ -67,7 +67,7 @@ public class Compiler implements Serializable {
         try(StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)){
             List<String> options = new ArrayList<>();
             options.add("-cp");
-            options.add(classPath + File.separator + System.getProperty("java.class.path"));
+            options.add(classPath + File.pathSeparator + System.getProperty("java.class.path"));
 
             Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(source));
 

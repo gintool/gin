@@ -10,9 +10,17 @@ import java.net.Socket;
 import java.text.ParseException;
 
 import com.sampullara.cli.Args;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.LauncherSession;
+import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
 import org.pmw.tinylog.Logger;
+
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
 /** 
  * Runs a given test request. Uses sockets to communicate with ExternalTestRunner.
@@ -110,8 +118,11 @@ public class TestHarness implements Serializable {
 
         Class<?> clazz = null;
 
+        LauncherDiscoveryRequest request = null;
+
         try {
             clazz = Class.forName(className);
+            request = buildRequest(test);
 
         } catch (ClassNotFoundException e) {
             Logger.error("Unable to find test class file: " + className);
@@ -121,11 +132,6 @@ public class TestHarness implements Serializable {
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
-        }
-
-        try {
-            JUnitBridge.annotateTestWithTimeout(clazz, methodName, timeout);
-
         } catch (NoSuchMethodException e) {
             Logger.error(e.getMessage());
             Logger.error("Note that parametirised JUnit tetsts are not allowed in Gin.");
@@ -154,14 +160,10 @@ public class TestHarness implements Serializable {
             return result;
         }
 
-        Request request = Request.method(clazz, methodName);
-
-        JUnitCore jUnitCore = new JUnitCore();
-
-        jUnitCore.addListener(new TestRunListener(result));
-
-        try {
-            jUnitCore.run(request);
+        try (LauncherSession session = LauncherFactory.openSession()) {
+            Launcher launcher = session.getLauncher();
+            TestPlan testPlan = launcher.discover(request);
+            launcher.execute(testPlan, new TestRunListener(result));
 
         } catch (Exception e) {
             Logger.error("Error running junit: " + e);
@@ -173,6 +175,18 @@ public class TestHarness implements Serializable {
 
         return result;
 
+    }
+
+    public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
+        String testClassname = test.getFullClassName();
+        String methodName = test.getMethodName();
+
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectMethod(testClassname, methodName))
+                .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
+                .build();
+
+        return request;
     }
 
 }    

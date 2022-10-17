@@ -1,18 +1,18 @@
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class ErrorTest {
 
     Error error;
     List<String> nullPointer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         error = new Error();
         nullPointer = null;
@@ -24,7 +24,7 @@ public class ErrorTest {
     }
 
     // Timeout is in ms
-    @Test(timeout=1500)
+    @Test
     public void testTimeout() throws Exception {
         error.thisMethodTakesASecond();
     }
@@ -36,7 +36,7 @@ public class ErrorTest {
     }
 
     // Test will be ignored, but considered passed
-    @Ignore
+    @Disabled
     @Test
     public void testIgnoredTest() throws Exception {
         error.returnTen(5);

@@ -1,4 +1,4 @@
-package gin.util;
+package gin.algorithm.nsgaii;
 
 import gin.Patch;
 

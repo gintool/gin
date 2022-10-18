@@ -1,4 +1,4 @@
-package gin.util;
+package gin.algorithm.nsgaii;
 
 import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
@@ -8,6 +8,7 @@ import gin.SourceFile;
 import gin.edit.Edit;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
+import gin.util.Sampler;
 import org.apache.commons.rng.simple.JDKRandomBridge;
 import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
@@ -17,7 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-public class NSGAII extends  Sampler {
+public class NSGAII extends Sampler {
 
     private static final long serialVersionUID = 8547883760400442899L;
 

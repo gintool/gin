@@ -194,19 +194,19 @@ public abstract class Sampler implements Serializable {
             this.methodID = methodID;
         }
 
-        protected File getFileSource() {
+        public File getFileSource() {
             return source;
         }
 
-        protected String getClassName() {
+        public String getClassName() {
             return className;
         }
 
-        protected String getMethodName() {
+        public String getMethodName() {
             return methodName;
         }
 
-        protected List<UnitTest> getGinTests() {
+        public List<UnitTest> getGinTests() {
             return tests;
         }
 

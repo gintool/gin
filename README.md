@@ -109,6 +109,7 @@ gin.LocalSearch.search() INFO: Step: 3, Patch: | gin.edit.line.DeleteLine exampl
 
 The output tells you for each step whether a patch was invalid (e.g. because it could not be applied) or whether the patched code failed to compile or it failed to pass all provided tests. If none of these conditions hold, then the runtime is shown, and it is highlighted if the patch has resulted in the fastest successful passing of all tests seen so far. At the end, a brief summary is shown.
 
+
 ## Logging
 
 We use tinylog for logging, allowing for several logging variants, for example:
@@ -214,6 +215,13 @@ Assuming EvoSuite tests were generated and original tests not removed:
 java -cp build/gin.jar:testgeneration/evosuite-1.0.6.jar gin.util.RandomSampler -d examples/maven-simple -p my-app -m examples/maven-simple/example_profiler_results.csv -mavenHome <path_to_mavenHome>
 ```
 
+Gin also offers an implementation of the multi-objective algorithm NSGA-II for improving the execution time and memory consumption of software.
+You can run it similarly to the other samplers shown above, for the example triangle project the following command should be called:
+
+```
+java -cp build/gin.jar gin.algorithm.nsgaii.NSGAII -d examples/triangle/ -c examples/triangle/ -m examples/triangle/method_file.csv
+```
+
 ## Test Runners
 
 The tests can be run internally (through InternalTestRunner), or in a separate jvm (through ExternalTestRunner). Moreover, each test case can be run in a separate jvm as well. This covers the situation where a target project has multiple threads that mean tests cannot be run safely in parallel. We added these options to Samplers, for example:
@@ -259,6 +267,7 @@ Run RandomSampler to test the effect of different edits in the space. Here, we l
 ```
 projectnameforgin='spatial4j'; editType='STATEMENT'; patchSize='1'; patchNumber='100'; java -Dtinylog.level=trace -cp ../../build/gin.jar gin.util.RandomSampler -j -p $projectnameforgin -d . -m $projectnameforgin.Profiler_output.csv -o $projectnameforgin.RandomSampler_${editType}_patchSize${patchSize}_patchNumber${patchNumber}_output.csv -mavenHome /usr/share/maven -editType $editType -patchNumber $patchNumber -patchSize $patchSize
 ```
+
 
 ## Contributing
 

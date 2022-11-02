@@ -112,6 +112,16 @@ public class PatchTesterNew extends Sampler {
                 double fitness = (double) (results.totalExecutionTime() / 1000000);
                 if (patch.toString().trim().equals("|")) {
                     original = fitness;
+                    if (!results.allTestsSuccessful()) {
+                        Logger.error("Original patch does not pass all tests. Cannot continue without a green test suite.");
+                        UnitTestResult unitTestResult = results.getResults().stream()
+                                .filter(uResult -> !uResult.getPassed())
+                                .findFirst().get();
+                        Logger.error("UnitTest: " + unitTestResult.getTest() +
+                                "\n\tException: " + unitTestResult.getExceptionMessage() +
+                                "\n\tAssertion (E/A): " + unitTestResult.getAssertionExpectedValue() + " / " + unitTestResult.getAssertionActualValue());
+                        throw new RuntimeException("Failing test suite exception.");
+                    }
                 }
 
                 writePatch(results, method.getMethodName(), method.getMethodID().toString(), fitness, original - fitness);

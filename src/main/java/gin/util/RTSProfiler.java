@@ -37,8 +37,9 @@ public class RTSProfiler implements Serializable {
     private static final long serialVersionUID = 6763826827126978230L;
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String HPROF_DIR = "hprof";
+    private static final String PROF_DIR = "profiler_out";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
+    private static String JFR_ARG = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -70,10 +71,14 @@ public class RTSProfiler implements Serializable {
     protected String rts = "ekstazi";
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
-    @Argument(alias = "hprof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private String hprofFileName = "java.hprof.txt";
+    @Argument(alias = "prof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
+    private String profFileName = "java.prof.txt";
+
+    @Argument(alias = "prof",description= "Profiler to use: jfr or hprof. Default is jfr")
+    protected String profilerChoice = "jfr";
+
     // Instance Members
-    private File hprofDir;
+    private File profDir;
     protected Project project;
 
     public RTSProfiler(String[] args) {
@@ -104,11 +109,13 @@ public class RTSProfiler implements Serializable {
         }
 
         // Adds the interval provided by the user
-        this.hprofDir = new File(projectDir, HPROF_DIR);
-        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        this.profDir = new File(projectDir, PROF_DIR);
+        if (this.profilerChoice.equals("hprof")) {
+            HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
     }
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
         StopWatch watch = StopWatch.createStarted();
         RTSProfiler profiler = new RTSProfiler(args);
         profiler.profile();
@@ -117,11 +124,11 @@ public class RTSProfiler implements Serializable {
     }
 
     // Main Profile Method
-    public void profile() {
+    public void profile() throws IOException {
         Logger.info("Profiling project: " + this.project);
         //Initialise
         Properties properties = new Properties();
-        File hprofFile = FileUtils.getFile(hprofDir, hprofFileName);
+        File profFile = FileUtils.getFile(profDir, profFileName);
         // Create RTS strategy if any
         Logger.info("Initialised: " + rts);
         RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, this.projectDir.getAbsolutePath());
@@ -130,15 +137,20 @@ public class RTSProfiler implements Serializable {
             // Try to create the folder in which the profiling results of hprof
             // will be stored
             try {
-                FileUtils.forceMkdir(hprofDir);
+                FileUtils.forceMkdir(profDir);
             } catch (IOException ex) {
-                Logger.error(ex, "Unable to create hprof folder " + hprofDir.getAbsolutePath());
+                Logger.error(ex, "Unable to create profiling folder " + profDir.getAbsolutePath());
                 System.exit(-1);
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            argLine.append(HPROF_ARG)
-                    .append(FilenameUtils.normalize(hprofFile.getAbsolutePath()));
+            if (this.profilerChoice.equals("hprof")) {
+                argLine.append(HPROF_ARG)
+                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
+            } else {
+                argLine.append(JFR_ARG)
+                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
+            }
 
             // Inject the RTS agent (if any)
             String rtsArg = rtsStrategy.getArgumentLine();
@@ -179,7 +191,7 @@ public class RTSProfiler implements Serializable {
             System.exit(-1);
         }
         // Get profiled taregt methods
-        List<HotMethod> hotMethods = getHotMethods(hprofFile);
+        List<HotMethod> hotMethods = getHotMethods(profFile);
         // Link the test cases to the methods based on the RTS technique
         rtsStrategy.linkTestsToMethods(hotMethods, allTestCases);
         // Order by hotness
@@ -188,14 +200,24 @@ public class RTSProfiler implements Serializable {
         writeResults(hotMethods);
     }
 
-    protected List<HotMethod> getHotMethods(File hprofFile) {
+    protected List<HotMethod> getHotMethods(File profFile) throws IOException {
         List<HotMethod> hotMethods = new ArrayList<>();
-        if (hprofFile != null && hprofFile.exists()) {
-            Map<String, Integer> methodCounts = Trace.fromFile(this.project, new UnitTest("", ""), hprofFile).methodCounts;
-            hotMethods = methodCounts.entrySet()
+        if (profFile != null && profFile.exists()) {
+            if (this.profilerChoice.equals("hprof")) {
+                Map<String, Integer> methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
+
+                hotMethods = methodCounts.entrySet()
                     .stream()
                     .map(traceToHotMethod())
                     .collect(Collectors.toList());
+            } else {
+                Map<String, Integer> methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
+
+                hotMethods = methodCounts.entrySet()
+                    .stream()
+                    .map(traceToHotMethod())
+                    .collect(Collectors.toList());
+            } 
         }
         return hotMethods;
     }

@@ -10,6 +10,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import jdk.jfr.Event;
+import jdk.jfr.EventType;
+import jdk.jfr.Label;
+import jdk.jfr.Name;
+import jdk.jfr.Recording;
+import jdk.jfr.consumer.RecordingFile;
+import jdk.jfr.consumer.RecordedFrame;
+import jdk.jfr.consumer.*;
+import jdk.jfr.consumer.RecordedObject;
+
 /**
  * Used by gin.util.Profiler.
  */
@@ -57,7 +69,7 @@ public class Trace implements Serializable {
     }
 
     // Parse a trace from a file
-    public static Trace fromFile(Project project, UnitTest test, File hprofFile) {
+    public static Trace fromHPROFFile(Project project, UnitTest test, File hprofFile) {
 
         String traceText = "";
 
@@ -75,7 +87,19 @@ public class Trace implements Serializable {
         Map<Integer, TracePoint> tracePoints = parseTracePoints(traceText);
 
         // Samples from the table at the end of the file. Use the tracePoints map to add line number.
-        Map<String, Integer> methodCounts = parseMethodCounts(traceText, tracePoints);
+        Map<String, Integer> methodCounts = parseHPROFMethodCounts(traceText, tracePoints);
+
+        // Finally: clean up methodCounts, to exclude methods not in the project etc.
+        Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
+
+        return new Trace(test, cleanedCounts);
+
+    }
+
+    public static Trace fromJFRFile(Project project, UnitTest test, File JFRFile) throws IOException {
+
+        // Samples from the table at the end of the file. Use the tracePoints map to add line number.
+        Map<String, Integer> methodCounts = parseJFRMethodCounts(JFRFile, project);
 
         // Finally: clean up methodCounts, to exclude methods not in the project etc.
         Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
@@ -146,7 +170,7 @@ public class Trace implements Serializable {
      * @param tracePoints
      * @return
      */
-    private static Map<String, Integer> parseMethodCounts(String hprof, Map<Integer, TracePoint> tracePoints) {
+    private static Map<String, Integer> parseHPROFMethodCounts(String hprof, Map<Integer, TracePoint> tracePoints) {
 
         Map<String, Integer> samples = new HashMap<>();
 
@@ -192,6 +216,54 @@ public class Trace implements Serializable {
 
     }
 
+    private static Map<String, Integer> parseJFRMethodCounts(File jfrF, Project project) throws IOException {
+
+        Map<String, Integer> samples = new HashMap<>();
+
+        Set<String> mainClasses = project.allMainClasses();
+
+        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
+
+        //read all events from the JFR profiling file
+        while (jfr.hasMoreEvents()) {
+            RecordedEvent event = jfr.readEvent();
+            String check = event.getEventType().getName();
+
+            //if this event is an exectution sample, it will contain a call stack snapshot
+            if (check.equals("com.oracle.jdk.ExecutionSample")) {
+                RecordedStackTrace s = event.getStackTrace();
+
+                if (s!= null) {
+
+                    //traverse the call stack, if a frame is part of the main program,
+                    //return it
+                    for (int i = 0;i<s.getFrames().size();i++) {
+
+                        RecordedFrame topFrame = s.getFrames().get(i);
+                        RecordedMethod method = topFrame.getMethod();
+                        
+
+                        String methodName = method.getType().getName();
+                        String className = StringUtils.substringBeforeLast(methodName, ".");
+
+                        if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                            methodName+= "." + method.getName() + ":" + topFrame.getLineNumber();
+                            samples.merge(methodName,1,Integer::sum);
+                            break;
+                        }
+                    }
+
+                    
+                }
+            }
+        }
+
+        return samples;
+
+        }
+
+    }
+
     // Run through method counts and cleanup
     private static Map<String, Integer> cleanMethodCounts(Project project, Map<String, Integer> methodCounts) {
 
@@ -233,7 +305,7 @@ public class Trace implements Serializable {
                         Logger.warn("This is likely because the method relates to an enum type.");
                     }
                 } else {
-                    cleanTrace.put(fullMethodName, entry.getValue());
+                    cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
                 }
 
             } else {

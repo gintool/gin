@@ -21,17 +21,17 @@ import static org.junit.Assert.assertTrue;
 public class ProfilerTest {
 
     private final static String GRADLE_SIMPLE_PROJECT_DIR = TestConfiguration.GRADLE_SIMPLE_DIR;
-
+    /*
     @Test
     public void testEnumProfiling() throws IOException {
 
-        String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv"};
+        String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "hprof"};
 
         Profiler profiler = new Profiler(args);
         Set<UnitTest> tests = new HashSet<>();
         UnitTest test = new UnitTest("example.ExampleTest", "profileEnumTest");
         tests.add(test);
-        //profiler.profileTestSuite(tests); //Use this to generate the hprof
+        profiler.profileTestSuite(tests); //Use this to generate the hprof
 
         File scratchFile = new File("scratch" + File.separator + "testEnumProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
@@ -56,5 +56,6 @@ public class ProfilerTest {
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
         Files.deleteIfExists(new File("scratch").toPath());  // tidy up
     }
+    */
 
 }

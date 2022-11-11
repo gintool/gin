@@ -8,6 +8,10 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
 
@@ -15,7 +19,7 @@ import gin.test.UnitTest;
 import org.pmw.tinylog.Logger;
 
 /**
- * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof.
+ * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof or jfr.
  *
  * Run directly from the commandline.
  *
@@ -62,10 +66,18 @@ public class Profiler implements Serializable {
     @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
 
+    @Argument(alias = "prof",description= "Profiler to use: JFR or HPROF. Default is JFR")
+    protected String profilerChoice = "jfr";
+
+    @Argument(alias = "save",description= "Save individual profiling files, default is delete, set command as 's' to save")
+    protected String saveChoice = "d";
+
     // Constants
 
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String WORKING_DIR = "hprof";
+    private static final String WORKING_DIR = "profiler_out";
+   
+    private static String JFR_ARG = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
 
     // Instance Members
@@ -90,7 +102,9 @@ public class Profiler implements Serializable {
             project.setMavenHome(this.mavenHome);
         }
         // Adds the interval provided by the user
-        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        if (this.profilerChoice.equals("hprof")) {
+            HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
     }
 
     // Main Profile Method
@@ -183,7 +197,13 @@ public class Profiler implements Serializable {
 
             for (int rep=1; rep <= this.reps; rep++) {
 
-                String args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
+                String args;
+
+                if (this.profilerChoice.equals("hprof")) {
+                    args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
+                } else {
+                    args = JFR_ARG + jfrFile(test,rep).getAbsolutePath();
+                }
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
                                                         test, testCount, tests.size(), rep, this.reps);
@@ -243,9 +263,34 @@ public class Profiler implements Serializable {
 
                 Logger.info("Parsing trace for test: " + test);
 
-                File traceFile = hprofFile(test, rep);
-                Trace trace = Trace.fromFile(this.project, test, traceFile);
-                testTraces.add(trace);
+                File traceFile;
+                Trace trace;
+
+                if (this.profilerChoice.equals("hprof")) {
+                    traceFile = hprofFile(test, rep);
+                    trace = Trace.fromHPROFFile(this.project, test, traceFile);
+                    testTraces.add(trace);
+                    if (saveChoice.equals("d")) {
+                        try {
+                            Files.deleteIfExists(traceFile.toPath());
+                        } catch (IOException e) {
+                            Logger.warn("Failed to delete HPROF file with IOException: " + e);
+                        }
+                    } 
+                } else {
+                    traceFile = jfrFile(test, rep);
+                    try {
+                        trace = Trace.fromJFRFile(this.project, test, traceFile);
+                        testTraces.add(trace);
+                        if (saveChoice.equals("d")) {
+                            Files.deleteIfExists(traceFile.toPath());
+                        } 
+                    } catch (IOException e) {
+                        Logger.warn("Failed to read JFR file due to IOException: " + e);
+                    }
+                    
+
+                }
 
             }
 
@@ -363,6 +408,17 @@ public class Profiler implements Serializable {
             return Integer.compare(this.count, o.count);
         }
 
+    }
+
+    private File jfrFile(UnitTest test, int rep) {
+
+        String testName = test.getTestName();
+        String cleanTest = testName.replace(" ", "_");
+        String filename = cleanTest + "_" + rep + ".jfr";
+        String filenameNoBrackets = filename.replace("()", "");
+        File jfr = new File(workingDir, filenameNoBrackets);
+        return jfr;
+        
     }
 
     private File hprofFile(UnitTest test, int rep) {

@@ -1,0 +1,149 @@
+JAVA PROFILE 1.0.1, created Fri Nov 11 11:18:58 2022
+
+Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Oracle nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=50000181, id = 200001, name="main", group="main")
+THREAD START (obj=50000181, id = 200004, name="surefire-forkedjvm-command-thread", group="main")
+THREAD START (obj=50000181, id = 200005, name="surefire-forkedjvm-ping-30s", group="main")
+THREAD START (obj=50000181, id = 200006, name="process reaper", group="system")
+THREAD START (obj=50000181, id = 200007, name="surefire-forkedjvm-last-ditch-daemon-shutdown-thread-30s", group="main")
+THREAD END (id = 200005)
+THREAD END (id = 200001)
+TRACE 300102:
+	java.io.FileInputStream.readBytes(FileInputStream.java:Unknown line)
+TRACE 300078:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+TRACE 300341:
+	java.lang.UNIXProcess.waitForProcessExit(UNIXProcess.java:Unknown line)
+TRACE 300217:
+	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
+TRACE 300063:
+	sun.nio.fs.UnixFileSystem.<init>(UnixFileSystem.java:67)
+TRACE 300101:
+	java.util.jar.JarFile.getEntry(JarFile.java:251)
+TRACE 300154:
+	java.lang.ProcessImpl.start(ProcessImpl.java:130)
+TRACE 300155:
+	java.util.zip.Inflater.reset(Inflater.java:Unknown line)
+TRACE 300209:
+	jdk.internal.org.objectweb.asm.ByteVector.<init>(ByteVector.java:95)
+TRACE 300218:
+	java.lang.Class.getEnclosingMethod0(Class.java:Unknown line)
+TRACE 300264:
+	sun.misc.ProxyGenerator.addProxyMethod(ProxyGenerator.java:618)
+TRACE 300265:
+	jdk.internal.org.objectweb.asm.Type.getArgumentTypes(Type.java:369)
+TRACE 300339:
+	java.io.ObjectStreamClass.lookup(ObjectStreamClass.java:347)
+TRACE 300340:
+	sun.util.locale.provider.LocaleProviderAdapter.<clinit>(LocaleProviderAdapter.java:104)
+TRACE 300434:
+	java.net.URLStreamHandler.parseURL(URLStreamHandler.java:130)
+TRACE 300443:
+	java.lang.Thread.currentThread(Thread.java:Unknown line)
+CPU SAMPLES BEGIN (total = 516) Fri Nov 11 11:19:03 2022
+rank   self  accum   count trace method
+   1 95.93% 95.93%     495 300102 java.io.FileInputStream.readBytes
+   2  0.78% 96.71%       4 300078 java.lang.ClassLoader.defineClass1
+   3  0.58% 97.29%       3 300341 java.lang.UNIXProcess.waitForProcessExit
+   4  0.39% 97.67%       2 300217 java.util.zip.Inflater.inflateBytes
+   5  0.19% 97.87%       1 300063 sun.nio.fs.UnixFileSystem.<init>
+   6  0.19% 98.06%       1 300101 java.util.jar.JarFile.getEntry
+   7  0.19% 98.26%       1 300154 java.lang.ProcessImpl.start
+   8  0.19% 98.45%       1 300155 java.util.zip.Inflater.reset
+   9  0.19% 98.64%       1 300209 jdk.internal.org.objectweb.asm.ByteVector.<init>
+  10  0.19% 98.84%       1 300218 java.lang.Class.getEnclosingMethod0
+  11  0.19% 99.03%       1 300264 sun.misc.ProxyGenerator.addProxyMethod
+  12  0.19% 99.22%       1 300265 jdk.internal.org.objectweb.asm.Type.getArgumentTypes
+  13  0.19% 99.42%       1 300339 java.io.ObjectStreamClass.lookup
+  14  0.19% 99.61%       1 300340 sun.util.locale.provider.LocaleProviderAdapter.<clinit>
+  15  0.19% 99.81%       1 300434 java.net.URLStreamHandler.parseURL
+  16  0.19% 100.00%       1 300443 java.lang.Thread.currentThread
+CPU SAMPLES END

@@ -222,43 +222,54 @@ public class Trace implements Serializable {
 
         Set<String> mainClasses = project.allMainClasses();
 
-        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
+        //From main classes, get main base class,
+        //From: Example.exampleTest we get Example
+        //Therefore, the following process will
+        //find functions relating to the main program
+        //being searched for
+        Set<String> mainBase = new HashSet<>();
 
-        //read all events from the JFR profiling file
-        while (jfr.hasMoreEvents()) {
-            RecordedEvent event = jfr.readEvent();
-            String check = event.getEventType().getName();
-
-            //if this event is an exectution sample, it will contain a call stack snapshot
-            if (check.equals("com.oracle.jdk.ExecutionSample")) {
-                RecordedStackTrace s = event.getStackTrace();
-
-                if (s!= null) {
-
-                    //traverse the call stack, if a frame is part of the main program,
-                    //return it
-                    for (int i = 0;i<s.getFrames().size();i++) {
-
-                        RecordedFrame topFrame = s.getFrames().get(i);
-                        RecordedMethod method = topFrame.getMethod();
-                        
-
-                        String methodName = method.getType().getName();
-                        String className = StringUtils.substringBeforeLast(methodName, ".");
-
-                        if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                            methodName+= "." + method.getName() + ":" + topFrame.getLineNumber();
-                            samples.merge(methodName,1,Integer::sum);
-                            break;
-                        }
-                    }
-
-                    
-                }
-            }
+        Iterator<String> mapIt = mainClasses.iterator();
+        while(mapIt.hasNext()) {
+            mainBase.add(StringUtils.substringBeforeLast(mapIt.next(),"."));
         }
 
-        return samples;
+        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
+
+            //read all events from the JFR profiling file
+            while (jfr.hasMoreEvents()) {
+                RecordedEvent event = jfr.readEvent();
+                String check = event.getEventType().getName();
+
+                //if this event is an exectution sample, it will contain a call stack snapshot
+                if (check.equals("com.oracle.jdk.ExecutionSample")) {
+                    RecordedStackTrace s = event.getStackTrace();
+
+                    if (s!= null) {
+
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
+                        for (int i = 0;i<s.getFrames().size();i++) {
+
+                            RecordedFrame topFrame = s.getFrames().get(i);
+                            RecordedMethod method = topFrame.getMethod();
+
+                            String methodName = method.getType().getName();
+                            String className = StringUtils.substringBeforeLast(methodName, ".");
+
+                            if (mainClasses.contains(methodName) || mainClasses.contains(className) || mainBase.contains(className)) {
+                                methodName+= "." + method.getName() + ":" + topFrame.getLineNumber();
+                                samples.merge(methodName,1,Integer::sum);
+                                break;
+                            }
+                        }
+
+                        
+                    }
+                }
+            }
+            System.out.println(samples.size());
+            return samples;
 
         }
 

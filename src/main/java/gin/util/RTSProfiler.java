@@ -202,22 +202,18 @@ public class RTSProfiler implements Serializable {
 
     protected List<HotMethod> getHotMethods(File profFile) throws IOException {
         List<HotMethod> hotMethods = new ArrayList<>();
+        Map<String, Integer> methodCounts = new HashMap<>();
         if (profFile != null && profFile.exists()) {
             if (this.profilerChoice.equals("hprof")) {
-                Map<String, Integer> methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-
-                hotMethods = methodCounts.entrySet()
-                    .stream()
-                    .map(traceToHotMethod())
-                    .collect(Collectors.toList());
+                methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } else {
-                Map<String, Integer> methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-
-                hotMethods = methodCounts.entrySet()
-                    .stream()
-                    .map(traceToHotMethod())
-                    .collect(Collectors.toList());
+                methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } 
+
+            hotMethods = methodCounts.entrySet()
+                .stream()
+                .map(traceToHotMethod())
+                .collect(Collectors.toList());
         }
         return hotMethods;
     }

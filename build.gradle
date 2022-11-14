@@ -6,8 +6,8 @@ plugins {
 
 apply plugin: 'java'
 apply plugin: 'application'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 9
+targetCompatibility = 9
 
 mainClassName = "gin.LocalSearch"
 

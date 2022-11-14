@@ -54,6 +54,8 @@ public class RTSProfilerTest {
 
     @Test
     public void testMainWithSTARTS() throws IOException {
+        //only run this test if java version < 9
+        Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
         // not be executed

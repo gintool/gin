@@ -270,27 +270,26 @@ public class Profiler implements Serializable {
                     traceFile = hprofFile(test, rep);
                     trace = Trace.fromHPROFFile(this.project, test, traceFile);
                     testTraces.add(trace);
-                    if (saveChoice.equals("d")) {
-                        try {
-                            Files.deleteIfExists(traceFile.toPath());
-                        } catch (IOException e) {
-                            Logger.warn("Failed to delete HPROF file with IOException: " + e);
-                        }
-                    } 
                 } else {
                     traceFile = jfrFile(test, rep);
                     try {
                         trace = Trace.fromJFRFile(this.project, test, traceFile);
                         testTraces.add(trace);
-                        if (saveChoice.equals("d")) {
-                            Files.deleteIfExists(traceFile.toPath());
-                        } 
                     } catch (IOException e) {
                         Logger.warn("Failed to read JFR file due to IOException: " + e);
                     }
                     
 
                 }
+
+                //delete individual profiling files
+                if (saveChoice.equals("d")) {
+                    try {
+                        Files.deleteIfExists(traceFile.toPath());
+                    } catch (IOException e) {
+                        Logger.warn("Failed to delete profiling file with IOException: " + e);
+                    }
+                } 
 
             }
 

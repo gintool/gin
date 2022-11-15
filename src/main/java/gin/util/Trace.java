@@ -268,7 +268,6 @@ public class Trace implements Serializable {
                     }
                 }
             }
-            System.out.println(samples.size());
             return samples;
 
         }

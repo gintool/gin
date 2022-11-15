@@ -29,13 +29,13 @@ public class ExampleTest {
     //calculate primes to give JFR something to sample
     @Test
     public void jfrPrimeTest() {
-        int[] primes = new int[20000];
+        int[] primes = new int[30000];
 
         int index = 1;
         primes[0] = 2;
         int current = 3;
 
-        while (index<20000) {
+        while (index<30000) {
             boolean check = true;
             for (int i = 0;i<index;i++) {
                 if (current%primes[i]==0) {

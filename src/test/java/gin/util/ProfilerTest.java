@@ -9,6 +9,7 @@ import org.junit.Assume;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Level;
 import org.pmw.tinylog.writers.FileWriter;
+import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,13 +31,13 @@ public class ProfilerTest {
         //only run this test if Java version < 9
         Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
 
-        String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "hprof"};
+        String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "hprof", "-save", "s"};
 
         Profiler profiler = new Profiler(args);
         Set<UnitTest> tests = new HashSet<>();
         UnitTest test = new UnitTest("example.ExampleTest", "profileEnumTest");
         tests.add(test);
-        profiler.profileTestSuite(tests); //Use this to generate the profiling file
+        //profiler.profileTestSuite(tests); //Use this to generate the profiling file
 
         File scratchFile = new File("scratch" + File.separator + "testEnumProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
@@ -76,7 +77,7 @@ public class ProfilerTest {
         tests.add(test);
         profiler.profileTestSuite(tests); //Use this to generate the profiling file
 
-        File scratchFile = new File("scratch" + File.separator + "testEnumProfiling.txt");
+        File scratchFile = new File("scratch" + File.separator + "testJFRProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
         Configurator.defaultConfig()
                 .writer(fileWriter)
@@ -87,10 +88,8 @@ public class ProfilerTest {
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
-        String likelyTestMessage = "INFO: Excluding method because class is a test class";
         String primeFunc = "example.ExampleTest.jfrPrimeTest";
 
-        assertTrue(logMessages.contains(likelyTestMessage));
         assertTrue(logMessages.contains(primeFunc));
 
         fileWriter.close();

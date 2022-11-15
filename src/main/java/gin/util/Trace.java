@@ -220,19 +220,8 @@ public class Trace implements Serializable {
 
         Map<String, Integer> samples = new HashMap<>();
 
+        //use main classes to find methods in the main program
         Set<String> mainClasses = project.allMainClasses();
-
-        //From main classes, get main base class,
-        //From: Example.exampleTest we get Example
-        //Therefore, the following process will
-        //find functions relating to the main program
-        //being searched for
-        Set<String> mainBase = new HashSet<>();
-
-        Iterator<String> mapIt = mainClasses.iterator();
-        while(mapIt.hasNext()) {
-            mainBase.add(StringUtils.substringBeforeLast(mapIt.next(),"."));
-        }
 
         try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
 
@@ -257,7 +246,7 @@ public class Trace implements Serializable {
                             String methodName = method.getType().getName();
                             String className = StringUtils.substringBeforeLast(methodName, ".");
 
-                            if (mainClasses.contains(methodName) || mainClasses.contains(className) || mainBase.contains(className)) {
+                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
                                 methodName+= "." + method.getName() + ":" + topFrame.getLineNumber();
                                 samples.merge(methodName,1,Integer::sum);
                                 break;

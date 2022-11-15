@@ -88,8 +88,8 @@ public class ProfilerTest {
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
-        String primeFunc = "example.ExampleTest.jfrPrimeTest";
-
+        String primeFunc = "INFO: Parsing trace for test: example.ExampleTest.jfrPrimeTest []";
+        
         assertTrue(logMessages.contains(primeFunc));
 
         fileWriter.close();

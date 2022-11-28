@@ -102,7 +102,7 @@ public class Profiler implements Serializable {
             project.setMavenHome(this.mavenHome);
         }
         // Adds the interval provided by the user
-        if (this.profilerChoice.equals("hprof")) {
+        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
     }
@@ -199,7 +199,7 @@ public class Profiler implements Serializable {
 
                 String args;
 
-                if (this.profilerChoice.equals("hprof")) {
+                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
                     args = JFR_ARG + jfrFile(test,rep).getAbsolutePath();
@@ -266,7 +266,7 @@ public class Profiler implements Serializable {
                 File traceFile;
                 Trace trace;
 
-                if (this.profilerChoice.equals("hprof")) {
+                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                     traceFile = hprofFile(test, rep);
                     trace = Trace.fromHPROFFile(this.project, test, traceFile);
                     testTraces.add(trace);

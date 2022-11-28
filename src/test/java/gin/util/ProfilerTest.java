@@ -37,9 +37,9 @@ public class ProfilerTest {
         Set<UnitTest> tests = new HashSet<>();
         UnitTest test = new UnitTest("example.ExampleTest", "profileEnumTest");
         tests.add(test);
-        //profiler.profileTestSuite(tests); //Use this to generate the profiling file
+        profiler.profileTestSuite(tests); //Use this to generate the profiling file
 
-        File scratchFile = new File("scratch" + File.separator + "testEnumProfiling.txt");
+        File scratchFile = new File("scratchhprof" + File.separator + "testEnumProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
         Configurator.defaultConfig()
                 .writer(fileWriter)
@@ -60,7 +60,7 @@ public class ProfilerTest {
 
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
-        Files.deleteIfExists(new File("scratch").toPath());  // tidy up
+        Files.deleteIfExists(new File("scratchhprof").toPath());  // tidy up
     }
 
     @Test
@@ -77,7 +77,7 @@ public class ProfilerTest {
         tests.add(test);
         profiler.profileTestSuite(tests); //Use this to generate the profiling file
 
-        File scratchFile = new File("scratch" + File.separator + "testJFRProfiling.txt");
+        File scratchFile = new File("scratchjfr" + File.separator + "testJFRProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
         Configurator.defaultConfig()
                 .writer(fileWriter)
@@ -94,7 +94,7 @@ public class ProfilerTest {
 
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
-        Files.deleteIfExists(new File("scratch").toPath());  // tidy up
+        Files.deleteIfExists(new File("scratchjfr").toPath());  // tidy up
     }
 
 

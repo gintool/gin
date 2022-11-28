@@ -110,7 +110,7 @@ public class RTSProfiler implements Serializable {
 
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
-        if (this.profilerChoice.equals("hprof")) {
+        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
     }
@@ -144,7 +144,7 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            if (this.profilerChoice.equals("hprof")) {
+            if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                 argLine.append(HPROF_ARG)
                     .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
             } else {
@@ -204,7 +204,7 @@ public class RTSProfiler implements Serializable {
         List<HotMethod> hotMethods = new ArrayList<>();
         Map<String, Integer> methodCounts = new HashMap<>();
         if (profFile != null && profFile.exists()) {
-            if (this.profilerChoice.equals("hprof")) {
+            if (this.profilerChoice.toUpperCase().equals("hprof")) {
                 methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } else {
                 methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;

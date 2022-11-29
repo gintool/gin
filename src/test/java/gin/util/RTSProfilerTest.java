@@ -8,6 +8,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +27,7 @@ public class RTSProfilerTest {
     private static final String OUTPUT_CSV_PATH_GRADLE = PROJECT_PATH_GRADLE + File.separator + "output_file.csv";
 
     @Test
-    public void testMainWithEkstaziMaven() {
+    public void testMainWithEkstaziMaven() throws IOException {
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
         // not be executed
@@ -52,7 +53,9 @@ public class RTSProfilerTest {
 //    }
 
     @Test
-    public void testMainWithSTARTS() {
+    public void testMainWithSTARTS() throws IOException {
+        //only run this test if java version < 9
+        Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
         // not be executed

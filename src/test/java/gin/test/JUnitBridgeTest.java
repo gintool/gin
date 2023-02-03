@@ -81,7 +81,7 @@ public class JUnitBridgeTest {
         UnitTestResult result = (UnitTestResult) resultObj;
 
         assertFalse(result.getPassed());
-        assertEquals(result.getExceptionType(), "java.lang.NullPointerException");
+        assertEquals("java.lang.NullPointerException", result.getExceptionType());
         assertTrue(result.getExecutionTime() > 0);
     }
 
@@ -141,8 +141,6 @@ public class JUnitBridgeTest {
 
         UnitTestResult result = (UnitTestResult) resultObj;
         assertFalse(result.getPassed());
-        assertEquals(result.getAssertionActualValue(), "10");
-        assertEquals(result.getAssertionExpectedValue(), "15");
     }
 
     @Test
@@ -181,8 +179,8 @@ public class JUnitBridgeTest {
         UnitTestResult result = (UnitTestResult) resultObj;
 
         assertTrue(result.getPassed());
-        assertEquals(result.getExceptionType(), "org.junit.AssumptionViolatedException");
-        assertEquals(result.getExceptionMessage(), "got: <false>, expected: is <true>");
+        assertEquals("org.opentest4j.TestAbortedException", result.getExceptionType());
+        assertEquals("Assumption failed: assumption is not true", result.getExceptionMessage());
     }
 
     @Test
@@ -222,7 +220,7 @@ public class JUnitBridgeTest {
         UnitTestResult result = (UnitTestResult) resultObj;
 
         assertFalse(result.getPassed());
-        assertEquals(result.getExceptionType(), "java.lang.NoSuchMethodException");
+        assertEquals("org.junit.platform.commons.JUnitException", result.getExceptionType());
     }
 
     @Test

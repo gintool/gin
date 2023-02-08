@@ -49,11 +49,8 @@ public class ProjectTest {
         // Source directories
         Set<File> expectedMainSourceDirs = new HashSet<>();
         expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "main" + File.separator + "java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
         expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "main" + File.separator + "java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
         expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "main" + File.separator + "java").getAbsoluteFile());
-        expectedMainSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
         Set<File> actualMainSourceDirs = new HashSet<>(project.getMainSourceDirs());
         assertEquals(expectedMainSourceDirs, actualMainSourceDirs);
 
@@ -62,11 +59,24 @@ public class ProjectTest {
         expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "test" + File.separator + "java").getAbsoluteFile());
         expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "test" + File.separator + "java").getAbsoluteFile());
         expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "test" + File.separator + "java").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
-        expectedTestSourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
         Set<File> actualTestSourceDirs = new HashSet<>(project.getTestSourceDirs());
         assertEquals(expectedTestSourceDirs, actualTestSourceDirs);
+
+        // Resource directories
+        Set<File> expectedMainResourceDirs = new HashSet<>();
+        expectedMainResourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
+        expectedMainResourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
+        expectedMainResourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "main" + File.separator + "resources").getAbsoluteFile());
+        Set<File> actualMainResourceDirs = new HashSet<>(project.getMainResourceDirs());
+        assertEquals(expectedMainResourceDirs, actualMainResourceDirs);
+
+        // Test resource directories
+        Set<File> expectedTestResourceDirs = new HashSet<>();
+        expectedTestResourceDirs.add(new File(GRADLE_MULTI_DIR, "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
+        expectedTestResourceDirs.add(new File(GRADLE_MULTI_DIR, "module1" + File.separator + "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
+        expectedTestResourceDirs.add(new File(GRADLE_MULTI_DIR, "module2" + File.separator + "src" + File.separator + "test" + File.separator + "resources").getAbsoluteFile());
+        Set<File> actualTestResourceDirs = new HashSet<>(project.getTestResourceDirs());
+        assertEquals(expectedTestResourceDirs, actualTestResourceDirs);
 
         // Main class dirs
         Set<File> expectedMainClassDirs = new HashSet<>();

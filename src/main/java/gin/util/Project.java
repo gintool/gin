@@ -52,6 +52,8 @@ public class Project implements Serializable {
     private List<File> moduleDirs = new LinkedList<>();
     private List<File> mainSourceDirs = new LinkedList<>();
     private List<File> testSourceDirs = new LinkedList<>();
+    private List<File> mainResourceDirs = new LinkedList<>();
+    private List<File> testResourceDirs = new LinkedList<>();
     private List<File> mainClassDirs = new LinkedList<>();
     private List<File> testClassDirs = new LinkedList<>();
 
@@ -122,6 +124,14 @@ public class Project implements Serializable {
     public List<File> getTestSourceDirs() {
         return testSourceDirs;
     }
+    
+    public List<File> getMainResourceDirs() {
+		return mainResourceDirs;
+	}
+    
+    public List<File> getTestResourceDirs() {
+		return testResourceDirs;
+	}
 
     public List<File> getMainClassDirs() {
         return mainClassDirs;
@@ -186,6 +196,13 @@ public class Project implements Serializable {
         List<File> allSourceDirs = new LinkedList<>(mainSourceDirs);
         allSourceDirs.addAll(testSourceDirs);
         return allSourceDirs;
+    }
+
+    // Return a list of all resource directories for project
+    public List<File> allResourceDirs() {
+        List<File> allResourceDirs = new LinkedList<>(mainResourceDirs);
+        allResourceDirs.addAll(testResourceDirs);
+        return allResourceDirs;
     }
 
     // Module directories, including at the top level
@@ -287,8 +304,16 @@ public class Project implements Serializable {
                     this.mainSourceDirs.add(dir.getDirectory());
                 }
 
+                for (IdeaSourceDirectory dir : root.getResourceDirectories()) {
+                    this.mainResourceDirs.add(dir.getDirectory());
+                }
+
                 for (IdeaSourceDirectory dir : root.getTestDirectories()) {
                     this.testSourceDirs.add(dir.getDirectory());
+                }
+
+                for (IdeaSourceDirectory dir : root.getTestResourceDirectories()) {
+                    this.testResourceDirs.add(dir.getDirectory());
                 }
             }
 

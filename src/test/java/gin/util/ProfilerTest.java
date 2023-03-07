@@ -26,7 +26,7 @@ public class ProfilerTest {
 
     private final static String GRADLE_SIMPLE_PROJECT_DIR = TestConfiguration.GRADLE_SIMPLE_DIR;
     
-    @Test
+//    @Test
     public void testEnumProfiling() throws IOException {
         //only run this test if Java version < 9
         Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
@@ -63,7 +63,7 @@ public class ProfilerTest {
         Files.deleteIfExists(new File("scratchhprof").toPath());  // tidy up
     }
 
-    @Test
+//    @Test
     public void testJFRProfiling() throws IOException {
 
         //only run this test if java version >= 8

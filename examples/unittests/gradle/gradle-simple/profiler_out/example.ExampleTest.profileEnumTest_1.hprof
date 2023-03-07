@@ -1,4 +1,4 @@
-JAVA PROFILE 1.0.1, created Tue Nov 29 07:25:39 2022
+JAVA PROFILE 1.0.1, created Fri Feb  3 17:13:55 2023
 
 Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
 
@@ -90,78 +90,111 @@ Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
 --------
 
 THREAD START (obj=50000228, id = 200001, name="main", group="main")
-THREAD START (obj=50000228, id = 200004, name="/0:0:0:0:0:0:0:1:44344 to /0:0:0:0:0:0:0:1:43669 workers", group="main")
-THREAD START (obj=50000228, id = 200005, name="/0:0:0:0:0:0:0:1:44344 to /0:0:0:0:0:0:0:1:43669 workers Thread 2", group="main")
-THREAD START (obj=50000228, id = 200006, name="/0:0:0:0:0:0:0:1:44344 to /0:0:0:0:0:0:0:1:43669 workers Thread 3", group="main")
+THREAD START (obj=50000228, id = 200004, name="/0:0:0:0:0:0:0:1:35358 to /0:0:0:0:0:0:0:1:38385 workers", group="main")
+THREAD START (obj=50000228, id = 200005, name="/0:0:0:0:0:0:0:1:35358 to /0:0:0:0:0:0:0:1:38385 workers Thread 2", group="main")
+THREAD START (obj=50000228, id = 200006, name="/0:0:0:0:0:0:0:1:35358 to /0:0:0:0:0:0:0:1:38385 workers Thread 3", group="main")
 THREAD END (id = 200005)
 THREAD END (id = 200006)
 THREAD END (id = 200004)
-THREAD START (obj=50000718, id = 200007, name="Thread-0", group="main")
+THREAD START (obj=50000716, id = 200007, name="Thread-0", group="main")
 THREAD END (id = 200007)
 THREAD END (id = 200001)
-TRACE 300352:
-	sun.nio.ch.EPollArrayWrapper.epollWait(EPollArrayWrapper.java:Unknown line)
-TRACE 300430:
-	example.ExampleTest.profileEnumTest(ExampleTest.java:23)
-TRACE 300433:
-	example.ExampleTest.jfrPrimeTest(ExampleTest.java:51)
-TRACE 300087:
-	java.util.zip.ZipFile.getEntry(ZipFile.java:Unknown line)
-TRACE 300043:
-	java.lang.System.nanoTime(System.java:Unknown line)
-TRACE 300019:
-	java.lang.String.replace(String.java:2082)
-TRACE 300032:
-	java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:68)
-TRACE 300056:
-	sun.misc.ProxyGenerator.<init>(ProxyGenerator.java:393)
-TRACE 300118:
-	sun.reflect.UnsafeFieldAccessorImpl.<init>(UnsafeFieldAccessorImpl.java:52)
-TRACE 300146:
-	java.lang.invoke.DirectMethodHandle.makePreparedLambdaForm(DirectMethodHandle.java:231)
-TRACE 300180:
-	java.lang.String.contains(String.java:2133)
-TRACE 300190:
-	jdk.internal.org.objectweb.asm.ClassWriter.visitField(ClassWriter.java:816)
-TRACE 300255:
-	sun.misc.FDBigInteger.<clinit>(FDBigInteger.java:67)
-TRACE 300306:
-	java.util.Collections.singleton(Collections.java:4669)
-TRACE 300308:
-	org.gradle.api.internal.tasks.testing.worker.TestWorker$TestFrameworkServiceRegistry.createActorFactory(TestWorker.java:160)
-TRACE 300309:
-	java.lang.Class.isPrimitive(Class.java:Unknown line)
-TRACE 300351:
-	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
 TRACE 300355:
-	java.util.zip.ZipFile.read(ZipFile.java:Unknown line)
-TRACE 300372:
-	java.lang.String.format(String.java:2940)
-TRACE 300431:
+	sun.nio.ch.EPollArrayWrapper.epollWait(EPollArrayWrapper.java:Unknown line)
+TRACE 300436:
+	example.ExampleTest.profileEnumTest(ExampleTest.java:23)
+TRACE 300439:
+	example.ExampleTest.jfrPrimeTest(ExampleTest.java:51)
+TRACE 300012:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+TRACE 300304:
+	java.lang.ClassLoader.loadClass(ClassLoader.java:430)
+TRACE 300032:
+	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
+TRACE 300111:
+	java.lang.Class.forName0(Class.java:Unknown line)
+TRACE 300437:
 	example.ExampleEnum.values(ExampleEnum.java:6)
+TRACE 300029:
+	java.lang.ref.ReferenceQueue.poll(ReferenceQueue.java:106)
+TRACE 300050:
+	java.lang.Object.getClass(Object.java:Unknown line)
+TRACE 300087:
+	org.gradle.internal.service.DefaultServiceRegistry.findProviderMethods(DefaultServiceRegistry.java:167)
+TRACE 300148:
+	java.lang.Object.hashCode(Object.java:Unknown line)
+TRACE 300175:
+	java.util.AbstractList.subList(AbstractList.java:484)
+TRACE 300181:
+	java.lang.invoke.MethodHandleNatives.resolve(MethodHandleNatives.java:Unknown line)
+TRACE 300190:
+	jdk.internal.org.objectweb.asm.MethodWriter.<init>(MethodWriter.java:507)
+TRACE 300215:
+	java.io.ObjectStreamClass.<init>(ObjectStreamClass.java:494)
+TRACE 300270:
+	java.lang.String.intern(String.java:Unknown line)
+TRACE 300278:
+	sun.reflect.ByteVectorImpl.trim(ByteVectorImpl.java:70)
+TRACE 300285:
+	java.nio.channels.spi.SelectorProvider$1.run(SelectorProvider.java:175)
+TRACE 300309:
+	org.gradle.internal.service.RelevantMethodsBuilder.<init>(RelevantMethodsBuilder.java:39)
+TRACE 300311:
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300335:
+	java.lang.Class.isPrimitive(Class.java:Unknown line)
+TRACE 300336:
+	sun.nio.ch.FileDispatcherImpl.write0(FileDispatcherImpl.java:Unknown line)
+TRACE 300337:
+	org.gradle.api.internal.tasks.testing.DefaultTestClassRunInfo.<init>(DefaultTestClassRunInfo.java:24)
+TRACE 300358:
+	java.io.File.<init>(File.java:375)
+TRACE 300369:
+	java.util.Collections.unmodifiableMap(Collections.java:1435)
+TRACE 300387:
+	sun.util.locale.provider.JRELocaleProviderAdapter.getDecimalFormatSymbolsProvider(JRELocaleProviderAdapter.java:193)
 TRACE 300432:
+	java.util.zip.ZipFile.getEntry(ZipFile.java:Unknown line)
+TRACE 300434:
+	java.lang.System.currentTimeMillis(System.java:Unknown line)
+TRACE 300435:
+	java.lang.Object.clone(Object.java:Unknown line)
+TRACE 300438:
 	example.ExampleTest.jfrPrimeTest(ExampleTest.java:40)
-CPU SAMPLES BEGIN (total = 526) Tue Nov 29 07:25:42 2022
+TRACE 300443:
+	org.gradle.internal.remote.internal.hub.ConnectionSet.maybeStop(ConnectionSet.java:69)
+CPU SAMPLES BEGIN (total = 669) Fri Feb  3 17:13:58 2023
 rank   self  accum   count trace method
-   1 48.48% 48.48%     255 300352 sun.nio.ch.EPollArrayWrapper.epollWait
-   2 36.69% 85.17%     193 300430 example.ExampleTest.profileEnumTest
-   3 10.65% 95.82%      56 300433 example.ExampleTest.jfrPrimeTest
-   4  0.76% 96.58%       4 300087 java.util.zip.ZipFile.getEntry
-   5  0.38% 96.96%       2 300043 java.lang.System.nanoTime
-   6  0.19% 97.15%       1 300019 java.lang.String.replace
-   7  0.19% 97.34%       1 300032 java.lang.AbstractStringBuilder.<init>
-   8  0.19% 97.53%       1 300056 sun.misc.ProxyGenerator.<init>
-   9  0.19% 97.72%       1 300118 sun.reflect.UnsafeFieldAccessorImpl.<init>
-  10  0.19% 97.91%       1 300146 java.lang.invoke.DirectMethodHandle.makePreparedLambdaForm
-  11  0.19% 98.10%       1 300180 java.lang.String.contains
-  12  0.19% 98.29%       1 300190 jdk.internal.org.objectweb.asm.ClassWriter.visitField
-  13  0.19% 98.48%       1 300255 sun.misc.FDBigInteger.<clinit>
-  14  0.19% 98.67%       1 300306 java.util.Collections.singleton
-  15  0.19% 98.86%       1 300308 org.gradle.api.internal.tasks.testing.worker.TestWorker$TestFrameworkServiceRegistry.createActorFactory
-  16  0.19% 99.05%       1 300309 java.lang.Class.isPrimitive
-  17  0.19% 99.24%       1 300351 java.util.zip.Inflater.inflateBytes
-  18  0.19% 99.43%       1 300355 java.util.zip.ZipFile.read
-  19  0.19% 99.62%       1 300372 java.lang.String.format
-  20  0.19% 99.81%       1 300431 example.ExampleEnum.values
-  21  0.19% 100.00%       1 300432 example.ExampleTest.jfrPrimeTest
+   1 47.83% 47.83%     320 300355 sun.nio.ch.EPollArrayWrapper.epollWait
+   2 28.55% 76.38%     191 300436 example.ExampleTest.profileEnumTest
+   3 17.79% 94.17%     119 300439 example.ExampleTest.jfrPrimeTest
+   4  0.90% 95.07%       6 300012 java.lang.ClassLoader.defineClass1
+   5  0.45% 95.52%       3 300304 java.lang.ClassLoader.loadClass
+   6  0.30% 95.81%       2 300032 java.util.zip.Inflater.inflateBytes
+   7  0.30% 96.11%       2 300111 java.lang.Class.forName0
+   8  0.30% 96.41%       2 300437 example.ExampleEnum.values
+   9  0.15% 96.56%       1 300029 java.lang.ref.ReferenceQueue.poll
+  10  0.15% 96.71%       1 300050 java.lang.Object.getClass
+  11  0.15% 96.86%       1 300087 org.gradle.internal.service.DefaultServiceRegistry.findProviderMethods
+  12  0.15% 97.01%       1 300148 java.lang.Object.hashCode
+  13  0.15% 97.16%       1 300175 java.util.AbstractList.subList
+  14  0.15% 97.31%       1 300181 java.lang.invoke.MethodHandleNatives.resolve
+  15  0.15% 97.46%       1 300190 jdk.internal.org.objectweb.asm.MethodWriter.<init>
+  16  0.15% 97.61%       1 300215 java.io.ObjectStreamClass.<init>
+  17  0.15% 97.76%       1 300270 java.lang.String.intern
+  18  0.15% 97.91%       1 300278 sun.reflect.ByteVectorImpl.trim
+  19  0.15% 98.06%       1 300285 java.nio.channels.spi.SelectorProvider$1.run
+  20  0.15% 98.21%       1 300309 org.gradle.internal.service.RelevantMethodsBuilder.<init>
+  21  0.15% 98.36%       1 300311 java.security.AccessController.doPrivileged
+  22  0.15% 98.51%       1 300335 java.lang.Class.isPrimitive
+  23  0.15% 98.65%       1 300336 sun.nio.ch.FileDispatcherImpl.write0
+  24  0.15% 98.80%       1 300337 org.gradle.api.internal.tasks.testing.DefaultTestClassRunInfo.<init>
+  25  0.15% 98.95%       1 300358 java.io.File.<init>
+  26  0.15% 99.10%       1 300369 java.util.Collections.unmodifiableMap
+  27  0.15% 99.25%       1 300387 sun.util.locale.provider.JRELocaleProviderAdapter.getDecimalFormatSymbolsProvider
+  28  0.15% 99.40%       1 300432 java.util.zip.ZipFile.getEntry
+  29  0.15% 99.55%       1 300434 java.lang.System.currentTimeMillis
+  30  0.15% 99.70%       1 300435 java.lang.Object.clone
+  31  0.15% 99.85%       1 300438 example.ExampleTest.jfrPrimeTest
+  32  0.15% 100.00%       1 300443 org.gradle.internal.remote.internal.hub.ConnectionSet.maybeStop
 CPU SAMPLES END

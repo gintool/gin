@@ -229,9 +229,9 @@ public class Trace implements Serializable {
             while (jfr.hasMoreEvents()) {
                 RecordedEvent event = jfr.readEvent();
                 String check = event.getEventType().getName();
-
+//System.out.println("******" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
-                if (check.equals("com.oracle.jdk.ExecutionSample")) {
+                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK 
                     RecordedStackTrace s = event.getStackTrace();
 
                     if (s!= null) {

@@ -1,39 +1,45 @@
 package gin.test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Executable;
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.util.Map;
-
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.LauncherSession;
+import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.core.LauncherConfig;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
+import org.junit.vintage.engine.VintageTestEngine;
 import org.pmw.tinylog.Logger;
+
+import java.io.Serializable;
+
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
 // see https://stackoverflow.com/questions/24319697/java-lang-exception-no-runnable-methods-exception-in-running-junits/24319836
 // timeout annotation based on: https://gist.github.com/henrrich/185503f10cbb2499a0dc75ec4c29c8f2 and https://www.baeldung.com/java-reflection-change-annotation-params
 
-/** 
+/**
  * Runs a given test in the same JVM as this class.
  */
 public class JUnitBridge implements Serializable {
 
-    private static final long serialVersionUID = -1984013159496571086L;
     public static final String BRIDGE_METHOD_NAME = "runTest";
+    private static final long serialVersionUID = -1984013159496571086L;
 
     /**
      * This method is called using reflection to ensure tests are run in an environment that employs a separate
      * classloader.
+     *
      * @param test the unit test to run
-     * @param rep the number of times to repeat the test
+     * @param rep  the number of times to repeat the test
      * @return the test results
      */
     public UnitTestResult runTest(UnitTest test, int rep) {
 
         UnitTestResult result = new UnitTestResult(test, rep);
 
-        Request request = null;
+        LauncherDiscoveryRequest request = null;
 
         try {
             request = buildRequest(test);
@@ -64,7 +70,7 @@ public class JUnitBridge implements Serializable {
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
-        
+
         } catch (IllegalAccessException e) {
             Logger.error("Exception when instrumenting tests with a timeout: " + e);
             Logger.error(e.getMessage());
@@ -75,12 +81,12 @@ public class JUnitBridge implements Serializable {
             return result;
         }
 
-        JUnitCore jUnitCore = new JUnitCore();
+//        LauncherConfig config = LauncherConfig.builder().addTestEngines(new VintageTestEngine()).build();
 
-        jUnitCore.addListener(new TestRunListener(result));
-
-        try {
-            jUnitCore.run(request);
+        try (LauncherSession session = LauncherFactory.openSession()) {
+            Launcher launcher = session.getLauncher();
+            TestPlan testPlan = launcher.discover(request);
+            launcher.execute(testPlan, new TestRunListener(result));
         } catch (Exception e) {
             Logger.error("Error running junit: " + e);
 
@@ -93,8 +99,7 @@ public class JUnitBridge implements Serializable {
 
     }
 
-    public Request buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
-
+    public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
         Class<?> clazz = null;
 
         String testClassname = test.getFullClassName();
@@ -104,49 +109,11 @@ public class JUnitBridge implements Serializable {
 
         String methodName = test.getMethodName();
 
-        annotateTestWithTimeout(clazz, methodName, test.getTimeoutMS());
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectMethod(clazz, methodName))
+                .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
+                .build();
 
-        return Request.method(clazz, methodName);
-
+        return request;
     }
-
-     // A hack to add a timeout to the method using Java reflection.
-     // It also checks that a given test method exists. Parametirised test methods are not allowed (following JUnit standard).
-    protected static void annotateTestWithTimeout(Class<?> clazz, String methodName, long timeout) throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
-
-        Field annotations = Executable.class.getDeclaredField("declaredAnnotations");
-        annotations.setAccessible(true);
-
-        Class<?> clazzCopy = clazz;
-
-        boolean methodFound = false;
-
-        while ((!methodFound) && (clazzCopy != java.lang.Object.class)) {
-       
-            try {
-                Method m = clazzCopy.getDeclaredMethod(methodName);
-                methodFound = true;
-                m.getAnnotation(Annotation.class);
-                Map<Class<? extends Annotation>, Annotation> map;
-                map = (Map<Class<? extends Annotation>, Annotation>) annotations.get(m);
-                org.junit.Test jTest = (org.junit.Test) map.get(org.junit.Test.class);
-                if (jTest != null) {
-                    ModifiableTest newTest = new ModifiableTest(timeout, jTest);
-                    map.put(org.junit.Test.class, newTest);
-                }
-
-            } catch (NoSuchMethodException e) {
-            
-                clazzCopy = clazzCopy.getSuperclass();
-            
-            }
-        }
-
-        if (!methodFound) {
-            throw new NoSuchMethodException("Test method " + methodName + " not found in " + clazz.getName());
-        }        
-
-    }
-
-
 }

@@ -138,12 +138,8 @@ public class UnitTestResult implements Serializable {
                 // based on messages thrown: https://github.com/junit-team/junit4/blob/master/src/main/java/org/junit/Assert.java
                 String s = this.exceptionMessage;
 
-                
-                if (s == null) {
-                	this.expectedValue = this.actualValue = "";
-                }
                 // 'expected:<EXPECTED> but was:<ACTUAL>'
-                else if ( s.contains("expected:<") && s.contains(" but was:<") ) {
+                if ( s.contains("expected:<") && s.contains(" but was:<") ) {
                     s = s.substring(s.lastIndexOf("expected:<")+10);
                     s = s.substring(0, s.indexOf(">"));
                     this.expectedValue = s;

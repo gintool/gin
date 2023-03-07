@@ -26,7 +26,7 @@ public class RTSProfilerTest {
     private static final File PROJECT_DIR_GRADLE = FileUtils.getFile(PROJECT_PATH_GRADLE);
     private static final String OUTPUT_CSV_PATH_GRADLE = PROJECT_PATH_GRADLE + File.separator + "output_file.csv";
 
-//    @Test
+    @Test
     public void testMainWithEkstaziMaven() throws IOException {
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
@@ -52,7 +52,7 @@ public class RTSProfilerTest {
 //        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
 //    }
 
-//    @Test
+    @Test
     public void testMainWithSTARTS() throws IOException {
         //only run this test if java version < 9
         Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);

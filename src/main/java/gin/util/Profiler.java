@@ -77,8 +77,7 @@ public class Profiler implements Serializable {
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "profiler_out";
    
-    private static String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static String JFR_ARG = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
 
     // Instance Members
@@ -123,8 +122,6 @@ public class Profiler implements Serializable {
         if (tests.isEmpty()) {
             Logger.error("No tests found in project.");
             System.exit(-1);
-        } else {
-        	Logger.info("Found " + tests.size() + " tests");
         }
 
         if (this.profileFirstNTests != null) {
@@ -140,7 +137,6 @@ public class Profiler implements Serializable {
             reportSummary(results);
         }
 
-        Logger.info("Parsing traces for " + tests.size() + " tests");
         List<Trace> testTraces = parseTraces(tests);
 
         List<HotMethod> hotMethods = calcHotMethods(testTraces);
@@ -206,11 +202,7 @@ public class Profiler implements Serializable {
                 if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                	if (getJavaVersion() < 11) {
-                		args = JFR_ARG_BEFORE_11 + jfrFile(test,rep).getAbsolutePath();
-                	} else {
-                		args = JFR_ARG_11_AFTER + jfrFile(test,rep).getAbsolutePath();
-                	}
+                    args = JFR_ARG + jfrFile(test,rep).getAbsolutePath();
                 }
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
@@ -443,17 +435,6 @@ public class Profiler implements Serializable {
             workingDir.mkdirs();
         }
 
-    }
-    
-    // https://stackoverflow.com/questions/2591083/getting-java-version-at-runtime
-    public static int getJavaVersion() {
-        String version = System.getProperty("java.version");
-        if(version.startsWith("1.")) {
-            version = version.substring(2, 3);
-        } else {
-            int dot = version.indexOf(".");
-            if(dot != -1) { version = version.substring(0, dot); }
-        } return Integer.parseInt(version);
     }
 
 }

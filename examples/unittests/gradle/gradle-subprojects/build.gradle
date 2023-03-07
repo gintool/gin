@@ -8,7 +8,7 @@ allprojects {
 
 
   dependencies {
-    testImplementation "junit:junit:${junitVersion}"
+    testCompile "junit:junit:${junitVersion}"
   }
 }
 

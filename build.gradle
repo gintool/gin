@@ -63,8 +63,8 @@ dependencies {
     implementation group: 'org.apache.maven', name: 'maven-core', version: '3.6.3'
 
     // Used to profile gradle projects
-    implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '7.4.2'
-    runtimeOnly 'org.slf4j:slf4j-simple:2.0.0-alpha1'
+    implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '8.0.2'
+    runtimeOnly 'org.slf4j:slf4j-simple:2.0.6'
 
     // Create jars for call graph generation using zta-zip
     implementation 'org.zeroturnaround:zt-zip:1.14'

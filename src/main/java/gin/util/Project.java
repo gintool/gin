@@ -39,13 +39,14 @@ import java.util.regex.Pattern;
  */
 public class Project implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -7683615011351128680L;
 
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
     private static final boolean DEBUG = false;
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = null;
+    private String gradleVersion = "8.0.2";
     private File projectDir;
     private String projectName;
     private BuildType buildType;
@@ -275,7 +276,7 @@ public class Project implements Serializable {
         IdeaProject project = connection.getModel(IdeaProject.class);
         GradleProject gradleProject = connection.getModel(GradleProject.class);
 
-        for (IdeaModule module : project.getModules()) {
+        for (IdeaModule module : project.getChildren()) {
 
             File outputDir = module.getCompilerOutput().getOutputDir();
             if (outputDir != null) {
@@ -808,7 +809,6 @@ public class Project implements Serializable {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
 
-
         if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
@@ -833,15 +833,11 @@ public class Project implements Serializable {
 
         try {
             testLauncher.run();
-        } catch (TestExecutionException exception) {
-            Logger.error("TestExecutionException from gradle test launcher");
+        } catch (TestExecutionException | BuildException exception) {
+            Logger.error(exception.getClass().getSimpleName() + " from gradle test launcher");
             Logger.error("Message: " + exception.getMessage());
             Logger.error("Cause: " + exception.getCause());
-            System.exit(-1);
-        } catch (BuildException exception) {
-            Logger.error("BuildException from from gradle test launcher");
-            Logger.error("Message: " + exception.getMessage());
-            Logger.error("Cause: " + exception.getCause());
+            exception.printStackTrace();
             System.exit(-1);
         }
 

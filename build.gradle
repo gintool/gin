@@ -1,11 +1,10 @@
 // To create fat (uber) jar
 plugins {
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.0'
     id 'java'
+    id 'application'
 }
 
-apply plugin: 'java'
-apply plugin: 'application'
 sourceCompatibility = 17
 targetCompatibility = 17
 
@@ -58,9 +57,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Used to profile maven projects
-    implementation group: 'org.apache.maven.shared', name: 'maven-invoker', version: '3.1.0'
+    implementation group: 'org.apache.maven.shared', name: 'maven-invoker', version: '3.2.0'
 
-    implementation group: 'org.apache.maven', name: 'maven-core', version: '3.6.3'
+    implementation group: 'org.apache.maven', name: 'maven-core', version: '3.9.0'
 
     // Used to profile gradle projects
     implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '8.0.2'
@@ -76,7 +75,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.13.1'
 
     // build example project so main project unit tests (e.g. profiler) will pass!
-    implementation project(':gradle-simple')
+//    implementation project(':gradle-simple')
 
     testImplementation "org.mockito:mockito-core:3.+"
 }
@@ -93,7 +92,7 @@ jar {
 }
 
 // This is handy to copy dependencies into a folder, for use in an IDE etc.
-task copyToLib(type: Copy) {
+tasks.register('copyToLib', Copy) {
     into "lib"
     from configurations.runtimeClasspath
 }
@@ -103,15 +102,11 @@ javadoc {
     classpath = configurations.compileClasspath
 }
 
-apply plugin: 'application'
-
-mainClassName = 'gin.LocalSearch'
-
 shadowJar {
     destinationDirectory = buildDir
     archiveBaseName = 'gin'
-    classifier = null
     archiveVersion = null
+    archiveClassifier = null
 }
 
 test {

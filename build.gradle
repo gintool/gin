@@ -75,7 +75,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.13.1'
 
     // build example project so main project unit tests (e.g. profiler) will pass!
-//    implementation project(':gradle-simple')
+    implementation project(':gradle-simple')
 
     testImplementation "org.mockito:mockito-core:3.+"
 }

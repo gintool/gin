@@ -96,20 +96,16 @@ public class RTSProfiler implements Serializable {
                 project.setMavenHome(this.mavenHome);
             }
         }
-        Logger.error("Got at 1");
         if (this.rts.equals(RTSFactory.STARTS)) {
             if (SystemUtils.IS_OS_WINDOWS) {
                 // STARTS fails on Windows
                 // https://github.com/TestingResearchIllinois/starts/issues/12
                 // Although the author claims the tests pass, they actually don't
-                Logger.error("Got at 2");
                 throw new IllegalArgumentException("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.");
             } else if (this.project.isGradleProject()) {
-                Logger.error("Got at 3");
                 throw new IllegalArgumentException("STARTS will not work with Gradle projects. Please, use 'ekstazi' as an alternative.");
             }
         }
-        Logger.error("Got at 4");
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
         if (this.profilerChoice.toUpperCase().equals("HPROF")) {

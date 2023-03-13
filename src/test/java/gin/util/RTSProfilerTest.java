@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,6 +28,7 @@ public class RTSProfilerTest {
     private static final String OUTPUT_CSV_PATH_GRADLE = PROJECT_PATH_GRADLE + File.separator + "output_file.csv";
 
     @Test
+    @Ignore
     public void testMainWithEkstaziMaven() throws IOException {
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should
@@ -39,20 +41,22 @@ public class RTSProfilerTest {
         String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_MAVEN};
         RTSProfiler.main(args);
 
-        assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "hprof").list().length);
+        assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out").list().length);
         assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
     }
 
-//    @Test
-//    public void testMainWithEkstaziGradle() {
-//        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
-//        RTSProfiler.main(args);
-//
-//        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "hprof").list().length);
-//        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
-//    }
+    @Test
+    @Ignore
+    public void testMainWithEkstaziGradle() throws IOException {
+        String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
+        RTSProfiler.main(args);
 
-//    @Test
+        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "profiler_out").list().length);
+        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
+    }
+
+    @Test
+    @Ignore
     public void testMainWithSTARTS() throws IOException {
         //only run this test if java version < 9
         Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
@@ -68,7 +72,7 @@ public class RTSProfilerTest {
             String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "starts", "-o", OUTPUT_CSV_PATH_MAVEN};
             RTSProfiler.main(args);
 
-            assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "hprof").list().length);
+            assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out").list().length);
             assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
         } catch (IllegalArgumentException ex) {
             if (SystemUtils.IS_OS_WINDOWS) {

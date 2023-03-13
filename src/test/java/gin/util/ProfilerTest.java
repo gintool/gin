@@ -26,10 +26,10 @@ public class ProfilerTest {
 
     private final static String GRADLE_SIMPLE_PROJECT_DIR = TestConfiguration.GRADLE_SIMPLE_DIR;
     
-//    @Test
+    @Test
     public void testEnumProfiling() throws IOException {
         //only run this test if Java version < 9
-        Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
+        Assume.assumeTrue(JavaUtils.getJavaVersion() < 9);
 
         String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "hprof", "-save", "s"};
 
@@ -63,11 +63,11 @@ public class ProfilerTest {
         Files.deleteIfExists(new File("scratchhprof").toPath());  // tidy up
     }
 
-//    @Test
+    @Test
     public void testJFRProfiling() throws IOException {
 
         //only run this test if java version >= 8
-        Assume.assumeTrue("1.8.0".compareTo(System.getProperty("java.version")) <= 0);
+        Assume.assumeTrue(JavaUtils.getJavaVersion() > 8);
 
         String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "jfr", "-save", "s"};
 

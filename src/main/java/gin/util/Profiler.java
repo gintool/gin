@@ -8,8 +8,6 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.Files;
 
 import com.sampullara.cli.Argument;
@@ -206,7 +204,7 @@ public class Profiler implements Serializable {
                 if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                	if (getJavaVersion() < 11) {
+                	if (JavaUtils.getJavaVersion() < 11) {
                 		args = JFR_ARG_BEFORE_11 + jfrFile(test,rep).getAbsolutePath();
                 	} else {
                 		args = JFR_ARG_11_AFTER + jfrFile(test,rep).getAbsolutePath();
@@ -443,17 +441,6 @@ public class Profiler implements Serializable {
             workingDir.mkdirs();
         }
 
-    }
-    
-    // https://stackoverflow.com/questions/2591083/getting-java-version-at-runtime
-    public static int getJavaVersion() {
-        String version = System.getProperty("java.version");
-        if(version.startsWith("1.")) {
-            version = version.substring(2, 3);
-        } else {
-            int dot = version.indexOf(".");
-            if(dot != -1) { version = version.substring(0, dot); }
-        } return Integer.parseInt(version);
     }
 
 }

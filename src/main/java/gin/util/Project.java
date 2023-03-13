@@ -595,6 +595,9 @@ public class Project implements Serializable {
         if (properties.containsKey("argLine")) {
             Logger.info("Running Gradle profile with argument line: " + properties.getProperty("argLine"));
             launcher = launcher.setJvmArguments(properties.getProperty("argLine").split(" "));
+            Map<String, String> variables = new HashMap<>();
+            variables.put("JAVA_TOOL_OPTIONS", properties.getProperty("argLine"));
+            launcher.setEnvironmentVariables(variables);
         }
 
 

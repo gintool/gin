@@ -824,12 +824,12 @@ public class Project implements Serializable {
 
         // Workaround for inner classes, see https://github.com/gradle/gradle/issues/5763
         if (test.getInnerClassName().isEmpty()) {
-            testLauncher.withJvmTestClasses(test.getTopClassName());
+            testLauncher = testLauncher.withJvmTestClasses(test.getTopClassName());
         } else {
-            testLauncher.withJvmTestClasses(test.getTopClassName() + "*");
+            testLauncher = testLauncher.withJvmTestClasses(test.getTopClassName() + "*");
         }
 
-        testLauncher.withJvmTestMethods(test.getMethodName());
+        testLauncher = testLauncher.withJvmTestMethods(test.getTopClassName(), test.getMethodName());
 
         testLauncher.setEnvironmentVariables(variables);
 

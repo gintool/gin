@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gintool/gin.svg?branch=master)](https://travis-ci.org/gintool/gin)
+[![Build](https://github.com/gintool/gin/actions/workflows/gradle.yml/badge.svg)](https://github.com/gintool/gin/actions/workflows/gradle.yml)
 
 # Gin: A Tool for Experimentation with GI
 

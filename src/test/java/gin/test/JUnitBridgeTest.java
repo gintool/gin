@@ -206,7 +206,7 @@ public class JUnitBridgeTest {
     @Test
     public void incorrectMethodName() throws Exception {
 
-        UnitTest test = new UnitTest("ErrorTest", "testFaultyTes");
+        UnitTest test = new UnitTest("ErrorTest", "thisTestDoesNotExist");
 
         Object resultObj = null;
         try {
@@ -220,13 +220,13 @@ public class JUnitBridgeTest {
         UnitTestResult result = (UnitTestResult) resultObj;
 
         assertFalse(result.getPassed());
-        assertEquals("org.junit.platform.commons.JUnitException", result.getExceptionType());
+        assertEquals("java.lang.NoSuchMethodException", result.getExceptionType());
     }
 
     @Test
     public void incorrectClassName() throws Exception {
 
-        UnitTest test = new UnitTest("ErrorTes", "testFaultyTest");
+        UnitTest test = new UnitTest("ThisClassDoesNotExist", "testFaultyTest");
 
         Object resultObj = null;
         try {

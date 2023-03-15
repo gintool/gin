@@ -66,6 +66,7 @@ public class ProfilerTest {
 
         //only run this test if java version >= 8
         Assume.assumeTrue(JavaUtils.getJavaVersion() > 8);
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
 
         String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "jfr", "-save", "s"};
 

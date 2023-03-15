@@ -64,4 +64,6 @@ examples/unittests/ekstazi_gradle/output_file.csv
 examples/unittests/starts_modules/*/target
 profile_timing.csv
 sampler_timing.csv
+sampler_results.csv
+profile_results.csv
 *.jfr

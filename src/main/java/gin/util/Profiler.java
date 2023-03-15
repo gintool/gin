@@ -3,24 +3,25 @@ package gin.util;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVWriter;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+import gin.test.UnitTest;
+import org.apache.commons.lang3.SystemUtils;
+import org.pmw.tinylog.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.nio.file.Files;
-
-import com.sampullara.cli.Argument;
-import com.sampullara.cli.Args;
-
-import gin.test.UnitTest;
-import org.pmw.tinylog.Logger;
-
 /**
  * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof or jfr.
- *
+ * <p>
  * Run directly from the commandline.
- *
+ * <p>
  * You provide the project directory, output file, number of reps.... the Profiler does the rest.
  */
 public class Profiler implements Serializable {
@@ -58,23 +59,23 @@ public class Profiler implements Serializable {
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
 
-    @Argument(alias = "m", description="Maven mavenProfile to use, e.g. light-test")
+    @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
     protected String mavenProfile = "";
 
-    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
+    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
 
-    @Argument(alias = "prof",description= "Profiler to use: JFR or HPROF. Default is JFR")
+    @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
     protected String profilerChoice = "jfr";
 
-    @Argument(alias = "save",description= "Save individual profiling files, default is delete, set command as 's' to save")
+    @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
 
     // Constants
 
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "profiler_out";
-   
+
     private static String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
@@ -104,6 +105,16 @@ public class Profiler implements Serializable {
         if (this.profilerChoice.toUpperCase().equals("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
+
+        valiateArguments();
+    }
+
+    private void valiateArguments() {
+        if (this.project.isGradleProject()
+                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
+                && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
+        }
     }
 
     // Main Profile Method
@@ -122,7 +133,7 @@ public class Profiler implements Serializable {
             Logger.error("No tests found in project.");
             System.exit(-1);
         } else {
-        	Logger.info("Found " + tests.size() + " tests");
+            Logger.info("Found " + tests.size() + " tests");
         }
 
         if (this.profileFirstNTests != null) {
@@ -133,8 +144,8 @@ public class Profiler implements Serializable {
         if (!this.excludeProfiler) {
             results = profileTestSuite(tests);
             tests = tests.stream()
-                        .filter(test -> results.keySet().contains(test) && results.get(test).success)
-                        .collect(Collectors.toSet());
+                    .filter(test -> results.keySet().contains(test) && results.get(test).success)
+                    .collect(Collectors.toSet());
             reportSummary(results);
         }
 
@@ -161,7 +172,7 @@ public class Profiler implements Serializable {
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
-            for (ProfileResult result: failures) {
+            for (ProfileResult result : failures) {
                 Logger.warn("Failed to run test: " + result.test + " due to exception: " + result.exception);
             }
         } else {
@@ -185,7 +196,7 @@ public class Profiler implements Serializable {
         List<UnitTest> sortedTests = new LinkedList(tests);
         Collections.sort(sortedTests);
 
-        for (UnitTest test: sortedTests) {
+        for (UnitTest test : sortedTests) {
 
             if (isParameterizedTest(test)) {
                 Logger.warn("Ignoring parameterized test, as jUnit does not support running individual " +
@@ -197,22 +208,22 @@ public class Profiler implements Serializable {
 
             testCount++;
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 String args;
 
                 if (this.profilerChoice.toUpperCase().equals("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                	if (JavaUtils.getJavaVersion() < 11) {
-                		args = JFR_ARG_BEFORE_11 + jfrFile(test,rep).getAbsolutePath();
-                	} else {
-                		args = JFR_ARG_11_AFTER + jfrFile(test,rep).getAbsolutePath();
-                	}
+                    if (JavaUtils.getJavaVersion() < 11) {
+                        args = JFR_ARG_BEFORE_11 + jfrFile(test, rep).getAbsolutePath();
+                    } else {
+                        args = JFR_ARG_11_AFTER + jfrFile(test, rep).getAbsolutePath();
+                    }
                 }
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
-                                                        test, testCount, tests.size(), rep, this.reps);
+                        test, testCount, tests.size(), rep, this.reps);
 
                 Logger.info(progressMessage);
 
@@ -240,6 +251,7 @@ public class Profiler implements Serializable {
         UnitTest test;
         boolean success;
         Exception exception;
+
         ProfileResult(UnitTest test, boolean success, Exception exception) {
             this.test = test;
             this.success = success;
@@ -257,7 +269,7 @@ public class Profiler implements Serializable {
 
         List<Trace> allTraces = new LinkedList<>();
 
-        for (UnitTest test: tests) {
+        for (UnitTest test : tests) {
 
             List<Trace> testTraces = new LinkedList<>();
 
@@ -265,7 +277,7 @@ public class Profiler implements Serializable {
                 continue;
             }
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 Logger.info("Parsing trace for test: " + test);
 
@@ -284,7 +296,7 @@ public class Profiler implements Serializable {
                     } catch (IOException e) {
                         Logger.warn("Failed to read JFR file due to IOException: " + e);
                     }
-                    
+
 
                 }
 
@@ -295,7 +307,7 @@ public class Profiler implements Serializable {
                     } catch (IOException e) {
                         Logger.warn("Failed to delete profiling file with IOException: " + e);
                     }
-                } 
+                }
 
             }
 
@@ -317,7 +329,7 @@ public class Profiler implements Serializable {
 
         Trace entireTestSuiteTrace = Trace.mergeTraces(traces);
 
-        for (String hotMethod: entireTestSuiteTrace.allMethods()) {
+        for (String hotMethod : entireTestSuiteTrace.allMethods()) {
 
             Set<UnitTest> callingTests = findTestsCallingMethod(hotMethod, traces);
 
@@ -335,7 +347,7 @@ public class Profiler implements Serializable {
 
         Set<UnitTest> tests = new HashSet<>();
 
-        for (Trace trace: traces) {
+        for (Trace trace : traces) {
 
             if (trace.allMethods().contains(method)) {
                 tests.add(trace.getTest());
@@ -364,20 +376,20 @@ public class Profiler implements Serializable {
 
         int hotMethodIndex = 1;
 
-        for (HotMethod method: hotMethods) {
+        for (HotMethod method : hotMethods) {
 
             List<String> testNames = new LinkedList<>();
-            for (UnitTest test: method.tests) {
+            for (UnitTest test : method.tests) {
                 testNames.add(test.toString());
             }
             String allTestNames = String.join(",", testNames);
 
             String[] row = {this.projectName,
-                            Integer.toString(hotMethodIndex),
-                            method.methodName,
-                            Integer.toString(method.count),
-                            allTestNames
-                            };
+                    Integer.toString(hotMethodIndex),
+                    method.methodName,
+                    Integer.toString(method.count),
+                    allTestNames
+            };
 
             writer.writeNext(row);
 
@@ -423,7 +435,7 @@ public class Profiler implements Serializable {
         String filenameNoBrackets = filename.replace("()", "");
         File jfr = new File(workingDir, filenameNoBrackets);
         return jfr;
-        
+
     }
 
     private File hprofFile(UnitTest test, int rep) {
@@ -432,7 +444,7 @@ public class Profiler implements Serializable {
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
         File hprof = new File(workingDir, filenameNoBrackets);
-        return  hprof;
+        return hprof;
     }
 
     private void ensureWorkingDirectory() {

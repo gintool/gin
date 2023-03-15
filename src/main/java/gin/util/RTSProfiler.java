@@ -8,6 +8,7 @@ import gin.util.regression.RTSFactory;
 import gin.util.regression.RTSStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
@@ -39,7 +40,7 @@ public class RTSProfiler implements Serializable {
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String PROF_DIR = "profiler_out";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -72,13 +73,13 @@ public class RTSProfiler implements Serializable {
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
     @Argument(alias = "prof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private String profFileName = "java.prof.txt";
+    private final String profFileName = "java.prof";
 
     @Argument(alias = "prof",description= "Profiler to use: jfr or hprof. Default is jfr")
     protected String profilerChoice = "jfr";
 
     // Instance Members
-    private File profDir;
+    private final File profDir;
     protected Project project;
 
     public RTSProfiler(String[] args) {
@@ -108,12 +109,12 @@ public class RTSProfiler implements Serializable {
         }
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
-        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
     }
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
         StopWatch watch = StopWatch.createStarted();
         RTSProfiler profiler = new RTSProfiler(args);
         profiler.profile();
@@ -142,17 +143,15 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            if (this.profilerChoice.toUpperCase().equals("HPROF")) {
-                argLine.append(HPROF_ARG)
-                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
-            } else {
-                argLine.append(JFR_ARG)
-                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
-            }
+            String profilerArgumentLine = switch(this.profilerChoice.toUpperCase()) {
+                case "HPROF" -> HPROF_ARG;
+                default -> JFR_ARG;
+            };
+            argLine.append(profilerArgumentLine).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
 
             // Inject the RTS agent (if any)
             String rtsArg = rtsStrategy.getArgumentLine();
-            if (rtsArg != null && !rtsArg.trim().isEmpty()) {
+            if (!StringUtils.isBlank(argLine)) {
                 argLine.append(" ").append(rtsArg);
             }
 
@@ -172,7 +171,7 @@ public class RTSProfiler implements Serializable {
             String rtsTestGoal = rtsStrategy.getTestGoal();
             // If -t was not given (is default), then use the one provided by
             // the RTS technique. Otherwise, use the one sepcified by the user.
-            this.mavenTaskName = this.mavenTaskName.equals("test")
+            this.mavenTaskName = this.mavenTaskName.equalsIgnoreCase("test")
                     ? rtsTestGoal
                     : this.mavenTaskName;
 
@@ -202,7 +201,7 @@ public class RTSProfiler implements Serializable {
         List<HotMethod> hotMethods = new ArrayList<>();
         Map<String, Integer> methodCounts = new HashMap<>();
         if (profFile != null && profFile.exists()) {
-            if (this.profilerChoice.toUpperCase().equals("hprof")) {
+            if (this.profilerChoice.equalsIgnoreCase("hprof")) {
                 methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } else {
                 methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
@@ -270,7 +269,7 @@ public class RTSProfiler implements Serializable {
 
     private void writeTimingResults(StopWatch watch) {
         try {
-            FileUtils.writeStringToFile(timingOutputFile, String.valueOf(watch.getTime()) + "\n", Charset.defaultCharset());
+            FileUtils.writeStringToFile(timingOutputFile, watch.getTime() + "\n", Charset.defaultCharset());
         } catch (IOException ex) {
             Logger.error(ex, "Error outputing execution time to: " + timingOutputFile);
         }

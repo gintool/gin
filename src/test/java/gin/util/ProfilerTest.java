@@ -3,6 +3,8 @@ package gin.util;
 import gin.TestConfiguration;
 import gin.test.UnitTest;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.pmw.tinylog.Configurator;
@@ -91,6 +93,14 @@ public class ProfilerTest {
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
         Files.deleteIfExists(new File("scratchjfr").toPath());  // tidy up
+    }
+
+    @Test
+    public void testWindowsGradleJFR() {
+        Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+
+        String[] args = {"-p", "gradle-simple", "-d", GRADLE_SIMPLE_PROJECT_DIR, "-r", "1", "-o", "simple.csv", "-prof", "jfr", "-save", "s"};
+        Assert.assertThrows(IllegalArgumentException.class, () -> new Profiler(args));
     }
 
 //    @Test

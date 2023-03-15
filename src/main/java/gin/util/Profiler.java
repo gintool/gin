@@ -91,7 +91,6 @@ public class Profiler implements Serializable {
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
-
         this.workingDir = new File(projectDir, WORKING_DIR);
 
         project = new Project(projectDir, projectName);

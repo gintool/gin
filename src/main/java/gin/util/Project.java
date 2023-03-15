@@ -46,7 +46,7 @@ public class Project implements Serializable {
 
     private static final boolean DEBUG = false;
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = "8.0.2";
+    private String gradleVersion = "7.6";
     private File projectDir;
     private String projectName;
     private BuildType buildType;
@@ -266,9 +266,8 @@ public class Project implements Serializable {
     private void detectDirsGradle() {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
-
         if (gradleVersion != null) {
-            connector.useGradleVersion(gradleVersion);
+            connector = connector.useGradleVersion(gradleVersion);
         }
 
         // Source Directories
@@ -276,7 +275,7 @@ public class Project implements Serializable {
         IdeaProject project = connection.getModel(IdeaProject.class);
         GradleProject gradleProject = connection.getModel(GradleProject.class);
 
-        for (IdeaModule module : project.getChildren()) {
+        for (IdeaModule module : project.getModules()) {
 
             File outputDir = module.getCompilerOutput().getOutputDir();
             if (outputDir != null) {

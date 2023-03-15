@@ -161,6 +161,7 @@ public abstract class Sampler implements Serializable {
                 Logger.info("I'm going to try and find your maven home, but make sure to set mavenHome for maven projects in the future.");
                 this.project.setMavenHome(MavenUtils.findMavenHomeFile());
             }
+            project.setUp();
             Logger.info("Calculating classpath..");
             this.classPath = project.classpath();
             Logger.info("Classpath: " + this.classPath);

@@ -98,6 +98,8 @@ public class RTSProfiler implements Serializable {
                 project.setMavenHome(this.mavenHome);
             }
         }
+        project.setUp();
+
         if (this.rts.equals(RTSFactory.STARTS)) {
             if (SystemUtils.IS_OS_WINDOWS) {
                 // STARTS fails on Windows

@@ -20,17 +20,18 @@ public class ProjectTest {
     private static final File GRADLE_SIMPLE = new File(TestConfiguration.GRADLE_SIMPLE_DIR);
     private static final File MAVEN_SIMPLE = new File(TestConfiguration.MAVEN_SIMPLE_DIR);
 
-    Project simpleProject = new Project(GRADLE_SIMPLE, "simple");
-
+    Project simpleProject = null;
     @Before
     public void setUp() throws Exception {
-
+        simpleProject = new Project(GRADLE_SIMPLE, "simple");
+        simpleProject.setUp();
     }
 
     @Test
     public void testDetectionGradleMultiProject() {
 
         Project project = new Project(GRADLE_MULTI_DIR, "myproject");
+        project.setUp();
 
         // Basic fields
         assertEquals(project.getProjectDir().getAbsoluteFile(), GRADLE_MULTI_DIR.getAbsoluteFile());
@@ -119,6 +120,7 @@ public class ProjectTest {
     @Test
     public void classpath() {
         Project simpleProject = new Project(MAVEN_SIMPLE, "simple");
+        simpleProject.setUp();
         String mavenHome = MavenUtils.findMavenHomePath();
         Assume.assumeTrue(FileUtils.getFile(mavenHome, "bin/mvn").exists()
                 || FileUtils.getFile(mavenHome, "mvn").exists()

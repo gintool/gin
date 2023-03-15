@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
 import gin.test.UnitTest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
@@ -24,6 +25,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.pmw.tinylog.Logger;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -58,12 +60,30 @@ public class Project implements Serializable {
     private List<File> mainClassDirs = new LinkedList<>();
     private List<File> testClassDirs = new LinkedList<>();
 
-    // Only constructor
+    /**
+     * Builds a project object. You must call {@link #setUp()} or {@link #setUp(String, String)} before using it to capture the project's structure.
+     *
+     * @param directory the Project's directory
+     * @param name      the Project's name
+     */
     public Project(File directory, String name) {
         projectDir = directory.getAbsoluteFile();
         projectName = name;
         detectBuildType();
+    }
+
+    public void setUp() {
         detectDirs();
+    }
+
+    public void setUp(@Nullable String gradleVersion, @Nullable String mavenHome) {
+        if (!StringUtils.isBlank(gradleVersion)) {
+            this.setGradleVersion(gradleVersion);
+        }
+        if (!StringUtils.isBlank(mavenHome)) {
+            this.setMavenHome(FileUtils.getFile(mavenHome));
+        }
+        this.setUp();
     }
 
     protected static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
@@ -125,14 +145,14 @@ public class Project implements Serializable {
     public List<File> getTestSourceDirs() {
         return testSourceDirs;
     }
-    
+
     public List<File> getMainResourceDirs() {
-		return mainResourceDirs;
-	}
-    
+        return mainResourceDirs;
+    }
+
     public List<File> getTestResourceDirs() {
-		return testResourceDirs;
-	}
+        return testResourceDirs;
+    }
 
     public List<File> getMainClassDirs() {
         return mainClassDirs;

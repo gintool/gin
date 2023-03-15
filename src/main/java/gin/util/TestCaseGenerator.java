@@ -115,6 +115,7 @@ public class TestCaseGenerator implements Serializable {
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
         }
+        project.setUp();
         this.projectCP = project.classpath(); 
 
         // Set up output directory for tests

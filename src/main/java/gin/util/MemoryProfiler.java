@@ -87,6 +87,7 @@ public class MemoryProfiler {
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
         }
+        project.setUp();
         // Adds the interval provided by the user
         HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
     }

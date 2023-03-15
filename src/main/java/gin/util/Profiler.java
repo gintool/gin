@@ -100,6 +100,7 @@ public class Profiler implements Serializable {
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
         }
+        project.setUp();
         // Adds the interval provided by the user
         if (this.profilerChoice.toUpperCase().equals("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));

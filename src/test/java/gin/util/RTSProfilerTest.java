@@ -28,7 +28,6 @@ public class RTSProfilerTest {
     private static final String OUTPUT_CSV_PATH_GRADLE = PROJECT_PATH_GRADLE + File.separator + "output_file.csv";
 
     @Test
-    @Ignore
     public void testMainWithEkstaziMaven() throws IOException {
         String mavenHome = MavenUtils.findMavenHomePath();
         // If maven is not set in the environment path, then this test should

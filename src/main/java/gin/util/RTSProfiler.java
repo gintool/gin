@@ -39,8 +39,9 @@ public class RTSProfiler implements Serializable {
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String PROF_DIR = "profiler_out";
+    private static String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static final String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -73,9 +74,9 @@ public class RTSProfiler implements Serializable {
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
     @Argument(alias = "prof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private final String profFileName = "java.prof";
+    private final String profFileName = "java.prof.jfr";
 
-    @Argument(alias = "prof",description= "Profiler to use: jfr or hprof. Default is jfr")
+    @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
     protected String profilerChoice = "jfr";
 
     // Instance Members
@@ -143,9 +144,9 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            String profilerArgumentLine = switch(this.profilerChoice.toUpperCase()) {
+            String profilerArgumentLine = switch (this.profilerChoice.toUpperCase()) {
                 case "HPROF" -> HPROF_ARG;
-                default -> JFR_ARG;
+                default -> JavaUtils.getJavaVersion() < 11 ? JFR_ARG_BEFORE_11 : JFR_ARG_11_AFTER;
             };
             argLine.append(profilerArgumentLine).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
 
@@ -205,12 +206,12 @@ public class RTSProfiler implements Serializable {
                 methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } else {
                 methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-            } 
+            }
 
             hotMethods = methodCounts.entrySet()
-                .stream()
-                .map(traceToHotMethod())
-                .collect(Collectors.toList());
+                    .stream()
+                    .map(traceToHotMethod())
+                    .collect(Collectors.toList());
         }
         return hotMethods;
     }

@@ -17,7 +17,7 @@ src/test/resources/ExampleTriangleProgram.java.patched
 classes/
 *.iml
 examples/*.class
-examples/*.csv
+examples/*_results.csv
 examples/unittests/mypackage/*.class
 /bin/
 evoexample/

@@ -5,11 +5,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
-import java.io.*;
+import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,45 +41,52 @@ public class RTSProfilerTest {
         String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_MAVEN};
         RTSProfiler.main(args);
 
-        assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out").list().length);
-        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
+        File profilerOutDir = FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out");
+        assertTrue(profilerOutDir.exists());
+        assertEquals(1, profilerOutDir.list().length);
+        FileUtils.deleteQuietly(profilerOutDir);
+
+        File ekstaziOut = FileUtils.getFile(PROJECT_DIR_MAVEN, ".ekstazi");
+        assertTrue(ekstaziOut.exists());
+        assertEquals(4, ekstaziOut.list().length);
+        Assertions.assertAll(Arrays.stream(ekstaziOut.listFiles())
+                .map(file -> () -> assertTrue("File " + file.getAbsolutePath() + " is empty.",file.length() > 0)));
+        FileUtils.deleteQuietly(ekstaziOut);
+
+        File csvResultFile = FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN);
+        assertTrue(csvResultFile.exists());
+        FileUtils.deleteQuietly(csvResultFile);
     }
 
     @Test
-    @Ignore
     public void testMainWithEkstaziGradle() throws IOException {
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
         String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};
         RTSProfiler.main(args);
 
-        assertEquals(1, FileUtils.getFile(PROJECT_DIR_GRADLE, "profiler_out").list().length);
-        assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE).exists());
+        File profilerOutDir = FileUtils.getFile(PROJECT_DIR_GRADLE, "profiler_out");
+        assertTrue(profilerOutDir.exists());
+        assertEquals(1, profilerOutDir.list().length);
+        FileUtils.deleteQuietly(profilerOutDir);
+
+        File ekstaziOut = FileUtils.getFile(PROJECT_DIR_GRADLE, ".ekstazi");
+        assertTrue(ekstaziOut.exists());
+        assertEquals(4, ekstaziOut.list().length);
+        Assertions.assertAll(Arrays.stream(ekstaziOut.listFiles())
+                .map(file -> () -> assertTrue(file.length() > 0)));
+        FileUtils.deleteQuietly(ekstaziOut);
+
+        File csvResultFile = FileUtils.getFile(OUTPUT_CSV_PATH_GRADLE);
+        assertTrue(csvResultFile.exists());
+        FileUtils.deleteQuietly(csvResultFile);
     }
 
     @Test
-    @Ignore
-    public void testMainWithSTARTS() throws IOException {
-        //only run this test if java version < 9
-        Assume.assumeTrue("9".compareTo(System.getProperty("java.version")) > 0);
-        String mavenHome = MavenUtils.findMavenHomePath();
-        // If maven is not set in the environment path, then this test should
-        // not be executed
-        Assume.assumeTrue(FileUtils.getFile(mavenHome, "bin/mvn").exists()
-                || FileUtils.getFile(mavenHome, "mvn").exists()
-                || FileUtils.getFile(mavenHome, "bin/mvn.cmd").exists()
-                || FileUtils.getFile(mavenHome, "mvn.cmd").exists());
+    public void testWindowsGradleJFR() {
+        Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
 
-        try {
-            String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_MAVEN, "-rts", "starts", "-o", OUTPUT_CSV_PATH_MAVEN};
-            RTSProfiler.main(args);
-
-            assertEquals(1, FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out").list().length);
-            assertTrue(FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN).exists());
-        } catch (IllegalArgumentException ex) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                assertEquals("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.", ex.getMessage());
-            } else {
-                Assert.fail(ex.getMessage());
-            }
-        }
+        String[] args = {"-p", "gradle-simple", "-d", PROJECT_PATH_GRADLE, "-r", "1", "-o", "simple.csv", "-prof", "jfr", "-save", "s"};
+        Assert.assertThrows(IllegalArgumentException.class, () -> new Profiler(args));
     }
+
 }

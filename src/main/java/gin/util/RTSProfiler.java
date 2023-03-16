@@ -66,9 +66,8 @@ public class RTSProfiler implements Serializable {
             + "If you are using Apache Commons projects, add the \"rat.skip=true\" property, otherwise the projects won't work with Gin.")
     protected String[] additionalProperties = new String[]{};
     @Argument(description = "The Regression Test Selection (RTS) mechanism used to collect test cases for each method. "
-            + "WARNING: starts does not work on Windows. "
             + "Use 'none' for avoiding RTS altogether. "
-            + "Available: 'none', 'ekstazi', 'starts', 'random'. "
+            + "Available: 'none', 'ekstazi', 'random'. "
             + "Default: 'ekstazi'.")
     protected String rts = "ekstazi";
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
@@ -100,20 +99,19 @@ public class RTSProfiler implements Serializable {
         }
         project.setUp();
 
-        if (this.rts.equals(RTSFactory.STARTS)) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                // STARTS fails on Windows
-                // https://github.com/TestingResearchIllinois/starts/issues/12
-                // Although the author claims the tests pass, they actually don't
-                throw new IllegalArgumentException("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.");
-            } else if (this.project.isGradleProject()) {
-                throw new IllegalArgumentException("STARTS will not work with Gradle projects. Please, use 'ekstazi' as an alternative.");
-            }
-        }
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
         if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
+        valiateArguments();
+    }
+
+    private void valiateArguments() {
+        if (this.project.isGradleProject()
+                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
+                && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
     }
 

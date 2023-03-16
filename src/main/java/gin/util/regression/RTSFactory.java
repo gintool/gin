@@ -1,18 +1,16 @@
 package gin.util.regression;
 
-import java.io.Serializable;
-
 import gin.util.regression.impl.EkstaziRTS;
 import gin.util.regression.impl.NoneRTS;
 import gin.util.regression.impl.RandomRTS;
-import gin.util.regression.impl.STARTSRTS;
+
+import java.io.Serializable;
 
 /**
  * This is a Factory class for the Regression Test Selection (RTS) strategy
  * objects.
  *
  * @author Giovani
- *
  * @see RTSStrategy
  * @see EkstaziRTS
  */
@@ -26,13 +24,6 @@ public class RTSFactory implements Serializable {
      * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
      */
     public static final String EKSTAZI = "ekstazi";
-
-    /**
-     * The identifier of {@link STARTSRTS}. This should be given as input to the
-     * factory method
-     * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
-     */
-    public static final String STARTS = "starts";
 
     /**
      * The identifier of {@link RandomRTS}. This should be given as input to the
@@ -55,23 +46,15 @@ public class RTSFactory implements Serializable {
      * @param rtsName        the RTS object to create
      * @param projectRootDir the root directory of the project under improvement
      * @return the object representing the RTS technique, or {@link NoneRTS} if
-     *         unidentified
-     *
+     * unidentified
      * @see #EKSTAZI
-     * @see #STARTS
      */
     public static RTSStrategy createRTSStrategy(String rtsName, String projectRootDir) {
-        switch (rtsName) {
-            case EKSTAZI:
-                return new EkstaziRTS(projectRootDir);
-            case STARTS:
-                return new STARTSRTS(projectRootDir);
-            case RANDOM:
-                return new RandomRTS();
-            case NONE:
-            default:
-                return new NoneRTS();
-        }
+        return switch (rtsName) {
+            case EKSTAZI -> new EkstaziRTS(projectRootDir);
+            case RANDOM -> new RandomRTS();
+            default -> new NoneRTS();
+        };
     }
 
 }

@@ -152,9 +152,9 @@ In case you want to use a Regression Test Selection (RTS) technique to speed up 
 java -cp build/gin.jar gin.util.RTSProfiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome> -rts ekstazi
 ```
 
-Gin integrates 3 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default), [STARTS](https://github.com/TestingResearchIllinois/starts) (`-rts starts`), and a Random selection (`-rts random` - not recommended). STARTS is not supported on Windows. To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
+Gin integrates 2 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default) and a Random selection (`-rts random` - not recommended). To disable it in `gin.util.RTSProfiler` and use all test cases to test all target methods, use the option `-rts none`.
 
-The output is saved in profiler_output.csv. Note that this is empty for the simple project above as Profiler depends on hprof and inherits its constraints.
+The output is saved in profiler_output.csv. Note that this is empty for the simple project above as Profiler depends on jfr and inherits its constraints.
 
 We've observed it's best to run Gin from within real-world project's repositories, in case test cases have some unexpected hard-coded dependencies.
 
@@ -187,7 +187,7 @@ java -cp build/gin.jar gin.util.TestCaseGenerator -d examples/maven-simple -p my
 
 ## Samplers
 
-We provide an abstract Sampler class that provides utilities for testing patches made at the class and method level. It takes method names and tests associated with those methods as input. Please note that you can simply supply the output of Profiler as an input file. Also note that we capture both the actual and expected result in case of failed assertions. Also worth noting that the samplers will probably produce different lists of patches with different versions of Gin (owing to updates to Java syntax, the RNG, and supporting libraries that mean the space of possible edits changes).
+We provide an abstract Sampler class that provides utilities for testing patches made at the class and method level. It takes method names and tests associated with those methods as input. Please note that you can simply supply the output of Profiler as an input file. Also note that we capture both the actual and expected result in case of failed assertions. Also, worth noting that the samplers will probably produce different lists of patches with different versions of Gin (owing to updates to Java syntax, the RNG, and supporting libraries that mean the space of possible edits changes).
 
 We provide three subclasses to show example usage scenarios and show how easily Gin can be extended.
 

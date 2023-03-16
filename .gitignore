@@ -25,6 +25,7 @@ java.prof
 hprof
 scratch
 examples/maven-simple/target
+examples/unittests/maven/maven-simple-junit5/target
 examples/unittests/mypackage/ExampleInterface.class
 examples/unittests/gradle/gradle-simple/build/reports/tests/test/classes/example.ExampleTest.html
 examples/unittests/gradle/gradle-simple/build/reports/tests/test/index.html

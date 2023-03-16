@@ -6,6 +6,7 @@ import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.pmw.tinylog.Logger;
 
@@ -41,8 +42,8 @@ public class Profiler implements Serializable {
     @Argument(alias = "r", description = "Number of times to run each test")
     protected Integer reps = 1;
 
-    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
-    protected File mavenHome = new File("/usr/local/");  // default on OS X
+    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/. Leave blank for automatic discovery.")
+    protected File mavenHome = null;
 
     @Argument(alias = "v", description = "Set Gradle version")
     protected String gradleVersion;
@@ -99,6 +100,14 @@ public class Profiler implements Serializable {
         }
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
+        } else {
+            // If maven home is not set manually, tries to find a home dir in
+            // the system variables
+            String mavenHomePath = MavenUtils.findMavenHomePath();
+            if (mavenHomePath != null) {
+                this.mavenHome = FileUtils.getFile(mavenHomePath);
+                project.setMavenHome(this.mavenHome);
+            }
         }
         project.setUp();
         // Adds the interval provided by the user

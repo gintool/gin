@@ -1,0 +1,2 @@
+"Project","Method","Count","Tests"
+"mypackage","com.mycompany.app.App.classifyTriangle(int,int,int)","5","com.mycompany.app.AppTest.shouldAnswerWithTrue [],com.mycompany.app.AppTest.testInvalidTriangles [],com.mycompany.app.AppTest.testEqualateralTriangles [],com.mycompany.app.AppTest.testIsocelesTriangles [],com.mycompany.app.AppTest.testScaleneTriangles []"

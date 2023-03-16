@@ -87,12 +87,10 @@ public class JUnitBridge implements Serializable {
     }
 
     public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
-        Class<?> clazz = null;
-
-        String testClassname = test.getFullClassName();
         ClassLoader loader = this.getClass().getClassLoader();
 
-        clazz = loader.loadClass(testClassname);
+        String testClassname = test.getFullClassName();
+        Class<?> clazz = loader.loadClass(testClassname);
 
         String methodName = test.getMethodName().replace("()", "");
         Method method = clazz.getDeclaredMethod(methodName);

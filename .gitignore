@@ -17,12 +17,14 @@ src/test/resources/ExampleTriangleProgram.java.patched
 classes/
 *.iml
 examples/*.class
+examples/*.csv
 examples/unittests/mypackage/*.class
 /bin/
 evoexample/
 evosuite-report/
 java.prof
 hprof
+*.jfr
 scratch
 examples/maven-simple/target
 examples/unittests/maven/maven-simple-junit5/target
@@ -67,4 +69,3 @@ profile_timing.csv
 sampler_timing.csv
 sampler_results.csv
 profile_results.csv
-*.jfr

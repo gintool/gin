@@ -18,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -131,7 +132,7 @@ public class RTSProfiler implements Serializable {
         File profFile = FileUtils.getFile(profDir, profFileName);
         // Create RTS strategy if any
         Logger.info("Initialised: " + rts);
-        RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, this.projectDir.getAbsolutePath());
+        RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, Paths.get(this.projectDir.getAbsolutePath()).normalize().toString());
         // Execute profiler
         if (!this.excludeProfiler) {
             // Try to create the folder in which the profiling results of hprof

@@ -1,5 +1,6 @@
 package gin.util;
 
+import gin.category.LocalTest;
 import gin.TestConfiguration;
 import gin.test.UnitTest;
 import org.apache.commons.io.FileUtils;
@@ -8,6 +9,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.Assertions;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Level;
@@ -79,6 +81,7 @@ public class ProfilerTest {
     }
 
     @Test
+    @Category(LocalTest.class)
     public void testJFRProfilingGradleJUnit4() throws IOException {
         Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
 
@@ -88,6 +91,7 @@ public class ProfilerTest {
     }
 
     @Test
+    @Category(LocalTest.class)
     public void testJFRProfilingGradleJUnit5() throws IOException {
         Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
 

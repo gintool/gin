@@ -30,12 +30,12 @@ public class NoneRTSTest {
     
     @Test
     public void testGetGoal() {
-        assertEquals("test", this.noneRTS.getTestGoal());
+        assertEquals("test", noneRTS.getTestGoal());
     }
 
     @Test
     public void testGetArgumentLine() throws IOException {
-        String argLine = this.noneRTS.getArgumentLine();
+        String argLine = noneRTS.getArgumentLine();
         assertNotNull(argLine);
         assertTrue(argLine.trim().isEmpty());
     }

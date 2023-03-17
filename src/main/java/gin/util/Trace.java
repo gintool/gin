@@ -10,17 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import jdk.jfr.Event;
-import jdk.jfr.EventType;
-import jdk.jfr.Label;
-import jdk.jfr.Name;
-import jdk.jfr.Recording;
-import jdk.jfr.consumer.RecordingFile;
-import jdk.jfr.consumer.RecordedFrame;
+
 import jdk.jfr.consumer.*;
-import jdk.jfr.consumer.RecordedObject;
 
 /**
  * Used by gin.util.Profiler.
@@ -28,7 +20,7 @@ import jdk.jfr.consumer.RecordedObject;
 public class Trace implements Serializable {
 
     private static final long serialVersionUID = -4519079857156034044L;
-    private UnitTest test;
+    private final UnitTest test;
     Map<String, Integer> methodCounts;
 
     private Trace(UnitTest test, Map<String, Integer> methodCounts) {
@@ -180,7 +172,7 @@ public class Trace implements Serializable {
         String footer = "CPU SAMPLES END";
         String tableRegex = header + "(.*?)" + footer;
 
-        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);;
+        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher m = p.matcher(hprof);
 
         if(m.find()) {
@@ -350,11 +342,7 @@ public class Trace implements Serializable {
             return false;
         }
 
-        if (method.contains("clinit")) {
-            return false;
-        }
-
-        return true;
+        return !method.contains("clinit");
 
     }
 

@@ -95,11 +95,9 @@ public class JUnitBridge implements Serializable {
         String methodName = test.getMethodName().replace("()", "");
         Method method = clazz.getDeclaredMethod(methodName);
 
-        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+        return LauncherDiscoveryRequestBuilder.request()
                 .selectors(selectMethod(clazz, method.getName()))
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
                 .build();
-
-        return request;
     }
 }

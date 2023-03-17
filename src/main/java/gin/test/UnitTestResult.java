@@ -12,8 +12,8 @@ import org.junit.runner.notification.Failure;
 public class UnitTestResult implements Serializable {
 
     private static final long serialVersionUID = -1929539166632146849L;
-    private UnitTest test;
-    private int repNumber;
+    private final UnitTest test;
+    private final int repNumber;
 
     private boolean passed = false;
     private boolean timedOut = false;

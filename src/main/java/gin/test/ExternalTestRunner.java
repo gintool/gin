@@ -40,12 +40,12 @@ public class ExternalTestRunner extends TestRunner {
     /**
      * If true, each test is run in a new JVM.
      */
-    private boolean eachTestInNewSubProcess;
+    private final boolean eachTestInNewSubProcess;
     
     /**
      * If true, each repetition of the full test suite is run in a new JVM.
      */
-    private boolean eachRepetitionInNewSubProcess;
+    private final boolean eachRepetitionInNewSubProcess;
     
     /**
      * If set to true, the tests will stop at the first failure and the next 
@@ -303,73 +303,72 @@ public class ExternalTestRunner extends TestRunner {
 
             boolean keepConnection = true;
 
-            inner:
             while (index < maxIndex) {
-                
+
                 if (keepConnection) {
-                        
-                        int testIndex = index % this.getTests().size();
-                        int rep = index / this.getTests().size();
-                        UnitTest test = this.getTests().get(testIndex);
-                        Logger.debug("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep+1 + "/"+reps+", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
-                        
-                        long timeoutMS = test.getTimeoutMS();
-                        String testName = test.toString();
-                        index++;
 
-                        client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
+                    int testIndex = index % this.getTests().size();
+                    int rep = index / this.getTests().size();
+                    UnitTest test = this.getTests().get(testIndex);
+                    Logger.debug("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep + 1 + "/" + reps + ", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
 
-                        String message = testName + "," + rep+1 + "," + timeoutMS;
-                        String resp;
-                        try {
-                            resp = client.sendMessage(message);
-                        } catch (SocketTimeoutException e) {
-                            resp = null;
-                        }
-                        try {
-                            if (resp != null) {
-                                UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
-                                results.add(result);
-                                // closes the connection and creates a new sub-
-                                // process if:
-                                // 1) new subprocess for each test
-                                if (eachTestInNewSubProcess
-                                        // 2) it is the last test of the
-                                        // repetition. This is needed to avoid
-                                        // test poisoning from one repetition to
-                                        // another
-                                        || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
-                                         // 3) it is fail fast and the test failed
-                                        || (failFast && !result.getPassed())) {
-                                    keepConnection = false; 
-                                    break inner;
-                                }
-                            } else {
-                                // connection timed out
+                    long timeoutMS = test.getTimeoutMS();
+                    String testName = test.toString();
+                    index++;
+
+                    client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
+
+                    String message = testName + "," + rep + 1 + "," + timeoutMS;
+                    String resp;
+                    try {
+                        resp = client.sendMessage(message);
+                    } catch (SocketTimeoutException e) {
+                        resp = null;
+                    }
+                    try {
+                        if (resp != null) {
+                            UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
+                            results.add(result);
+                            // closes the connection and creates a new sub-
+                            // process if:
+                            // 1) new subprocess for each test
+                            if (eachTestInNewSubProcess
+                                    // 2) it is the last test of the
+                                    // repetition. This is needed to avoid
+                                    // test poisoning from one repetition to
+                                    // another
+                                    || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
+                                    // 3) it is fail fast and the test failed
+                                    || (failFast && !result.getPassed())) {
                                 keepConnection = false;
-                                UnitTestResult result = timeoutResult(test, rep+1);
-                                results.add(result);
-                                break inner;
+                                break;
                             }
-                        } catch (ParseException e) {
+                        } else {
+                            // connection timed out
                             keepConnection = false;
-                            // smth else went wrong, test or test result likely in the wrong format
-                            UnitTestResult result = new UnitTestResult(test, rep+1);
-                            result.setExceptionType(e.getClass().getName());
-                            result.setExceptionMessage(e.getMessage());
+                            UnitTestResult result = timeoutResult(test, rep + 1);
                             results.add(result);
                             break;
                         }
+                    } catch (ParseException e) {
+                        keepConnection = false;
+                        // smth else went wrong, test or test result likely in the wrong format
+                        UnitTestResult result = new UnitTestResult(test, rep + 1);
+                        result.setExceptionType(e.getClass().getName());
+                        result.setExceptionMessage(e.getMessage());
+                        results.add(result);
+                        break;
+                    }
 
                 } else {
-                    break inner;
+                    break;
                 }
 
             } // end of inner
 
             try {
                 client.sendMessage("stop");
-            } catch (SocketTimeoutException e) {}
+            } catch (SocketTimeoutException ignored) {}
 
             client.stopConnection();
                         

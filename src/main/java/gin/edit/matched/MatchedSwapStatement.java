@@ -39,11 +39,6 @@ public class MatchedSwapStatement extends SwapStatement {
     private MatchedSwapStatement(String sourceFilename, int sourceStatement, String destinationFilename, int destinationStatement) {
         super(sourceFilename, sourceStatement, destinationFilename, destinationStatement);
     }
-    
-    @Override
-    public String toString() {
-        return super.toString(); //.replace("SwapStatement", "MatchedSwapStatement");
-    }
 
     public static Edit fromString(String description) {
             String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);

@@ -3,7 +3,6 @@ package gin.edit.insert;
 import java.util.List;
 import java.util.Random;
 
-import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.stmt.BreakStmt;
 
 import gin.SourceFile;
@@ -80,9 +79,9 @@ public class InsertBreak extends InsertStatementEdit {
     }
 
     public static Edit fromString(String description) {
-        String tokens[] = description.split("\\s+");
+        String[] tokens = description.split("\\s+");
         String destination = tokens[1];
-        String destTokens[] = destination.split(":");
+        String[] destTokens = destination.split(":");
         String destFile = destTokens[0];
         int destBlock = Integer.parseInt(destTokens[1]);
         int destLine = Integer.parseInt(destTokens[2]);

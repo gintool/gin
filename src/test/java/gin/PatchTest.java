@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +34,7 @@ public class PatchTest {
     private final static String verySmallExampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Small.java";
     private final static String tmpPatchedFilenameTree = verySmallExampleSourceFilename + ".patchedTree";
     private final static String tmpPatchedFilenameLine = verySmallExampleSourceFilename + ".patchedLine";
-    private final static Charset charSet = Charset.forName("UTF-8");
+    private final static Charset charSet = StandardCharsets.UTF_8;
 
     private final static List<EditType> allowableEditTypesTree = Arrays.asList(EditType.STATEMENT, EditType.MODIFY_STATEMENT);
 

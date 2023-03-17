@@ -116,7 +116,7 @@ import gin.SourceFileTree;
 public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
 
     private static final long serialVersionUID = -7030362755496561991L;
-    private Map<Integer,Node> nodesToReplace;
+    private final Map<Integer,Node> nodesToReplace;
 
     public CloneVisitorCopyIDs() {
         nodesToReplace = new HashedMap<>();
@@ -461,8 +461,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
     public Visitable visit(final BinaryExpr n, final Object arg) {
         Integer id = n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
         if (nodesToReplace.containsKey(id)) {
-            Node r = nodesToReplace.get(id);
-            return r;
+            return nodesToReplace.get(id);
         }
 
         Visitable r = checkForReplacement(n);
@@ -698,9 +697,8 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
     public Visitable visit(final UnaryExpr n, final Object arg) {
         Integer id = n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
         if (nodesToReplace.containsKey(id)) {
-            Node r = nodesToReplace.get(id);
             //r.setData(SourceFileTree.NODEKEY_ID, id);
-            return r;
+            return nodesToReplace.get(id);
         }
 
         Visitable r = checkForReplacement(n);
@@ -1034,7 +1032,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
     @Override
     public Node visit(final ImportDeclaration n, final Object arg) {
         Node r = super.visit(n, arg);
-        ((ImportDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+        r.setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         return r;
     }
 
@@ -1194,8 +1192,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
     private Node checkForReplacement(Node n) {
         Integer id = n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
         if (nodesToReplace.containsKey(id)) {
-            Node r = nodesToReplace.get(id);
-            return r;
+            return nodesToReplace.get(id);
         } else {
             return null;
         }

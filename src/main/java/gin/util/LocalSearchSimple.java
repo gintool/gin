@@ -45,10 +45,6 @@ public abstract class LocalSearchSimple extends GP {
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
 
-    // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
-    @Override
-    protected abstract double compareFitness(double newFitness, double oldFitness);
-
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/

@@ -71,16 +71,13 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
     public SourceFile apply(SourceFile sourceFile) {
         SourceFileTree sf = (SourceFileTree)sourceFile;
         Node node = sf.getNode(targetNode);
-        
-        if (node == null) {
-            return sf; // targeting a deleted location just does nothing.
-        } else {
-            ((UnaryExpr)node).setOperator(replacement);
-            
+
+        // targeting a deleted location just does nothing.
+        if (node != null) {
+            ((UnaryExpr) node).setOperator(replacement);
             sf = sf.replaceNode(this.targetNode, node);
-            
-            return sf;
         }
+        return sf;
     }
     
     private static Operator chooseRandomReplacement(Operator original, Random r) {
@@ -108,7 +105,7 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
     
     public static Edit fromString(String description) {
             String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-        String sourceTokens[] = tokens[1].split(":");
+        String[] sourceTokens = tokens[1].split(":");
         String sourceFile = sourceTokens[0].replace("\"", "");
         int targetNodeID = Integer.parseInt(sourceTokens[1]);
         Operator sourceOperator = Operator.valueOf(tokens[2]);

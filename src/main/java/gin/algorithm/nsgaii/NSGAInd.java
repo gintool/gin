@@ -3,8 +3,6 @@ package gin.algorithm.nsgaii;
 import gin.Patch;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class NSGAInd {
 

@@ -30,7 +30,7 @@ public class TestHarness implements Serializable {
     public static final String PORT_PREFIX = "PORT";
 
     public static void main(String[] args) {
-        TestHarness testHarness = new TestHarness(args);
+        new TestHarness(args);
     }
 
     public TestHarness(String[] args) {
@@ -109,15 +109,11 @@ public class TestHarness implements Serializable {
         UnitTestResult result = new UnitTestResult(test, rep);
 
         String className = test.getFullClassName();
-        String methodName = test.getMethodName();
-        long timeout = test.getTimeoutMS();
 
-        Class<?> clazz = null;
-
-        LauncherDiscoveryRequest request = null;
+        LauncherDiscoveryRequest request;
 
         try {
-            clazz = Class.forName(className);
+            Class.forName(className);
             request = buildRequest(test);
 
         } catch (ClassNotFoundException e) {
@@ -182,12 +178,10 @@ public class TestHarness implements Serializable {
         String methodName = test.getMethodName().replace("()", "");
         Method method = clazz.getDeclaredMethod(methodName);
 
-        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+        return LauncherDiscoveryRequestBuilder.request()
                 .selectors(selectMethod(clazz, method.getName()))
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
                 .build();
-
-        return request;
     }
 
 }    

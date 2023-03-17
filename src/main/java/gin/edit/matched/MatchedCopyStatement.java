@@ -26,11 +26,6 @@ public class MatchedCopyStatement extends CopyStatement {
         super(sourceFilename, sourceStatement, destinationFilename, destinationBlock, destinationChildInBlock);
     }
 
-    @Override
-    public String toString() {
-        return super.toString(); //.replace("CopyStatement", "MatchedCopyStatement");
-    }
-
     public static Edit fromString(String description) {
             String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] sourceTokens = tokens[1].split(":");

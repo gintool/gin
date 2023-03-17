@@ -49,16 +49,16 @@ public class Project implements Serializable {
     private static final boolean DEBUG = false;
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
     private String gradleVersion = "7.6";
-    private File projectDir;
-    private String projectName;
+    private final File projectDir;
+    private final String projectName;
     private BuildType buildType;
-    private List<File> moduleDirs = new LinkedList<>();
-    private List<File> mainSourceDirs = new LinkedList<>();
-    private List<File> testSourceDirs = new LinkedList<>();
-    private List<File> mainResourceDirs = new LinkedList<>();
-    private List<File> testResourceDirs = new LinkedList<>();
-    private List<File> mainClassDirs = new LinkedList<>();
-    private List<File> testClassDirs = new LinkedList<>();
+    private final List<File> moduleDirs = new LinkedList<>();
+    private final List<File> mainSourceDirs = new LinkedList<>();
+    private final List<File> testSourceDirs = new LinkedList<>();
+    private final List<File> mainResourceDirs = new LinkedList<>();
+    private final List<File> testResourceDirs = new LinkedList<>();
+    private final List<File> mainClassDirs = new LinkedList<>();
+    private final List<File> testClassDirs = new LinkedList<>();
 
     /**
      * Builds a project object. You must call {@link #setUp()} or {@link #setUp(String, String)} before using it to capture the project's structure.
@@ -462,7 +462,7 @@ public class Project implements Serializable {
             InvocationResult result = null;
 
             // Extremely detailed debug output.
-            if (this.DEBUG) {
+            if (DEBUG) {
                 request.setErrorHandler(new InvocationOutputHandler() {
                     @Override
                     public void consumeLine(String line) throws IOException {
@@ -571,7 +571,7 @@ public class Project implements Serializable {
         InvocationResult result = null;
 
         // Extremely detailed debug output.
-        if (this.DEBUG) {
+        if (DEBUG) {
             request.setErrorHandler(new InvocationOutputHandler() {
                 @Override
                 public void consumeLine(String line) throws IOException {
@@ -749,7 +749,7 @@ public class Project implements Serializable {
         Path relativeModulePath = projectDir.toPath().relativize(moduleDir.toPath());
         String moduleName = relativeModulePath.toString();
 
-        Set<UnitTest> tests = new HashSet();
+        Set<UnitTest> tests = new HashSet<>();
 
         File targetDir = new File(moduleDir, "target");
         File surefireReportsDir = new File(targetDir, "surefire-reports");

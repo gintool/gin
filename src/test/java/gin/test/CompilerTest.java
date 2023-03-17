@@ -21,11 +21,11 @@ public class CompilerTest {
 
         CompiledCode code = Compiler.compile(className, "public class SimpleExample {} ", classPath);
 
-        assertTrue(code != null);
+        assertNotNull(code);
 
         CacheClassLoader loader = new CacheClassLoader(classPath);
         loader.setCustomCompiledCode(className, code.getByteCode());
-        Class compiledClass = loader.findClass("SimpleExample");
+        Class<?> compiledClass = loader.findClass("SimpleExample");
 
         assertNotNull(compiledClass);
         assertEquals("SimpleExample", compiledClass.getSimpleName());

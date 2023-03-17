@@ -37,11 +37,6 @@ public class MatchedReplaceStatement extends ReplaceStatement {
     private MatchedReplaceStatement(String sourceFilename, int sourceStatement, String destinationFilename, int destinationStatement) {
         super(sourceFilename, sourceStatement, destinationFilename, destinationStatement);
     }
-        
-    @Override
-    public String toString() {
-        return super.toString(); //.replace("ReplaceStatement", "MatchedReplaceStatement");
-    }
 
     public static Edit fromString(String description) {
             String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);

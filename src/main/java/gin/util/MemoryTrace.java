@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public class MemoryTrace {
 
-    private UnitTest test;
+    private final UnitTest test;
     Map<String, Integer> methodCounts;
 
     private MemoryTrace(UnitTest test, Map<String, Integer> methodCounts) {
@@ -174,7 +174,7 @@ public class MemoryTrace {
         String footer = "SITES END";
         String tableRegex = header + "(.*?)" + footer;
 	
-        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);;
+        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher m = p.matcher(hprof);
 
         m.find();
@@ -192,9 +192,8 @@ public class MemoryTrace {
                     int tracePointNumber = Integer.parseInt(fields[7]);
                     int lineNumber = tracePoints.get(tracePointNumber).lineNumber;
                     //String methodName = fields[8];
-		    String methodName = tracePoints.get(tracePointNumber).method;
 
-                    String fullMethodName = methodName;
+                    String fullMethodName = tracePoints.get(tracePointNumber).method;
                     if (lineNumber != -1) {
                         fullMethodName += ":" + lineNumber;
                     }
@@ -300,11 +299,7 @@ public class MemoryTrace {
             return false;
         }
 
-        if (method.contains("<clinit>")) {
-            return false;
-        }
-
-        return true;
+        return !method.contains("<clinit>");
 
     }
 

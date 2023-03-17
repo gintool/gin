@@ -8,7 +8,7 @@ import gin.test.UnitTest;
 public class FailedToExecuteTestException extends Exception {
 
     private static final long serialVersionUID = -8186678933926975283L;
-    private Project.BuildType buildType;
+    private final Project.BuildType buildType;
     String reason;
     UnitTest test;
 

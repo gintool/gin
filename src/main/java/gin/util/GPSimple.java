@@ -56,10 +56,6 @@ public abstract class GPSimple extends GP {
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
     
-     // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
-    @Override
-    protected abstract double compareFitness(double newFitness, double oldFitness);
-
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/
@@ -77,9 +73,6 @@ public abstract class GPSimple extends GP {
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
         super.writePatch(results, methodName, orig, 0);
-
-        // Keep best 
-        double best = orig;
 
         // Generation 1
         Map<Patch, Double> population = new HashMap<>();
@@ -100,7 +93,7 @@ public abstract class GPSimple extends GP {
         for (int g = 0; g < genNumber; g++) {
 
             // Previous generation
-            List<Patch> patches = new ArrayList(population.keySet());
+            List<Patch> patches = new ArrayList<>(population.keySet());
 
             Logger.info("Creating generation: " + (g + 1));
 
@@ -158,7 +151,7 @@ public abstract class GPSimple extends GP {
     // Tournament selection for patches
     protected List<Patch> select(Map<Patch, Double> population, Patch origPatch, double origFitness) {
 
-        List<Patch> patches = new ArrayList(population.keySet());
+        List<Patch> patches = new ArrayList<>(population.keySet());
         if (patches.size() < super.indNumber) {
             population.put(origPatch, origFitness);
             while (patches.size() < super.indNumber) {
@@ -208,22 +201,22 @@ public abstract class GPSimple extends GP {
             Patch child1 = origPatch.clone();
             Patch child2 = origPatch.clone();
 
-            for (int j = 0; j < list1.size(); j++) {
+            for (Edit edit : list1) {
                 if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
-                    child1.add(list1.get(j));
+                    child1.add(edit);
                 }
             }
-            for (int j = 0; j < list2.size(); j++) {
+            for (Edit edit : list2) {
                 if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
-                    child1.add(list2.get(j));
+                    child1.add(edit);
                 }
                 if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
-                    child2.add(list2.get(j));
+                    child2.add(edit);
                 }
             }
-            for (int j = 0; j < list1.size(); j++) {
+            for (Edit edit : list1) {
                 if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
-                    child2.add(list1.get(j));
+                    child2.add(edit);
                 }
             }
 

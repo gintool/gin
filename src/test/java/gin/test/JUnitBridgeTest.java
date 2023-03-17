@@ -24,8 +24,6 @@ import org.pmw.tinylog.Logger;
 
 public class JUnitBridgeTest {
 
-    final String ROOT_DIR = "."+ File.separator +"tmp";
-
     CacheClassLoader classLoader;
 
     Object junitBridge;
@@ -37,7 +35,7 @@ public class JUnitBridgeTest {
     public void setUp() throws Exception {
         classLoader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME);
         Class<?> bridgeClass = classLoader.loadClass(JUnitBridge.class.getName());
-        junitBridge = bridgeClass.newInstance();
+        junitBridge = bridgeClass.getDeclaredConstructor().newInstance();
         runnerMethod = junitBridge.getClass().getMethod(JUnitBridge.BRIDGE_METHOD_NAME, UnitTest.class, int.class);
         buildExampleClasses();
     }

@@ -40,7 +40,7 @@ public class ProjectTest {
 
         // Module directories
         List<File> moduleDirs = project.getModuleDirs();
-        Set<File> moduleDirSet = new HashSet(moduleDirs);
+        Set<File> moduleDirSet = new HashSet<>(moduleDirs);
         Set<File> expectedModules = new HashSet<>();
         expectedModules.add(GRADLE_MULTI_DIR.getAbsoluteFile());
         expectedModules.add(new File(GRADLE_MULTI_DIR, "module1").getAbsoluteFile());
@@ -180,63 +180,4 @@ public class ProjectTest {
         assertEquals("mypackage.ExampleMethodSignature.exampleComplexParamComplexReturn(List<List<Map<Integer,Pair<Double,Object>>>>,List<Map<Integer,Object>>)", methodSignature);
     }
 
-    @Test
-    public void getProjectName() {
-    }
-
-    @Test
-    public void getGradleVersion() {
-    }
-
-    @Test
-    public void setGradleVersion() {
-    }
-
-    @Test
-    public void getBuildType() {
-    }
-
-    @Test
-    public void allClassDirs() {
-    }
-
-    @Test
-    public void allSourceDirs() {
-    }
-
-    @Test
-    public void getModuleDirs() {
-    }
-
-    @Test
-    public void findSourceFile() {
-    }
-
-    @Test
-    public void runAllUnitTests() {
-    }
-
-    @Test
-    public void parseTestReports() {
-    }
-
-    @Test
-    public void runUnitTest() {
-    }
-
-    @Test
-    public void runUnitTestGradle() {
-    }
-
-    @Test
-    public void runUnitTestMaven() {
-    }
-
-    @Test
-    public void listOfMainClasses() {
-    }
-
-    @Test
-    public void getMethodSignature() {
-    }
 }

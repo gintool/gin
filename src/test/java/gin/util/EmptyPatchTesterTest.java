@@ -27,7 +27,6 @@ public class EmptyPatchTesterTest {
     File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
     File packageDir = new File(resourcesDir, "mypackage");
     File methodFile = new File(packageDir, "profiler_all_results.csv");
-    File faultyMethodFile = new File(packageDir, "profiler_faulty_header.csv");
 
     // Compile source files.
     private static void buildExampleClasses() throws IOException {

@@ -35,7 +35,7 @@ public class InsertContinueWithIf extends InsertStatementEdit {
     public int destinationBlock;
     public int destinationChildInBlock;
 
-    private Statement toInsert;
+    private final Statement toInsert;
     
     /** 
      * create a random {@link InsertContinueWithIf} for the given sourcefile, using the provided RNG
@@ -80,7 +80,7 @@ public class InsertContinueWithIf extends InsertStatementEdit {
                                                 Operator.GREATER_EQUALS,
                                                 Operator.GREATER,
                                         }[rng.nextInt(5)];
-                        condition = new BinaryExpr(new NameExpr(v.getName()), new IntegerLiteralExpr(0), operator);
+                        condition = new BinaryExpr(new NameExpr(v.getName()), new IntegerLiteralExpr(String.valueOf(0)), operator);
                 }
                 
                 IfStmt ifs = new IfStmt();
@@ -150,7 +150,7 @@ public class InsertContinueWithIf extends InsertStatementEdit {
                             // otherwise it's if (var ?? 0)
                             String[] condSplit = strStatement.split("\\s+");
                             Operator o = Operator.valueOf(condSplit[1]);
-                            condition = new BinaryExpr(new NameExpr(condSplit[0]), new IntegerLiteralExpr(0), o);
+                            condition = new BinaryExpr(new NameExpr(condSplit[0]), new IntegerLiteralExpr(String.valueOf(0)), o);
                     }
                     
                     ContinueStmt cstmt = new ContinueStmt();

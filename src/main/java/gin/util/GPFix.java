@@ -134,7 +134,7 @@ public class GPFix extends GPSimple {
         this.multiplier = (failing > 0) ? passing * WEIGHT / failing : 0;
         Logger.info("Currently failing tests: " + failing);
         Logger.info("Currently passing tests (i.e., current fitness): " + passing);
-        this.targetFitness = (double) (passing + (this.multiplier * failing));
+        this.targetFitness = passing + (this.multiplier * failing);
         Logger.info("Target fitness: " + this.targetFitness);
     }
 

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public class SourceFileTreeTest {
     private final static String exampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
     private final static String exampleMethodName = "delay()";
     private final static String verySmallExampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Small.java";
-    private final static Charset charSet = Charset.forName("UTF-8");
+    private final static Charset charSet = StandardCharsets.UTF_8;
 
     @Before
     public void setup() {
@@ -105,7 +106,7 @@ public class SourceFileTreeTest {
     
     @Test
     public void statementListMethod() throws Exception {
-        List<Integer> expected = Arrays.asList(new Integer[] {181, 182, 183, 184, 195});
+        List<Integer> expected = Arrays.asList(181, 182, 183, 184, 195);
         assertEquals(expected, sourceFileWithMethod.getStatementIDsInTargetMethod());
     }
     
@@ -141,13 +142,13 @@ public class SourceFileTreeTest {
         // We expect 8,14,20,45 to be matched with each other, and 7 to match 44, and 30 to match only itself
         
     Map<Integer, List<Integer>> expected = new HashMap<>();
-    expected.put(10, Arrays.asList(new Integer[] {10, 47}));
-    expected.put(11, Arrays.asList(new Integer[] {11, 17, 23, 48}));
-    expected.put(17, Arrays.asList(new Integer[] {11, 17, 23, 48}));
-    expected.put(23, Arrays.asList(new Integer[] {11, 17, 23, 48}));
-    expected.put(33, Arrays.asList(new Integer[] {33}));
-    expected.put(47, Arrays.asList(new Integer[] {10, 47}));
-    expected.put(48, Arrays.asList(new Integer[] {11, 17, 23, 48}));
+    expected.put(10, Arrays.asList(10, 47));
+    expected.put(11, Arrays.asList(11, 17, 23, 48));
+    expected.put(17, Arrays.asList(11, 17, 23, 48));
+    expected.put(23, Arrays.asList(11, 17, 23, 48));
+    expected.put(33, List.of(33));
+    expected.put(47, Arrays.asList(10, 47));
+    expected.put(48, Arrays.asList(11, 17, 23, 48));
     
         assertEquals(expected, sourceFileSmall.getMatchedStatementLists(true, true));
         assertEquals(expected, sourceFileSmall.getMatchedStatementLists(false, true));
@@ -156,17 +157,17 @@ public class SourceFileTreeTest {
     @Test
     public void findNodesByClass() throws Exception {
         List<Integer> expected;
-        expected = Arrays.asList(new Integer[] {181, 183, 195});
+        expected = Arrays.asList(181, 183, 195);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, BlockStmt.class));
-        expected = Arrays.asList(new Integer[] {45, 55, 81, 107, 136, 152, 168, 172, 181, 183, 195});
+        expected = Arrays.asList(45, 55, 81, 107, 136, 152, 168, 172, 181, 183, 195);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, BlockStmt.class));
         expected = Collections.emptyList();
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, IfStmt.class));
-        expected = Arrays.asList(new Integer[] {49, 75, 101, 127, 140, 156});
+        expected = Arrays.asList(49, 75, 101, 127, 140, 156);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, IfStmt.class));
-        expected = Arrays.asList(new Integer[] {182});
+        expected = List.of(182);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, TryStmt.class));
-        expected = Arrays.asList(new Integer[] {182});
+        expected = List.of(182);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, TryStmt.class));
     }
 

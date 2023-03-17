@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -19,9 +20,8 @@ public class SourceFileLineTest {
     private SourceFileLine sourceFileTriangleWithComments;
     private final static String exampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
     private final static String exampleMethodName = "delay()";
-    private final static String verySmallExampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Small.java";
     private final static String triangleWithCommentsFilename = TestConfiguration.EXAMPLE_DIR_NAME + "TriangleWithComments.java";
-    private final static Charset charSet = Charset.forName("UTF-8");
+    private final static Charset charSet = StandardCharsets.UTF_8;
 
     @Before
     public void setup() {
@@ -57,7 +57,7 @@ public class SourceFileLineTest {
     
     @Test
     public void getLineIDsEmptyMethod() throws Exception {
-        List<Integer> expected = Arrays.asList(new Integer[]{2, 7, 16, 20, 21, 23, 30, 36, 44, 55, 57, 62, 65});
+        List<Integer> expected = Arrays.asList(2, 7, 16, 20, 21, 23, 30, 36, 44, 55, 57, 62, 65);
         List<Integer> actual = sourceFileTriangleWithComments.getLineIDsEmpty();
         
         assertEquals(expected, actual);
@@ -65,12 +65,12 @@ public class SourceFileLineTest {
     
     @Test
     public void getLineIDsNonEmptyOrCommentsMethod() throws Exception {
-        List<Integer> expected = Arrays.asList(new Integer[]{1, 3, 4, 5, 6, 15, 22, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 37, 38, 39, 40, 41, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 54, 56, 58, 59, 60, 61, 63, 64, 66});
+        List<Integer> expected = Arrays.asList(1, 3, 4, 5, 6, 15, 22, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 37, 38, 39, 40, 41, 42, 43, 45, 46, 48, 49, 50, 51, 52, 53, 54, 56, 58, 59, 60, 61, 63, 64, 66);
         List<Integer> actual = sourceFileTriangleWithComments.getLineIDsNonEmptyOrComments(false);
         
         assertEquals(expected, actual);
         
-        expected = Arrays.asList(new Integer[]{58, 59, 60, 61, 63, 64});
+        expected = Arrays.asList(58, 59, 60, 61, 63, 64);
         actual = sourceFileTriangleWithComments.getLineIDsNonEmptyOrComments(true);
         
         assertEquals(expected, actual);
@@ -78,7 +78,7 @@ public class SourceFileLineTest {
     
     @Test
     public void getLineIDsOnlyCommentsMethod() throws Exception {
-        List<Integer> expected = Arrays.asList(new Integer[]{8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 24, 47});
+        List<Integer> expected = Arrays.asList(8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 24, 47);
         List<Integer> actual = sourceFileTriangleWithComments.getLineIDsOnlyComments();
         
         assertEquals(expected, actual);

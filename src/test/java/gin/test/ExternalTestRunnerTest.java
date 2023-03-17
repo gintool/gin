@@ -29,7 +29,6 @@ public class ExternalTestRunnerTest {
     String classPath = TestConfiguration.EXAMPLE_DIR_NAME;
     String testClassname = "myPackage.SimpleTest";
     String testMethodName = "testReturnsTrue";
-    String sourceFilename;
 
     File packageDirectory = new File(TestConfiguration.EXAMPLE_DIR, packageName);
     File sourceFile = new File(packageDirectory, className + ".java");

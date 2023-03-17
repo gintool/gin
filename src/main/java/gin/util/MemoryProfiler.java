@@ -67,8 +67,8 @@ public class MemoryProfiler {
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
 
     // Instance Members
-    private File workingDir;
-    private Project project;
+    private final File workingDir;
+    private final Project project;
 
     public static void main(String[] args) {
         MemoryProfiler profiler = new MemoryProfiler(args);
@@ -117,7 +117,7 @@ public class MemoryProfiler {
         if (!this.excludeMemoryProfiler) {
             results = profileTestSuite(tests);
             tests = tests.stream()
-                        .filter(test -> results.keySet().contains(test) && results.get(test).success)
+                        .filter(test -> results.containsKey(test) && results.get(test).success)
                         .collect(Collectors.toSet());
             reportSummary(results);
         }
@@ -165,7 +165,7 @@ public class MemoryProfiler {
         int testCount = 0;
 
         // Sort for replication when debugging
-        List<UnitTest> sortedTests = new LinkedList(tests);
+        List<UnitTest> sortedTests = new LinkedList<>(tests);
         Collections.sort(sortedTests);
 
         for (UnitTest test: sortedTests) {
@@ -369,8 +369,7 @@ public class MemoryProfiler {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
-        File hprof = new File(workingDir, filenameNoBrackets);
-        return  hprof;
+        return new File(workingDir, filenameNoBrackets);
     }
 
     private void ensureWorkingDirectory() {

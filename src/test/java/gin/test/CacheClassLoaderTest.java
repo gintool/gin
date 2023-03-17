@@ -34,8 +34,8 @@ public class CacheClassLoaderTest {
     // The special case of JUnitBridge - should load a new class in the cache class loader
     @Test
     public void loadTestRunner() throws ClassNotFoundException {
-        Class systemClassForTestRunner = InternalTestRunner.class;
-        Class loadedTestRunner = loader.loadClass("gin.test.JUnitBridge");
+        Class<InternalTestRunner> systemClassForTestRunner = InternalTestRunner.class;
+        Class<?> loadedTestRunner = loader.loadClass("gin.test.JUnitBridge");
         assertNotEquals(systemClassForTestRunner, loadedTestRunner);
     }
 
@@ -43,7 +43,7 @@ public class CacheClassLoaderTest {
 
     @Test
     public void loadSystemClass() throws ClassNotFoundException {
-        Class patchClass = loader.loadClass("gin.Patch");
+        Class<?> patchClass = loader.loadClass("gin.Patch");
         assertEquals(gin.Patch.class, patchClass);
         // and try again
         assertEquals(patchClass, loader.loadClass("gin.Patch"));

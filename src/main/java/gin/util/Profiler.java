@@ -63,8 +63,8 @@ public class Profiler implements Serializable {
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
     // Instance Members
-    private File workingDir;
-    private Project project;
+    private final File workingDir;
+    private final Project project;
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -87,7 +87,7 @@ public class Profiler implements Serializable {
         }
         project.setUp();
         // Adds the interval provided by the user
-        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
 
@@ -131,7 +131,7 @@ public class Profiler implements Serializable {
         Map<UnitTest, ProfileResult> results;
         if (!this.excludeProfiler) {
             results = profileTestSuite(tests);
-            tests = tests.stream().filter(test -> results.keySet().contains(test) && results.get(test).success).collect(Collectors.toSet());
+            tests = tests.stream().filter(test -> results.containsKey(test) && results.get(test).success).collect(Collectors.toSet());
             reportSummary(results);
         }
 
@@ -178,7 +178,7 @@ public class Profiler implements Serializable {
         int testCount = 0;
 
         // Sort for replication when debugging
-        List<UnitTest> sortedTests = new LinkedList(tests);
+        List<UnitTest> sortedTests = new LinkedList<>(tests);
         Collections.sort(sortedTests);
 
         for (UnitTest test : sortedTests) {
@@ -196,7 +196,7 @@ public class Profiler implements Serializable {
 
                 String args;
 
-                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
                     if (JavaUtils.getJavaVersion() < 11) {
@@ -253,7 +253,7 @@ public class Profiler implements Serializable {
                 File traceFile;
                 Trace trace;
 
-                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     traceFile = hprofFile(test, rep);
                     trace = Trace.fromHPROFFile(this.project, test, traceFile);
                     testTraces.add(trace);
@@ -379,8 +379,7 @@ public class Profiler implements Serializable {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".jfr";
         String filenameNoBrackets = filename.replace("()", "");
-        File jfr = new File(workingDir, filenameNoBrackets);
-        return jfr;
+        return new File(workingDir, filenameNoBrackets);
 
     }
 
@@ -389,8 +388,7 @@ public class Profiler implements Serializable {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
-        File hprof = new File(workingDir, filenameNoBrackets);
-        return hprof;
+        return new File(workingDir, filenameNoBrackets);
     }
 
     private void ensureWorkingDirectory() {

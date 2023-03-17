@@ -5,15 +5,13 @@
  */
 package gin.util.regression.impl;
 
-import gin.TestConfiguration;
 import gin.util.HotMethod;
 import gin.test.UnitTest;
-import java.io.File;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import static org.junit.Assert.*;
 import org.junit.Before;

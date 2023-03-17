@@ -10,8 +10,8 @@ import gin.misc.BlockedByJavaParserException;
 public class DeleteStatement extends StatementEdit {
 
     private static final long serialVersionUID = -8946372835353498185L;
-    private String sourceFilename;
-    private int statementToDelete;
+    private final String sourceFilename;
+    private final int statementToDelete;
 
     /** 
      * create a random deletestatement for the given sourcefile, using the provided RNG

@@ -3,7 +3,6 @@ package gin;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -52,12 +51,12 @@ public abstract class SourceFile implements Serializable {
     }
     
     public SourceFile(File file, String method) {
-        this(file.getPath(), Arrays.asList(method));
+        this(file.getPath(), Collections.singletonList(method));
     }
     
     
     public static SourceFile makeSourceFileForEditType(Class<? extends Edit> type, String filename, String targetMethodName) {
-        return makeSourceFileForEditTypes(Collections.singletonList(type), filename, Arrays.asList(targetMethodName));
+        return makeSourceFileForEditTypes(Collections.singletonList(type), filename, Collections.singletonList(targetMethodName));
     }
     
     public static SourceFile makeSourceFileForEditType(Class<? extends Edit> type, String filename, List<String> targetMethodNames) {
@@ -96,9 +95,8 @@ public abstract class SourceFile implements Serializable {
     public String getFilename() {
         String base = (new File(".")).getAbsolutePath();
         base = StringUtils.chop(base);
-        String filePath = (new File(this.filename)).getAbsolutePath();        
-        String result = StringUtils.substringAfter(filePath, base);
-        return result;        
+        String filePath = (new File(this.filename)).getAbsolutePath();
+        return StringUtils.substringAfter(filePath, base);
     }
     
     /**

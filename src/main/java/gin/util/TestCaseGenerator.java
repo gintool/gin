@@ -78,15 +78,13 @@ public class TestCaseGenerator implements Serializable {
     @Argument(alias = "maxStatements", description = "Search budget for test case generation, set to 50000 statements by default")
     protected String search_budget = "50000"; // search budget for MaxStatements stopping condition
 
-    private Project project;
+    private final Project project;
 
     private boolean checkIfRewrite = false;
 
     // EvoSuite parameters
 
-    private String projectCP; // classpath to be supplied to EvoSuite
-
-    private static final String report_dir = "evosuite-reports";  // relative to projectDir
+    private final String projectCP; // classpath to be supplied to EvoSuite
 
     // below settings to get deterministic results according to: https://github.com/EvoSuite/evosuite/issues/48
     private static final String p_functional_mocking = "0";
@@ -180,7 +178,7 @@ public class TestCaseGenerator implements Serializable {
 
     public static void main(String[] args) {
 
-        TestCaseGenerator evotestgen = new TestCaseGenerator(args);
+        new TestCaseGenerator(args);
         
     }
 
@@ -196,7 +194,7 @@ public class TestCaseGenerator implements Serializable {
 
         } else {
 
-            Logger.error(javaDir.toString()+" is not a directory. Please specify the output directory using the outputDir parameter. Please note tests are run using mvn/gradle test, so manual copying of tests to the appropriate directories might be needed before tests can be run with Gin.");
+            Logger.error(javaDir +" is not a directory. Please specify the output directory using the outputDir parameter. Please note tests are run using mvn/gradle test, so manual copying of tests to the appropriate directories might be needed before tests can be run with Gin.");
             System.exit(-1);
 
         }
@@ -248,9 +246,7 @@ public class TestCaseGenerator implements Serializable {
 
                 allClasses.removeIf(Objects::isNull);
 
-                String[] allClassNames = allClasses.toArray(new String[0]);
-
-                return allClassNames;
+        return allClasses.toArray(new String[0]);
 
         }
 
@@ -363,7 +359,7 @@ public class TestCaseGenerator implements Serializable {
             }
         }
 
-        if ( check == false ) {
+        if (!check) {
             model.addDependency(dependency);
         } 
         

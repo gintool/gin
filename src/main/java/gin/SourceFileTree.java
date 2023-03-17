@@ -3,7 +3,6 @@ package gin;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +61,7 @@ public class SourceFileTree extends SourceFile {
      * (for now, maybe useful in future?) possibly under a different key
      * to the original IDs
      */
-    private CompilationUnit compilationUnit;
+    private final CompilationUnit compilationUnit;
     private Map<Integer,Node> allNodes;
     private List<Integer> allBlockIDs;
 
@@ -97,7 +96,7 @@ public class SourceFileTree extends SourceFile {
     }
 
     public SourceFileTree(File file, String method) {
-        this(file.getPath(), Arrays.asList(method));
+        this(file.getPath(), Collections.singletonList(method));
     }
 
     /**
@@ -401,14 +400,13 @@ public class SourceFileTree extends SourceFile {
                 NodeList<Statement> statements = ((BlockStmt)parent).getStatements();
             
                 int insertIndex = 0; // start with the possibility of inserting at beginning of block   
-                    
-                statementLoop:
+
                 for (int i = 0; i < statements.size(); i++) {
                     Integer id = statements.get(i).containsData(NODEKEY_ID) ? statements.get(i).getData(NODEKEY_ID) : NODE_NULL_ID;
                     if ((id == null) || (id <= insertionPoint)) {
                         insertIndex = i + 1; // add 1 because we want to insert after the statement!
                     } else {
-                        break statementLoop;
+                        break;
                     }
                 }
             
@@ -442,9 +440,8 @@ public class SourceFileTree extends SourceFile {
             replacementNodeCopy.setData(NODEKEY_ID, NODE_NULL_ID);
             
             Map<Integer, Node> nodesToReplace = Collections.singletonMap(ID, replacementNodeCopy);
-            SourceFileTree sf = new SourceFileTree(this, nodesToReplace);
-            
-            return sf;
+
+            return new SourceFileTree(this, nodesToReplace);
         }
     }
     
@@ -599,35 +596,29 @@ public class SourceFileTree extends SourceFile {
      * @return a list of node IDs
      */
     public List<Integer> getNodeIDsByClass(boolean inTargetMethod, List<Class<? extends Node>> clazzes) {
+        List<Integer> rval;
         if (inTargetMethod) {
-            List<Integer> rval = new ArrayList<>(targetMethodNodeIDs.size());
-            
+            rval = new ArrayList<>(targetMethodNodeIDs.size());
             for (int i : targetMethodNodeIDs) {
-                classLoop:
                 for (Class<? extends Node> clazz : clazzes) {
                     if (clazz.isAssignableFrom(allNodes.get(i).getClass())) {
                         rval.add(i);
-                        break classLoop;
+                        break;
                     }
                 }
             }
-            
-            return rval;
         } else {
-            List<Integer> rval = new ArrayList<>();
-            
+            rval = new ArrayList<>();
             for (Node n : allNodes.values()) {
-                classLoop:
                 for (Class<? extends Node> clazz : clazzes) {
                     if (clazz.isAssignableFrom(n.getClass())) {
                         rval.add(n.containsData(NODEKEY_ID) ? n.getData(NODEKEY_ID) : NODE_NULL_ID); // no need to check for null, these nodes are only ones from the original and have IDs
-                        break classLoop;
+                        break;
                     }
                 }
             }
-            
-            return rval;
         }
+        return rval;
     }
     
     public List<Integer> getAllStatementIDs() {
@@ -688,7 +679,7 @@ public class SourceFileTree extends SourceFile {
         List<Statement> l = compilationUnit.getChildNodesByType(Statement.class);
         
         for (int i = 0; i < l.size(); i++) {
-            if (l.get(i).containsData(NODEKEY_ID) ? l.get(i).getData(NODEKEY_ID) == ID : false) {
+            if (l.get(i).containsData(NODEKEY_ID) && l.get(i).getData(NODEKEY_ID) == ID) {
                 return i;
             }
         }
@@ -710,7 +701,7 @@ public class SourceFileTree extends SourceFile {
         List<BlockStmt> l = compilationUnit.getChildNodesByType(BlockStmt.class);
 
         for (int i = 0; i < l.size(); i++) {
-            if (l.get(i).containsData(NODEKEY_ID) ? l.get(i).getData(NODEKEY_ID) == ID : false) {
+            if (l.get(i).containsData(NODEKEY_ID) && l.get(i).getData(NODEKEY_ID) == ID) {
                 return i;
             }
         }
@@ -728,31 +719,30 @@ public class SourceFileTree extends SourceFile {
                     Node parent = n.getParentNode().get();
                     
                     // loop through children...
-                    childLoop:
-                    for (Node child : parent.getChildNodes()) {
-                            // stop when we reach the present node
-                            if (child == n) {
-                                    break childLoop;
-                            }
-
-                            if ((child instanceof ExpressionStmt) && ((ExpressionStmt)child).getExpression() instanceof VariableDeclarationExpr) {
-                                    for (VariableDeclarator vd : ((VariableDeclarationExpr)((ExpressionStmt)child).getExpression()).getVariables()) {
-                                            if ((vd.getType()).isPrimitiveType()) {
-                                                    rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
-                                            }
-                                    }
-                            } else if (child instanceof Parameter) { // parameters of the containing method
-                                    if (((Parameter)child).getType().isPrimitiveType()) {
-                                            rval.add(new VariableTypeAndName(((Parameter)child).getType(), ((Parameter)child).getName()));
-                                    }
-                            } else if (child instanceof FieldDeclaration) {
-                                    for (VariableDeclarator vd : ((FieldDeclaration)child).getVariables()) {
-                                            if ((vd.getType()).isPrimitiveType()) {
-                                                    rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
-                                            }
-                                    }
-                            }
+                for (Node child : parent.getChildNodes()) {
+                    // stop when we reach the present node
+                    if (child == n) {
+                        break;
                     }
+
+                    if ((child instanceof ExpressionStmt) && ((ExpressionStmt) child).getExpression() instanceof VariableDeclarationExpr) {
+                        for (VariableDeclarator vd : ((VariableDeclarationExpr) ((ExpressionStmt) child).getExpression()).getVariables()) {
+                            if ((vd.getType()).isPrimitiveType()) {
+                                rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
+                            }
+                        }
+                    } else if (child instanceof Parameter) { // parameters of the containing method
+                        if (((Parameter) child).getType().isPrimitiveType()) {
+                            rval.add(new VariableTypeAndName(((Parameter) child).getType(), ((Parameter) child).getName()));
+                        }
+                    } else if (child instanceof FieldDeclaration) {
+                        for (VariableDeclarator vd : ((FieldDeclaration) child).getVariables()) {
+                            if ((vd.getType()).isPrimitiveType()) {
+                                rval.add(new VariableTypeAndName(vd.getType(), vd.getName()));
+                            }
+                        }
+                    }
+                }
                     
                     // move up a level and try again
                     n = parent;
@@ -773,8 +763,7 @@ public class SourceFileTree extends SourceFile {
      * */
     @SuppressWarnings("unused")
 	private static CompilationUnit cloneCompilationUnitWithIDs(CompilationUnit cu) {
-        CompilationUnit rval = (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(), null));
-        return rval;
+        return (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(), null));
     }
     
     /**
@@ -783,8 +772,7 @@ public class SourceFileTree extends SourceFile {
      * @return the clone
      */
     private static CompilationUnit cloneCompilationUnitWithIDs(CompilationUnit cu, Map<Integer, Node> nodesToReplace) {
-    	CompilationUnit rval = (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(nodesToReplace), null));
-	    return rval;
+        return (CompilationUnit)(cu.accept(new CloneVisitorCopyIDs(nodesToReplace), null));
     }
 
     

@@ -72,7 +72,7 @@ public abstract class TestRunner implements Serializable {
         List<UnitTest> tests = new LinkedList<>();
         try(CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath())){
             // Set up list of tests based on the class name
-            Class clazz = null;
+            Class<?> clazz = null;
 
             try {
                 clazz = classLoader.loadClass(testClassName);
@@ -120,8 +120,7 @@ public abstract class TestRunner implements Serializable {
         normalisedPatched = normalisedPatched.replaceAll("\\s+", " ");
         normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
         normalisedOriginal = normalisedOriginal.replaceAll("\\s+", " ");
-        boolean noOp = normalisedPatched.equals(normalisedOriginal);
-        return noOp;
+        return normalisedPatched.equals(normalisedOriginal);
     }
 
 }

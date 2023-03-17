@@ -17,7 +17,6 @@ public class SourceFileLineTest {
     private SourceFileLine sourceFile;
     private SourceFileLine sourceFileWithMethod;
     private SourceFileLine sourceFileTriangleWithComments;
-    private SourceFileLine sourceFileSmall;
     private final static String exampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
     private final static String exampleMethodName = "delay()";
     private final static String verySmallExampleSourceFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Small.java";
@@ -29,7 +28,6 @@ public class SourceFileLineTest {
         sourceFile = new SourceFileLine(exampleSourceFilename, Collections.emptyList());
         sourceFileWithMethod = new SourceFileLine(exampleSourceFilename, Collections.singletonList(exampleMethodName));
         sourceFileTriangleWithComments = new SourceFileLine(triangleWithCommentsFilename, Collections.singletonList(exampleMethodName));
-        sourceFileSmall = new SourceFileLine(verySmallExampleSourceFilename, Collections.emptyList());
     }
 
     @Test

@@ -260,9 +260,9 @@ public class EmptyPatchTesterTest {
 
             // Test whether all lines are true for all important stuff
             Assertions.assertAll(lines.stream().map(line -> () -> {
-                assertEquals("true", line[validIndex]);
-                assertEquals("true", line[compileIndex]);
-                assertEquals("true", line[testIndex]);
+                assertEquals("Test not valid", "true", line[validIndex]);
+                assertEquals("Test not compiling","true", line[compileIndex]);
+                assertEquals("Test not passing","true", line[testIndex]);
             }));
         }
         Files.deleteIfExists(outputFile.toPath());  // tidy up

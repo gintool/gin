@@ -19,7 +19,7 @@ public class FailedToExecuteTestException extends Exception {
     }
 
     public String toString() {
-        return this.getClass().getSimpleName() + " " + reason + " for test " + this.test;
+        return "Build failure type " + buildType + " with class " + this.getClass().getSimpleName() + " " + reason + " for test " + this.test;
     }
 
 }

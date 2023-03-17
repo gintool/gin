@@ -40,8 +40,8 @@ public class RTSProfiler implements Serializable {
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String PROF_DIR = "profiler_out";
-    private static String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
@@ -73,8 +73,8 @@ public class RTSProfiler implements Serializable {
     protected String rts = "ekstazi";
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
-    @Argument(alias = "prof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private final String profFileName = "java.prof.jfr";
+    @Argument(alias = "pn", description = "Java profiler file name. If running in parallel, use a different name for each job.")
+    protected String profFileName = "java.prof.jfr";
 
     @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
     protected String profilerChoice = "jfr";

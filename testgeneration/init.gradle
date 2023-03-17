@@ -6,6 +6,6 @@ allprojects {
         mavenCentral()
     }
     dependencies {
- 	    compile group: 'org.evosuite', name: 'evosuite-standalone-runtime', version: '1.0.6'
+ 	    api group: 'org.evosuite', name: 'evosuite-standalone-runtime', version: '1.0.6'
     }
 }

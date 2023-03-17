@@ -2,6 +2,7 @@ package gin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,6 +28,7 @@ import gin.test.UnitTestResultSet;
  */
 public class PatchAnalyser implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3749197264292832819L;
 
     private static final int REPS = 10;
@@ -54,10 +56,6 @@ public class PatchAnalyser implements Serializable {
             + "You probably don't want to set this to true for Automatic Program Repair.")
     protected Boolean failFast = false;
 
-    private SourceFileLine sourceFileLine;
-    private SourceFileTree sourceFileTree;
-    private InternalTestRunner testRunner;
-
     // Instantiate a class and call search
     public static void main(String[] args) {
         PatchAnalyser analyser = new PatchAnalyser(args);
@@ -68,9 +66,6 @@ public class PatchAnalyser implements Serializable {
 
         Args.parseOrExit(this, args);
 
-        this.sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
-
-        this.sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
         if (this.packageDir == null) {
                 this.packageDir = this.source.getParentFile().getAbsoluteFile();
             }
@@ -92,7 +87,7 @@ public class PatchAnalyser implements Serializable {
         SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
         SourceFileTree sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
 
-        this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
+        InternalTestRunner testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFileTree.statementList();
@@ -176,8 +171,7 @@ public class PatchAnalyser implements Serializable {
 
         if (patchText.equals("|")) {
             Logger.info("No edits to be applied. Running original code.");
-            Patch patch = new Patch(sourceFileTree);
-            return patch;
+            return new Patch(sourceFileTree);
         }
 
         List<Edit> editInstances = new ArrayList<>();

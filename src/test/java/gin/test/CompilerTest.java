@@ -1,7 +1,6 @@
 package gin.test;
 
 import gin.TestConfiguration;
-import org.junit.Before;
 import org.junit.Test;
 import org.mdkt.compiler.CompiledCode;
 
@@ -11,15 +10,8 @@ import static org.junit.Assert.*;
 
 public class CompilerTest {
 
-    private CacheClassLoader loader;
-
     private final static File exampleDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
     private final static String exampleDirName = exampleDir.getPath();
-
-    @Before
-    public void setUp() {
-        loader = new CacheClassLoader(exampleDirName);
-    }
 
     @Test
     public void testCompile() throws ClassNotFoundException {

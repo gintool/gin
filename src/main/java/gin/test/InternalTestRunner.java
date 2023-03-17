@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -16,12 +17,11 @@ import java.io.IOException;
  */
 public class InternalTestRunner extends TestRunner {
 
+    @Serial
     private static final long serialVersionUID = -2348071089493178903L;
 
     public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
 
-    private CacheClassLoader classLoader;
-    
     /**
      * If set to true, the tests will stop at the first failure and the next 
      * patch will be executed. You probably don't want to set this to true for 
@@ -88,7 +88,7 @@ public class InternalTestRunner extends TestRunner {
     public UnitTestResultSet runTests(Patch patch, int reps) {
         List<UnitTestResult> results;
         // Create a new class loader for every compilation, otherwise java will cache the modified class for us
-        classLoader = new CacheClassLoader(this.getClassPath());
+        CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath());
         try {
             // Apply the patch.
             String patchedSource = patch.apply();
@@ -120,9 +120,7 @@ public class InternalTestRunner extends TestRunner {
             return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
         } finally {
             try {
-                if(this.classLoader != null) {
-                    this.classLoader.close();
-                }
+                classLoader.close();
             } catch (IOException ex) {
                 Logger.error(ex, "Could not close CacheClassLoader.");
             }

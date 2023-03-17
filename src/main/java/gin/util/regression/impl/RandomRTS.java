@@ -26,7 +26,7 @@ public class RandomRTS extends RTSStrategy {
     /**
      * Random generator for selecting the test cases.
      */
-    private RandomDataGenerator randomGenerator;
+    private final RandomDataGenerator randomGenerator;
 
     /**
      * Builds this object with the given seed.

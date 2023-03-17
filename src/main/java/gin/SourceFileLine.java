@@ -6,7 +6,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
@@ -37,7 +36,7 @@ public class SourceFileLine extends SourceFile {
     private static final long serialVersionUID = -4661893718115291631L;
 
     /**the raw lines in the source*/
-    private SortedMap<LineID, String> lines;
+    private final SortedMap<LineID, String> lines;
 
     /** IDs of lines in the target methods */
     private List<LineID> lineIDsInTargetMethod;
@@ -59,7 +58,7 @@ public class SourceFileLine extends SourceFile {
     }
 
     public SourceFileLine(File file, String method) {
-        this(file.getPath(), Arrays.asList(method));
+        this(file.getPath(), Collections.singletonList(method));
     }
 
     /**
@@ -115,7 +114,7 @@ public class SourceFileLine extends SourceFile {
     private void populateIDLists() {
 
         // A JavaParser CU is used to find the lines for the methods
-        CompilationUnit compilationUnit = StaticJavaParser.parse(this.getSource().toString());
+        CompilationUnit compilationUnit = StaticJavaParser.parse(this.getSource());
         
         this.lineIDsInTargetMethod = new ArrayList<>();
 
@@ -201,7 +200,7 @@ public class SourceFileLine extends SourceFile {
     
     @Override
     public String getSource() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (String line : lines.values()) {
             buf.append(line);
             buf.append(System.lineSeparator());
@@ -330,39 +329,33 @@ public class SourceFileLine extends SourceFile {
 
  
     /*============== the following are some helper methods and classes ==============*/
-     
+
     /**
      * used to keep the list of lines in the correct order
+     *
+     * @param lineNumber original code line number
+     * @param offset     this is used to sort inserted lines following the lineNumber they were inserted after
      */
-    private static final class LineID implements Comparable<LineID> {
-        private final boolean isOriginalLine;
-        private final int lineNumber; // original code line number
-        private final int offset; // this is used to sort inserted lines following the lineNumber they were inserted after 
-        
-        public LineID(boolean isOriginalLine, int lineNumber, int offset) {
-            this.isOriginalLine = isOriginalLine;
-            this.lineNumber = lineNumber;
-            this.offset = offset;
-        }
-        
+        private record LineID(boolean isOriginalLine, int lineNumber, int offset) implements Comparable<LineID> {
+
         @Override
-        public int compareTo(LineID that) {
-            if (isOriginalLine || (this.lineNumber != that.lineNumber)) {
-                return Integer.compare(this.lineNumber, that.lineNumber);
-            } else {
-                if (this.isOriginalLine) {
-                    return -1;
-                } else if (that.isOriginalLine) {
-                    return 1;
+            public int compareTo(LineID that) {
+                if (isOriginalLine || (this.lineNumber != that.lineNumber)) {
+                    return Integer.compare(this.lineNumber, that.lineNumber);
                 } else {
-                    return Integer.compare(this.offset, that.offset);
+                    if (this.isOriginalLine) {
+                        return -1;
+                    } else if (that.isOriginalLine) {
+                        return 1;
+                    } else {
+                        return Integer.compare(this.offset, that.offset);
+                    }
                 }
             }
-        }
-        
+
         @Override
-        public String toString() {
-            return (this.isOriginalLine ? "O" : "I") + this.lineNumber + (this.isOriginalLine ? "" : "." + this.offset);
+            public String toString() {
+                return (this.isOriginalLine ? "O" : "I") + this.lineNumber + (this.isOriginalLine ? "" : "." + this.offset);
+            }
         }
-    }
 }

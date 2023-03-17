@@ -22,7 +22,7 @@ import gin.edit.statement.StatementEdit;
 /**
  * Represents a patch, a potential set of changes to a sourcefile.
  */
-public class Patch implements Serializable {
+public class Patch implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1645891147232089192L;
     protected LinkedList<Edit> edits = new LinkedList<>();
@@ -51,10 +51,10 @@ public class Patch implements Serializable {
         this.editsValidOnLastApply = Collections.emptyList();
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     public Patch clone() {
         Patch clonePatch = new Patch(this.sourceFile);
-        clonePatch.edits = (LinkedList<Edit>)(this.edits.clone());
+        clonePatch.edits = new LinkedList<>(this.edits);
         clonePatch.superClassOfEdits = this.superClassOfEdits;
         return clonePatch;
     }

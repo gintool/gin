@@ -58,20 +58,15 @@ public class ReorderLogicalExpression extends ModifyNodeEdit {
     public SourceFile apply(SourceFile sourceFile) {
         SourceFileTree sf = (SourceFileTree)sourceFile;
         Node node = sf.getNode(this.targetNode);
-    
-        if (node == null) {
-            return sf; // targeting a deleted location just does nothing.
-        } else {
-            Expression left = ((BinaryExpr)node).getLeft();
-            Expression right = ((BinaryExpr)node).getRight();
-                
-            ((BinaryExpr)node).setLeft(right);
-            ((BinaryExpr)node).setRight(left);
-            
+
+        if (node != null) {
+            Expression left = ((BinaryExpr) node).getLeft();
+            Expression right = ((BinaryExpr) node).getRight();
+            ((BinaryExpr) node).setLeft(right);
+            ((BinaryExpr) node).setRight(left);
             sf = sf.replaceNode(this.targetNode, node);
-            
-            return sf;
         }
+        return sf;
     }
     
     @Override

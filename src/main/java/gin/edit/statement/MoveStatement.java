@@ -12,11 +12,11 @@ import gin.misc.BlockedByJavaParserException;
 public class MoveStatement extends StatementEdit {
 
     private static final long serialVersionUID = 7928960721990003574L;
-    private String sourceFilename;
-    private int sourceStatement;
-    private String destinationFilename;
-    private int destinationBlock;
-    private int destinationChildInBlock;
+    private final String sourceFilename;
+    private final int sourceStatement;
+    private final String destinationFilename;
+    private final int destinationBlock;
+    private final int destinationChildInBlock;
 
     /**
      *  create a random movestatement for the given sourcefile, using the provided RNG

@@ -15,8 +15,8 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
 
     public static long defaultTimeoutMS = 10000L;
 
-    private String className;
-    private String methodName;
+    private final String className;
+    private final String methodName;
     private String moduleName = "";
     private long timeoutMS;
 
@@ -85,7 +85,7 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
     @Override
     public boolean equals(Object obj) {
 
-        return ( (obj instanceof UnitTest) && (this.toString()).equals( ((UnitTest)obj).toString() ) );
+        return ( (obj instanceof UnitTest) && (this.toString()).equals( obj.toString() ) );
 
     }
 

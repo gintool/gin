@@ -24,38 +24,32 @@ import gin.edit.line.DeleteLine;
 
 public class TestRunnerTest {
 
-    private CacheClassLoader cacheClassLoader;
     private InternalTestRunner internalTestRunner;
 
-    private String packageName = "mypackage";
-    private String className = "Simple";
-    private String fullClassName = packageName + "." + className;
-    private String methodName = "returnsTrue()";
+    private final String packageName = "mypackage";
+    private final String className = "Simple";
+    private final String fullClassName = packageName + "." + className;
 
-    private String testClassName = "SimpleTest";
-    private String testMethodName = "testReturnsTrue";
-    private String fullTestClassName = packageName + "." + testClassName;
-    private String otherTestMethodName = "otherTest";
+    private final String testClassName = "SimpleTest";
+    private final String testMethodName = "testReturnsTrue";
+    private final String fullTestClassName = packageName + "." + testClassName;
 
-    private File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
-    private File sourceFile = new File(packageDir, className + ".java");
+    private final File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
+    private final File sourceFile = new File(packageDir, className + ".java");
 
-    private List<UnitTest> testSet;
     private SourceFileLine sourceFileLine;
 
 
     @Before
     public void setUp() throws Exception {
-
-        cacheClassLoader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME);
-
         UnitTest test = new UnitTest(fullTestClassName, testMethodName);
-        testSet = new LinkedList<>();
+        List<UnitTest> testSet = new LinkedList<>();
         testSet.add(test);
 
         internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR_NAME, testSet, false);
 
         List<String> targetMethodNames = new LinkedList<>();
+        String methodName = "returnsTrue()";
         targetMethodNames.add(methodName);
 
         sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
@@ -134,6 +128,7 @@ public class TestRunnerTest {
         LinkedList<UnitTest> tests = new LinkedList<>();
         UnitTest test = new UnitTest(fullTestClassName, testMethodName);
         tests.add(test);
+        String otherTestMethodName = "otherTest";
         UnitTest test2 = new UnitTest(fullTestClassName, otherTestMethodName);
         tests.add(test2);
 
@@ -236,7 +231,7 @@ public class TestRunnerTest {
         loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
 
         try {
-            Class example = loader.findClass("mypackage.NewExample");
+            loader.findClass("mypackage.NewExample");
         } catch (ClassNotFoundException e) {
             fail("Could not load NewExample class.");
         }

@@ -25,7 +25,7 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
 
     protected Map<String, byte[]> customCompiledCode = new HashMap<>();
 
-    private URL[] providedClassPath;
+    private final URL[] providedClassPath;
 
     /**
      * Constructs a ClassLoader with the system classpath and the elements given
@@ -71,8 +71,7 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
         // Otherwise, try the system class loader. If not there, must be part of the project, so load ourselves.
         try {
             ClassLoader system = ClassLoader.getSystemClassLoader();
-            Class fromSystemCall = system.loadClass(name);
-            return fromSystemCall;
+            return system.loadClass(name);
         } catch (ClassNotFoundException e) {
             return super.findClass(name);
         }
@@ -94,7 +93,7 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
      *
      * @return the set of converted classpath elements.
      */
-    private static final URL[] classPathToURLs(String classPath) {
+    public static URL[] classPathToURLs(String classPath) {
 
         if (classPath == null) {
             return new URL[0];
@@ -127,7 +126,7 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
      * @return new array containing the system classpath and the elements given
      * as input.
      */
-    public static final URL[] addSystemClassPath(URL[] projectClasspath) {
+    public static URL[] addSystemClassPath(URL[] projectClasspath) {
 
         String classPath = System.getProperty("java.class.path");
 

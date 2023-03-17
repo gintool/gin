@@ -20,9 +20,9 @@ import java.util.Map;
 public abstract class LocalSearchSimple extends GP {
 
     // Percentage of population size to be selected during tournament selection
-    private static double tournamentPercentage = 0.2;
+    private static final double TOURNAMENT_PERCENTAGE = 0.2;
     // Probability of adding an edit during uniform crossover
-    private static double mutateProbability = 0.5;
+    private static final double MUTATE_PROBABILITY = 0.5;
 
     public LocalSearchSimple(String[] args) {
         super(args);
@@ -44,10 +44,6 @@ public abstract class LocalSearchSimple extends GP {
     // Calculate fitness threshold, for selection to the next generation
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
-
-    // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
-    @Override
-    protected abstract double compareFitness(double newFitness, double oldFitness);
 
     /*============== Implementation of abstract methods  ==============*/
 
@@ -120,7 +116,7 @@ public abstract class LocalSearchSimple extends GP {
             // Best patch from x% randomly selected patches picked each time
             Patch bestPatch = patches.get(0);
             double best = population.get(bestPatch);
-            for (int j = 1; j < (super.indNumber * tournamentPercentage); j++) {
+            for (int j = 1; j < (super.indNumber * TOURNAMENT_PERCENTAGE); j++) {
                 Patch patch = patches.get(j);
                 double fitness = population.get(patch);
 
@@ -154,20 +150,20 @@ public abstract class LocalSearchSimple extends GP {
             Patch child2 = origPatch.clone();
 
             for (Edit edit : list1) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
                     child1.add(edit);
                 }
             }
             for (Edit edit : list2) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
                     child1.add(edit);
                 }
-                if (super.mutationRng.nextFloat() > mutateProbability) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
                     child2.add(edit);
                 }
             }
             for (Edit edit : list1) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
                     child2.add(edit);
                 }
             }

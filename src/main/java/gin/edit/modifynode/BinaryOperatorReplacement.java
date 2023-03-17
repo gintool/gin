@@ -88,16 +88,12 @@ public class BinaryOperatorReplacement extends ModifyNodeEdit {
         
         // first, get the node from the cu
         Node node = sf.getNode(this.targetNode);
-            
-        if (node == null) {
-            return sf; // targeting a deleted location just does nothing.
-        } else {
-            ((BinaryExpr)node).setOperator(replacement);
-            
+        // targeting a deleted location does nothing, that's why we need this check before.
+        if (node != null) {
+            ((BinaryExpr) node).setOperator(replacement);
             sf = sf.replaceNode(this.targetNode, node);
-            
-            return sf;
         }
+        return sf;
     }
     
     private static Operator chooseRandomReplacement(Operator original, Random r) {

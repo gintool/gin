@@ -10,10 +10,6 @@ import static org.junit.Assert.*;
  * @author Giovani
  */
 public class HotMethodTest {
-    
-    @Before
-    public void setUp() {
-    }
 
     @Test
     public void testGetFullMethodName() {
@@ -37,12 +33,12 @@ public class HotMethodTest {
         HotMethod hotMethod1 = new HotMethod("test.package.TestClass", "method1", 0, new HashSet<>());
         HotMethod hotMethod2 = new HotMethod("test.package.TestClass", "method1", 1, new HashSet<>());
         HotMethod hotMethod3 = new HotMethod("test.package.TestClass2", "method1", 1, new HashSet<>());
-        
-        assertTrue(hotMethod1.equals(hotMethod2));
-        assertTrue(hotMethod2.equals(hotMethod1));
-        assertFalse(hotMethod3.equals(hotMethod1));
-        assertFalse(hotMethod3.equals(hotMethod2));
-        assertFalse(hotMethod3.equals(null));
+
+        assertEquals(hotMethod1, hotMethod2);
+        assertEquals(hotMethod2, hotMethod1);
+        assertNotEquals(hotMethod3, hotMethod1);
+        assertNotEquals(hotMethod3, hotMethod2);
+        assertNotEquals(null, hotMethod3);
     }
 
 }

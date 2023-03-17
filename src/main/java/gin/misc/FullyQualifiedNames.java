@@ -116,7 +116,7 @@ public class FullyQualifiedNames implements Serializable {
                 String curName = ((ClassOrInterfaceDeclaration)current).getNameAsString();
                 name.insert(0, "$" + curName);
             } else if ((current instanceof ObjectCreationExpr) && ((ObjectCreationExpr)current).getAnonymousClassBody().isPresent()) { // what we've seen so far is contained in an object creation expression, so an anonymous inner class
-                int num = ((ObjectCreationExpr)current).getData(NODEKEY_ANON_INNER_CLASS_NUM);
+                int num = current.getData(NODEKEY_ANON_INNER_CLASS_NUM);
                 name.insert(0, "$" + num);
             }
 
@@ -183,7 +183,7 @@ public class FullyQualifiedNames implements Serializable {
      */
     public static String makeMethodNameFullyQualified(String methodName, CompilationUnit cu) {
         String className = getClassName(cu);
-        PackageDeclaration p = ((CompilationUnit)cu).getPackageDeclaration().orElse(null);
+        PackageDeclaration p = cu.getPackageDeclaration().orElse(null);
         String packageName = p != null ? p.getNameAsString() + "." : "";
           
         if (!methodName.startsWith(packageName) || packageName.isEmpty()) {

@@ -4,15 +4,12 @@ import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Request;
-import org.junit.vintage.engine.VintageTestEngine;
 import org.pmw.tinylog.Logger;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
@@ -62,7 +59,7 @@ public class JUnitBridge implements Serializable {
             result.setExceptionMessage(e.getMessage());
             return result;
 
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             Logger.error("Exception when instrumenting tests with a timeout: " + e);
             Logger.error(e.getMessage());
             Logger.trace(e);
@@ -71,17 +68,7 @@ public class JUnitBridge implements Serializable {
             result.setExceptionMessage(e.getMessage());
             return result;
 
-        } catch (IllegalAccessException e) {
-            Logger.error("Exception when instrumenting tests with a timeout: " + e);
-            Logger.error(e.getMessage());
-            Logger.trace(e);
-
-            result.setExceptionType(e.getClass().getName());
-            result.setExceptionMessage(e.getMessage());
-            return result;
         }
-
-//        LauncherConfig config = LauncherConfig.builder().addTestEngines(new VintageTestEngine()).build();
 
         try (LauncherSession session = LauncherFactory.openSession()) {
             Launcher launcher = session.getLauncher();
@@ -100,20 +87,17 @@ public class JUnitBridge implements Serializable {
     }
 
     public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
-        Class<?> clazz = null;
-
-        String testClassname = test.getFullClassName();
         ClassLoader loader = this.getClass().getClassLoader();
 
-        clazz = loader.loadClass(testClassname);
+        String testClassname = test.getFullClassName();
+        Class<?> clazz = loader.loadClass(testClassname);
 
-        String methodName = test.getMethodName();
+        String methodName = test.getMethodName().replace("()", "");
+        Method method = clazz.getDeclaredMethod(methodName);
 
-        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectMethod(clazz, methodName))
+        return LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectMethod(clazz, method.getName()))
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
                 .build();
-
-        return request;
     }
 }

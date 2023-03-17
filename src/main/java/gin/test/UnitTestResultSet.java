@@ -19,16 +19,16 @@ public class UnitTestResultSet implements Serializable {
 
     private static final long serialVersionUID = 672861195212496772L;
 
-    private List<UnitTestResult> results;
+    private final List<UnitTestResult> results;
 
-    private Patch patch;
-    private boolean patchValid;
-    private boolean compiledOK;
-    private List<Boolean> editsValid;
+    private final Patch patch;
+    private final boolean patchValid;
+    private final boolean compiledOK;
+    private final List<Boolean> editsValid;
     
     /**was the patch effectively a no-op? i.e. was there some difference between
      * input and output source?*/
-    private boolean noOp;
+    private final boolean noOp;
 
     public UnitTestResultSet(Patch patch, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, boolean noOp, List<UnitTestResult> results) {
         this.patch = patch;

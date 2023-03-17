@@ -30,11 +30,6 @@ public class MatchedDeleteStatement extends DeleteStatement {
     }
 
 
-    @Override
-    public String toString() {
-        return super.toString(); //.replace("DeleteStatement", "MatchedDeleteStatement");
-    }
-
     public static Edit fromString(String description) {
             String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String[] tokens2 = tokens[1].split(":");

@@ -1,14 +1,5 @@
 package gin.test;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.text.ParseException;
-
 import com.sampullara.cli.Args;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -16,13 +7,17 @@ import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Request;
 import org.pmw.tinylog.Logger;
+
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.text.ParseException;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
-/** 
+/**
  * Runs a given test request. Uses sockets to communicate with ExternalTestRunner.
  */
 public class TestHarness implements Serializable {
@@ -35,7 +30,7 @@ public class TestHarness implements Serializable {
     public static final String PORT_PREFIX = "PORT";
 
     public static void main(String[] args) {
-        TestHarness testHarness= new TestHarness(args);
+        new TestHarness(args);
     }
 
     public TestHarness(String[] args) {
@@ -48,7 +43,7 @@ public class TestHarness implements Serializable {
             serverSocket = new ServerSocket(0);
             int port = serverSocket.getLocalPort();
             System.out.println(PORT_PREFIX + "=" + port); // tell the ExternalTestRunner what port we'll be using
-                    
+
             clientSocket = serverSocket.accept();
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -59,10 +54,10 @@ public class TestHarness implements Serializable {
                     String response = runTest(command);
                     out.println(response);
                 } catch (ParseException e) {
-                    break; 
+                    break;
                 }
             }
-        stop();
+            stop();
 
         } catch (IOException e) {
             Logger.error(e.getMessage());
@@ -81,11 +76,12 @@ public class TestHarness implements Serializable {
         }
 
     }
+
     private String runTest(String command) throws ParseException {
 
-       String testName;
-       Integer rep;
-       Long timeoutMS;
+        String testName;
+        Integer rep;
+        Long timeoutMS;
 
         String[] params = command.split(",");
         try {
@@ -100,11 +96,11 @@ public class TestHarness implements Serializable {
             throw new ParseException("Not a test format: " + command, 0);
         }
 
-       UnitTest test = UnitTest.fromString(testName);
-       test.setTimeoutMS(timeoutMS);
-       UnitTestResult result = runTest(test, rep);
+        UnitTest test = UnitTest.fromString(testName);
+        test.setTimeoutMS(timeoutMS);
+        UnitTestResult result = runTest(test, rep);
 
-       return result.toString();
+        return result.toString();
 
     }
 
@@ -113,15 +109,11 @@ public class TestHarness implements Serializable {
         UnitTestResult result = new UnitTestResult(test, rep);
 
         String className = test.getFullClassName();
-        String methodName = test.getMethodName();
-        long timeout = test.getTimeoutMS();
 
-        Class<?> clazz = null;
-
-        LauncherDiscoveryRequest request = null;
+        LauncherDiscoveryRequest request;
 
         try {
-            clazz = Class.forName(className);
+            Class.forName(className);
             request = buildRequest(test);
 
         } catch (ClassNotFoundException e) {
@@ -149,7 +141,7 @@ public class TestHarness implements Serializable {
             result.setExceptionType(e.getClass().getName());
             result.setExceptionMessage(e.getMessage());
             return result;
-        
+
         } catch (IllegalAccessException e) {
             Logger.error("Exception when instrumenting tests with a timeout: " + e);
             Logger.error(e.getMessage());
@@ -178,15 +170,18 @@ public class TestHarness implements Serializable {
     }
 
     public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
-        String testClassname = test.getFullClassName();
-        String methodName = test.getMethodName();
+        ClassLoader loader = this.getClass().getClassLoader();
 
-        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectMethod(testClassname, methodName))
+        String testClassname = test.getFullClassName();
+        Class<?> clazz = loader.loadClass(testClassname);
+
+        String methodName = test.getMethodName().replace("()", "");
+        Method method = clazz.getDeclaredMethod(methodName);
+
+        return LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectMethod(clazz, method.getName()))
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
                 .build();
-
-        return request;
     }
 
 }    

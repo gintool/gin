@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.io.Files;
 import com.opencsv.CSVReaderHeaderAware;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
@@ -161,6 +160,7 @@ public abstract class Sampler implements Serializable {
                 Logger.info("I'm going to try and find your maven home, but make sure to set mavenHome for maven projects in the future.");
                 this.project.setMavenHome(MavenUtils.findMavenHomeFile());
             }
+            project.setUp();
             Logger.info("Calculating classpath..");
             this.classPath = project.classpath();
             Logger.info("Classpath: " + this.classPath);
@@ -178,13 +178,13 @@ public abstract class Sampler implements Serializable {
 
     protected static class TargetMethod {
 
-        private File source;
-        private String className;
+        private final File source;
+        private final String className;
         
-        private String methodName;
-        private List<UnitTest> tests;
+        private final String methodName;
+        private final List<UnitTest> tests;
 
-        private Integer methodID;
+        private final Integer methodID;
 
         protected TargetMethod(File source, String className, String methodName, List<UnitTest> tests, Integer methodID) {
             this.source = source;
@@ -398,7 +398,7 @@ public abstract class Sampler implements Serializable {
             while (data != null) {
 
                 String[] tests = data.get("Tests").split(TEST_SEPARATOR);
-                List<UnitTest> ginTests = new ArrayList();        
+                List<UnitTest> ginTests = new ArrayList<>();
                 for (String test : tests) {
                     UnitTest ginTest = null;        
                     ginTest = UnitTest.fromString(test);

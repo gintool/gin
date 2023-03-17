@@ -5,11 +5,7 @@ import gin.Patch;
 import java.util.ArrayList;
 
 public class NSGAIIInd extends NSGAInd {
-;
     private double crowding;
-
-    private int rank;
-    private ArrayList<Long> fitnesses;
 
     public NSGAIIInd(Patch patch, ArrayList<Long> fitnesses){
         super(patch,fitnesses);

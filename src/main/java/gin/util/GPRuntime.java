@@ -35,8 +35,7 @@ public class GPRuntime extends GPSimple {
 
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
 
-        UnitTestResultSet results = testPatch(className, tests, origPatch);
-        return results;
+        return testPatch(className, tests, origPatch);
     }
 
     // Calculate fitness

@@ -228,8 +228,7 @@ public class NSGAII extends Sampler {
     }
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
 
-        UnitTestResultSet results = testPatch(className, tests, origPatch);
-        return results;
+        return testPatch(className, tests, origPatch);
     }
 
     protected Patch mutate(Patch oldPatch) {
@@ -255,22 +254,22 @@ public class NSGAII extends Sampler {
             Patch child1 = origPatch.clone();
             Patch child2 = origPatch.clone();
 
-            for (int j = 0; j < list1.size(); j++) {
+            for (Edit edit : list1) {
                 if (mutationRng.nextFloat() > 0.5) {
-                    child1.add(list1.get(j));
+                    child1.add(edit);
                 }
             }
-            for (int j = 0; j < list2.size(); j++) {
+            for (Edit edit : list2) {
                 if (mutationRng.nextFloat() > 0.5) {
-                    child1.add(list2.get(j));
+                    child1.add(edit);
                 }
                 if (mutationRng.nextFloat() > 0.5) {
-                    child2.add(list2.get(j));
+                    child2.add(edit);
                 }
             }
-            for (int j = 0; j < list1.size(); j++) {
+            for (Edit edit : list1) {
                 if (mutationRng.nextFloat() > 0.5) {
-                    child2.add(list1.get(j));
+                    child2.add(edit);
                 }
             }
 

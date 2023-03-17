@@ -1,6 +1,7 @@
 package gin.util;
 
 import java.io.File;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import gin.test.UnitTestResultSet;
 
 public abstract class GPSimple extends GP {
     
+    @Serial
     private static final long serialVersionUID = -3339464277865429122L;
 
     public GPSimple(String[] args) {
@@ -37,10 +39,10 @@ public abstract class GPSimple extends GP {
     }   
 
     // Percentage of population size to be selected during tournament selection
-    private static double tournamentPercentage = 0.2;
+    private static final double TOURNAMENT_PERCENTAGE = 0.2;
 
     // Probability of adding an edit during uniform crossover
-    private static double mutateProbability = 0.5;
+    private static final double MUTATE_PROBABILITY = 0.5;
 
     // Whatever initialisation needs to be done for fitness calculations
     @Override
@@ -54,10 +56,6 @@ public abstract class GPSimple extends GP {
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
     
-     // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
-    @Override
-    protected abstract double compareFitness(double newFitness, double oldFitness);
-
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/
@@ -75,9 +73,6 @@ public abstract class GPSimple extends GP {
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
         super.writePatch(results, methodName, orig, 0);
-
-        // Keep best 
-        double best = orig;
 
         // Generation 1
         Map<Patch, Double> population = new HashMap<>();
@@ -98,7 +93,7 @@ public abstract class GPSimple extends GP {
         for (int g = 0; g < genNumber; g++) {
 
             // Previous generation
-            List<Patch> patches = new ArrayList(population.keySet());
+            List<Patch> patches = new ArrayList<>(population.keySet());
 
             Logger.info("Creating generation: " + (g + 1));
 
@@ -156,7 +151,7 @@ public abstract class GPSimple extends GP {
     // Tournament selection for patches
     protected List<Patch> select(Map<Patch, Double> population, Patch origPatch, double origFitness) {
 
-        List<Patch> patches = new ArrayList(population.keySet());
+        List<Patch> patches = new ArrayList<>(population.keySet());
         if (patches.size() < super.indNumber) {
             population.put(origPatch, origFitness);
             while (patches.size() < super.indNumber) {
@@ -173,7 +168,7 @@ public abstract class GPSimple extends GP {
             // Best patch from x% randomly selected patches picked each time
             Patch bestPatch = patches.get(0);
             double best = population.get(bestPatch);
-            for (int j = 1; j < (super.indNumber * tournamentPercentage); j++) {
+            for (int j = 1; j < (super.indNumber * TOURNAMENT_PERCENTAGE); j++) {
                 Patch patch = patches.get(j);
                 double fitness = population.get(patch);
 
@@ -206,22 +201,22 @@ public abstract class GPSimple extends GP {
             Patch child1 = origPatch.clone();
             Patch child2 = origPatch.clone();
 
-            for (int j = 0; j < list1.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child1.add(list1.get(j));
+            for (Edit edit : list1) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
+                    child1.add(edit);
                 }
             }
-            for (int j = 0; j < list2.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child1.add(list2.get(j));
+            for (Edit edit : list2) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
+                    child1.add(edit);
                 }
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child2.add(list2.get(j));
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
+                    child2.add(edit);
                 }
             }
-            for (int j = 0; j < list1.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child2.add(list1.get(j));
+            for (Edit edit : list1) {
+                if (super.mutationRng.nextFloat() > MUTATE_PROBABILITY) {
+                    child2.add(edit);
                 }
             }
 

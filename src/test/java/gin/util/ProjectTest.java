@@ -20,17 +20,18 @@ public class ProjectTest {
     private static final File GRADLE_SIMPLE = new File(TestConfiguration.GRADLE_SIMPLE_DIR);
     private static final File MAVEN_SIMPLE = new File(TestConfiguration.MAVEN_SIMPLE_DIR);
 
-    Project simpleProject = new Project(GRADLE_SIMPLE, "simple");
-
+    Project simpleProject = null;
     @Before
     public void setUp() throws Exception {
-
+        simpleProject = new Project(GRADLE_SIMPLE, "simple");
+        simpleProject.setUp();
     }
 
     @Test
     public void testDetectionGradleMultiProject() {
 
         Project project = new Project(GRADLE_MULTI_DIR, "myproject");
+        project.setUp();
 
         // Basic fields
         assertEquals(project.getProjectDir().getAbsoluteFile(), GRADLE_MULTI_DIR.getAbsoluteFile());
@@ -39,7 +40,7 @@ public class ProjectTest {
 
         // Module directories
         List<File> moduleDirs = project.getModuleDirs();
-        Set<File> moduleDirSet = new HashSet(moduleDirs);
+        Set<File> moduleDirSet = new HashSet<>(moduleDirs);
         Set<File> expectedModules = new HashSet<>();
         expectedModules.add(GRADLE_MULTI_DIR.getAbsoluteFile());
         expectedModules.add(new File(GRADLE_MULTI_DIR, "module1").getAbsoluteFile());
@@ -119,6 +120,7 @@ public class ProjectTest {
     @Test
     public void classpath() {
         Project simpleProject = new Project(MAVEN_SIMPLE, "simple");
+        simpleProject.setUp();
         String mavenHome = MavenUtils.findMavenHomePath();
         Assume.assumeTrue(FileUtils.getFile(mavenHome, "bin/mvn").exists()
                 || FileUtils.getFile(mavenHome, "mvn").exists()
@@ -178,63 +180,4 @@ public class ProjectTest {
         assertEquals("mypackage.ExampleMethodSignature.exampleComplexParamComplexReturn(List<List<Map<Integer,Pair<Double,Object>>>>,List<Map<Integer,Object>>)", methodSignature);
     }
 
-    @Test
-    public void getProjectName() {
-    }
-
-    @Test
-    public void getGradleVersion() {
-    }
-
-    @Test
-    public void setGradleVersion() {
-    }
-
-    @Test
-    public void getBuildType() {
-    }
-
-    @Test
-    public void allClassDirs() {
-    }
-
-    @Test
-    public void allSourceDirs() {
-    }
-
-    @Test
-    public void getModuleDirs() {
-    }
-
-    @Test
-    public void findSourceFile() {
-    }
-
-    @Test
-    public void runAllUnitTests() {
-    }
-
-    @Test
-    public void parseTestReports() {
-    }
-
-    @Test
-    public void runUnitTest() {
-    }
-
-    @Test
-    public void runUnitTestGradle() {
-    }
-
-    @Test
-    public void runUnitTestMaven() {
-    }
-
-    @Test
-    public void listOfMainClasses() {
-    }
-
-    @Test
-    public void getMethodSignature() {
-    }
 }

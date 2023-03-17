@@ -3,95 +3,71 @@ package gin.util;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVWriter;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+import gin.test.UnitTest;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.pmw.tinylog.Logger;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-
-import com.sampullara.cli.Argument;
-import com.sampullara.cli.Args;
-
-import gin.test.UnitTest;
-import org.pmw.tinylog.Logger;
-
 /**
  * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof or jfr.
- *
+ * <p>
  * Run directly from the commandline.
- *
+ * <p>
  * You provide the project directory, output file, number of reps.... the Profiler does the rest.
  */
 public class Profiler implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 766201566071524493L;
-
+    private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
+    private static final String WORKING_DIR = "profiler_out";
+    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
-
     @Argument(alias = "d", description = "Project Directory, reuqired", required = true)
     protected File projectDir;
-
     @Argument(alias = "o", description = "Results file hot methods")
     protected File outputFile = new File("profile_results.csv");
-
     @Argument(alias = "r", description = "Number of times to run each test")
     protected Integer reps = 1;
-
-    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
-    protected File mavenHome = new File("/usr/local/");  // default on OS X
-
+    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/. Leave blank for automatic discovery.")
+    protected File mavenHome = null;
     @Argument(alias = "v", description = "Set Gradle version")
     protected String gradleVersion;
-
     @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
     protected Boolean excludeProfiler = false;
-
     @Argument(alias = "s", description = "Skip initial run of all tests, just parse reports. For debugging.")
     protected Boolean skipInitialRun = false;
-
     @Argument(alias = "n", description = "Only mavenProfile the first n tests. For debugging.")
     protected Integer profileFirstNTests;
 
+    // Constants
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
-
-    @Argument(alias = "m", description="Maven mavenProfile to use, e.g. light-test")
+    @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
     protected String mavenProfile = "";
-
-    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
+    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
-
-    @Argument(alias = "prof",description= "Profiler to use: JFR or HPROF. Default is JFR")
+    @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
     protected String profilerChoice = "jfr";
-
-    @Argument(alias = "save",description= "Save individual profiling files, default is delete, set command as 's' to save")
+    @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
-
-    // Constants
-
-    private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String WORKING_DIR = "profiler_out";
-   
-    private static String JFR_ARG = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
-
     // Instance Members
-    private File workingDir;
-    private Project project;
-
-    public static void main(String[] args) {
-        Profiler profiler = new Profiler(args);
-        profiler.profile();
-    }
+    private final File workingDir;
+    private final Project project;
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
-
         this.workingDir = new File(projectDir, WORKING_DIR);
 
         project = new Project(projectDir, projectName);
@@ -100,10 +76,32 @@ public class Profiler implements Serializable {
         }
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
+        } else {
+            // If maven home is not set manually, tries to find a home dir in
+            // the system variables
+            String mavenHomePath = MavenUtils.findMavenHomePath();
+            if (mavenHomePath != null) {
+                this.mavenHome = FileUtils.getFile(mavenHomePath);
+                project.setMavenHome(this.mavenHome);
+            }
         }
+        project.setUp();
         // Adds the interval provided by the user
-        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
+
+        valiateArguments();
+    }
+
+    public static void main(String[] args) {
+        Profiler profiler = new Profiler(args);
+        profiler.profile();
+    }
+
+    private void valiateArguments() {
+        if (this.project.isGradleProject() && this.profilerChoice.trim().equalsIgnoreCase("JFR") && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
     }
 
@@ -122,6 +120,8 @@ public class Profiler implements Serializable {
         if (tests.isEmpty()) {
             Logger.error("No tests found in project.");
             System.exit(-1);
+        } else {
+            Logger.info("Found " + tests.size() + " tests");
         }
 
         if (this.profileFirstNTests != null) {
@@ -131,12 +131,11 @@ public class Profiler implements Serializable {
         Map<UnitTest, ProfileResult> results;
         if (!this.excludeProfiler) {
             results = profileTestSuite(tests);
-            tests = tests.stream()
-                        .filter(test -> results.keySet().contains(test) && results.get(test).success)
-                        .collect(Collectors.toSet());
+            tests = tests.stream().filter(test -> results.containsKey(test) && results.get(test).success).collect(Collectors.toSet());
             reportSummary(results);
         }
 
+        Logger.info("Parsing traces for " + tests.size() + " tests");
         List<Trace> testTraces = parseTraces(tests);
 
         List<HotMethod> hotMethods = calcHotMethods(testTraces);
@@ -153,13 +152,12 @@ public class Profiler implements Serializable {
         Logger.info("Profiling report summary");
         Logger.info("Total number of tests run: " + results.size());
 
-        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
-                .collect(Collectors.toList());
+        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).collect(Collectors.toList());
 
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
-            for (ProfileResult result: failures) {
+            for (ProfileResult result : failures) {
                 Logger.warn("Failed to run test: " + result.test + " due to exception: " + result.exception);
             }
         } else {
@@ -180,14 +178,13 @@ public class Profiler implements Serializable {
         int testCount = 0;
 
         // Sort for replication when debugging
-        List<UnitTest> sortedTests = new LinkedList(tests);
+        List<UnitTest> sortedTests = new LinkedList<>(tests);
         Collections.sort(sortedTests);
 
-        for (UnitTest test: sortedTests) {
+        for (UnitTest test : sortedTests) {
 
             if (isParameterizedTest(test)) {
-                Logger.warn("Ignoring parameterized test, as jUnit does not support running individual " +
-                        "parameterized tests.");
+                Logger.warn("Ignoring parameterized test, as jUnit does not support running individual " + "parameterized tests.");
                 Logger.warn("See https://github.com/junit-team/junit4/issues/664");
                 Logger.warn("Test was: " + test);
                 continue;
@@ -195,18 +192,21 @@ public class Profiler implements Serializable {
 
             testCount++;
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 String args;
 
-                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                    args = JFR_ARG + jfrFile(test,rep).getAbsolutePath();
+                    if (JavaUtils.getJavaVersion() < 11) {
+                        args = JFR_ARG_BEFORE_11 + jfrFile(test, rep).getAbsolutePath();
+                    } else {
+                        args = JFR_ARG_11_AFTER + jfrFile(test, rep).getAbsolutePath();
+                    }
                 }
 
-                String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
-                                                        test, testCount, tests.size(), rep, this.reps);
+                String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d", test, testCount, tests.size(), rep, this.reps);
 
                 Logger.info(progressMessage);
 
@@ -230,28 +230,15 @@ public class Profiler implements Serializable {
 
     }
 
-    static class ProfileResult {
-        UnitTest test;
-        boolean success;
-        Exception exception;
-        ProfileResult(UnitTest test, boolean success, Exception exception) {
-            this.test = test;
-            this.success = success;
-            this.exception = exception;
-        }
-    }
-
     private boolean isParameterizedTest(UnitTest test) {
         return test.getMethodName().contains("[");
     }
-
-    // Parse traces from test suite
 
     protected List<Trace> parseTraces(Set<UnitTest> tests) {
 
         List<Trace> allTraces = new LinkedList<>();
 
-        for (UnitTest test: tests) {
+        for (UnitTest test : tests) {
 
             List<Trace> testTraces = new LinkedList<>();
 
@@ -259,14 +246,14 @@ public class Profiler implements Serializable {
                 continue;
             }
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 Logger.info("Parsing trace for test: " + test);
 
                 File traceFile;
                 Trace trace;
 
-                if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     traceFile = hprofFile(test, rep);
                     trace = Trace.fromHPROFFile(this.project, test, traceFile);
                     testTraces.add(trace);
@@ -278,7 +265,7 @@ public class Profiler implements Serializable {
                     } catch (IOException e) {
                         Logger.warn("Failed to read JFR file due to IOException: " + e);
                     }
-                    
+
 
                 }
 
@@ -289,7 +276,7 @@ public class Profiler implements Serializable {
                     } catch (IOException e) {
                         Logger.warn("Failed to delete profiling file with IOException: " + e);
                     }
-                } 
+                }
 
             }
 
@@ -303,6 +290,8 @@ public class Profiler implements Serializable {
 
     }
 
+    // Parse traces from test suite
+
     // For each method found in the entire test suite trace, record its overall count, and the name of
     // all tests that called it.
     private List<HotMethod> calcHotMethods(List<Trace> traces) {
@@ -311,7 +300,7 @@ public class Profiler implements Serializable {
 
         Trace entireTestSuiteTrace = Trace.mergeTraces(traces);
 
-        for (String hotMethod: entireTestSuiteTrace.allMethods()) {
+        for (String hotMethod : entireTestSuiteTrace.allMethods()) {
 
             Set<UnitTest> callingTests = findTestsCallingMethod(hotMethod, traces);
 
@@ -329,7 +318,7 @@ public class Profiler implements Serializable {
 
         Set<UnitTest> tests = new HashSet<>();
 
-        for (Trace trace: traces) {
+        for (Trace trace : traces) {
 
             if (trace.allMethods().contains(method)) {
                 tests.add(trace.getTest());
@@ -358,20 +347,15 @@ public class Profiler implements Serializable {
 
         int hotMethodIndex = 1;
 
-        for (HotMethod method: hotMethods) {
+        for (HotMethod method : hotMethods) {
 
             List<String> testNames = new LinkedList<>();
-            for (UnitTest test: method.tests) {
+            for (UnitTest test : method.tests) {
                 testNames.add(test.toString());
             }
             String allTestNames = String.join(",", testNames);
 
-            String[] row = {this.projectName,
-                            Integer.toString(hotMethodIndex),
-                            method.methodName,
-                            Integer.toString(method.count),
-                            allTestNames
-                            };
+            String[] row = {this.projectName, Integer.toString(hotMethodIndex), method.methodName, Integer.toString(method.count), allTestNames};
 
             writer.writeNext(row);
 
@@ -389,35 +373,14 @@ public class Profiler implements Serializable {
 
     }
 
-    class HotMethod implements Comparable<HotMethod> {
-
-        HotMethod(String method, int count, Set<UnitTest> tests) {
-            this.methodName = method;
-            this.count = count;
-            this.tests = tests;
-        }
-
-
-        String methodName;
-        int count;
-        Set<UnitTest> tests;
-
-        @Override
-        public int compareTo(HotMethod o) {
-            return Integer.compare(this.count, o.count);
-        }
-
-    }
-
     private File jfrFile(UnitTest test, int rep) {
 
         String testName = test.getTestName();
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".jfr";
         String filenameNoBrackets = filename.replace("()", "");
-        File jfr = new File(workingDir, filenameNoBrackets);
-        return jfr;
-        
+        return new File(workingDir, filenameNoBrackets);
+
     }
 
     private File hprofFile(UnitTest test, int rep) {
@@ -425,14 +388,44 @@ public class Profiler implements Serializable {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
-        File hprof = new File(workingDir, filenameNoBrackets);
-        return  hprof;
+        return new File(workingDir, filenameNoBrackets);
     }
 
     private void ensureWorkingDirectory() {
 
         if (!workingDir.exists()) {
             workingDir.mkdirs();
+        }
+
+    }
+
+    static class ProfileResult {
+        UnitTest test;
+        boolean success;
+        Exception exception;
+
+        ProfileResult(UnitTest test, boolean success, Exception exception) {
+            this.test = test;
+            this.success = success;
+            this.exception = exception;
+        }
+    }
+
+    class HotMethod implements Comparable<HotMethod> {
+
+        String methodName;
+        int count;
+        Set<UnitTest> tests;
+
+        HotMethod(String method, int count, Set<UnitTest> tests) {
+            this.methodName = method;
+            this.count = count;
+            this.tests = tests;
+        }
+
+        @Override
+        public int compareTo(HotMethod o) {
+            return Integer.compare(this.count, o.count);
         }
 
     }

@@ -8,6 +8,7 @@ import gin.util.regression.RTSFactory;
 import gin.util.regression.RTSStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
@@ -17,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,8 +40,9 @@ public class RTSProfiler implements Serializable {
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String PROF_DIR = "profiler_out";
+    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static String JFR_ARG = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -64,21 +67,20 @@ public class RTSProfiler implements Serializable {
             + "If you are using Apache Commons projects, add the \"rat.skip=true\" property, otherwise the projects won't work with Gin.")
     protected String[] additionalProperties = new String[]{};
     @Argument(description = "The Regression Test Selection (RTS) mechanism used to collect test cases for each method. "
-            + "WARNING: starts does not work on Windows. "
             + "Use 'none' for avoiding RTS altogether. "
-            + "Available: 'none', 'ekstazi', 'starts', 'random'. "
+            + "Available: 'none', 'ekstazi', 'random'. "
             + "Default: 'ekstazi'.")
     protected String rts = "ekstazi";
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
-    @Argument(alias = "prof", description = "Java hprof file name. If running in parallel, use a different name for each job.")
-    private String profFileName = "java.prof.txt";
+    @Argument(alias = "pn", description = "Java profiler file name. If running in parallel, use a different name for each job.")
+    protected String profFileName = "java.prof.jfr";
 
-    @Argument(alias = "prof",description= "Profiler to use: jfr or hprof. Default is jfr")
+    @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
     protected String profilerChoice = "jfr";
 
     // Instance Members
-    private File profDir;
+    private final File profDir;
     protected Project project;
 
     public RTSProfiler(String[] args) {
@@ -96,26 +98,25 @@ public class RTSProfiler implements Serializable {
                 project.setMavenHome(this.mavenHome);
             }
         }
-
-        if (this.rts.equals(RTSFactory.STARTS)) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                // STARTS fails on Windows
-                // https://github.com/TestingResearchIllinois/starts/issues/12
-                // Although the author claims the tests pass, they actually don't
-                throw new IllegalArgumentException("STARTS will not work on Windows. Please, use 'ekstazi' as an alternative.");
-            } else if (this.project.isGradleProject()) {
-                throw new IllegalArgumentException("STARTS will not work with Gradle projects. Please, use 'ekstazi' as an alternative.");
-            }
-        }
+        project.setUp();
 
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
-        if (this.profilerChoice.toUpperCase().equals("HPROF")) {
+        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
+        valiateArguments();
+    }
+
+    private void valiateArguments() {
+        if (this.project.isGradleProject()
+                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
+                && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
     }
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
         StopWatch watch = StopWatch.createStarted();
         RTSProfiler profiler = new RTSProfiler(args);
         profiler.profile();
@@ -131,7 +132,7 @@ public class RTSProfiler implements Serializable {
         File profFile = FileUtils.getFile(profDir, profFileName);
         // Create RTS strategy if any
         Logger.info("Initialised: " + rts);
-        RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, this.projectDir.getAbsolutePath());
+        RTSStrategy rtsStrategy = RTSFactory.createRTSStrategy(rts, Paths.get(this.projectDir.getAbsolutePath()).normalize().toString());
         // Execute profiler
         if (!this.excludeProfiler) {
             // Try to create the folder in which the profiling results of hprof
@@ -144,21 +145,19 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            if (this.profilerChoice.toUpperCase().equals("HPROF")) {
-                argLine.append(HPROF_ARG)
-                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
-            } else {
-                argLine.append(JFR_ARG)
-                    .append(FilenameUtils.normalize(profFile.getAbsolutePath()));
-            }
+            String profilerArgumentLine = switch (this.profilerChoice.toUpperCase()) {
+                case "HPROF" -> HPROF_ARG;
+                default -> JavaUtils.getJavaVersion() < 11 ? JFR_ARG_BEFORE_11 : JFR_ARG_11_AFTER;
+            };
+            argLine.append(profilerArgumentLine).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
 
             // Inject the RTS agent (if any)
             String rtsArg = rtsStrategy.getArgumentLine();
-            if (rtsArg != null && !rtsArg.trim().isEmpty()) {
+            if (!StringUtils.isBlank(argLine)) {
                 argLine.append(" ").append(rtsArg);
             }
 
-            // Set the argument line witht he agents
+            // Set the argument line with the agents
             properties.put("argLine", argLine.toString().trim());
 
             // Set the additional properties
@@ -174,7 +173,7 @@ public class RTSProfiler implements Serializable {
             String rtsTestGoal = rtsStrategy.getTestGoal();
             // If -t was not given (is default), then use the one provided by
             // the RTS technique. Otherwise, use the one sepcified by the user.
-            this.mavenTaskName = this.mavenTaskName.equals("test")
+            this.mavenTaskName = this.mavenTaskName.equalsIgnoreCase("test")
                     ? rtsTestGoal
                     : this.mavenTaskName;
 
@@ -204,16 +203,16 @@ public class RTSProfiler implements Serializable {
         List<HotMethod> hotMethods = new ArrayList<>();
         Map<String, Integer> methodCounts = new HashMap<>();
         if (profFile != null && profFile.exists()) {
-            if (this.profilerChoice.toUpperCase().equals("hprof")) {
+            if (this.profilerChoice.equalsIgnoreCase("hprof")) {
                 methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
             } else {
                 methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-            } 
+            }
 
             hotMethods = methodCounts.entrySet()
-                .stream()
-                .map(traceToHotMethod())
-                .collect(Collectors.toList());
+                    .stream()
+                    .map(traceToHotMethod())
+                    .collect(Collectors.toList());
         }
         return hotMethods;
     }
@@ -272,7 +271,7 @@ public class RTSProfiler implements Serializable {
 
     private void writeTimingResults(StopWatch watch) {
         try {
-            FileUtils.writeStringToFile(timingOutputFile, String.valueOf(watch.getTime()) + "\n", Charset.defaultCharset());
+            FileUtils.writeStringToFile(timingOutputFile, watch.getTime() + "\n", Charset.defaultCharset());
         } catch (IOException ex) {
             Logger.error(ex, "Error outputing execution time to: " + timingOutputFile);
         }

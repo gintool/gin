@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -69,7 +69,7 @@ public class Compiler implements Serializable {
             options.add("-cp");
             options.add(classPath + File.pathSeparator + System.getProperty("java.class.path"));
 
-            Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(source));
+            Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Collections.singletonList(source));
 
             JavaCompiler.CompilationTask task;
             task = compiler.getTask(null, fm, null, options, null, compilationUnit);

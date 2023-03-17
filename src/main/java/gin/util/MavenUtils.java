@@ -47,7 +47,7 @@ public class MavenUtils implements Serializable {
                 }
             }
         }
-        return "/usr/local/";
+        throw new RuntimeException("Gin could not locate the maven executable. Please, set your 'MAVEN_HOME' environment variable, or provide the maven home path when using Gin.");
     }
 
     /**

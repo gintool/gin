@@ -1,11 +1,13 @@
 package gin.util;
 
 import gin.TestConfiguration;
+import gin.category.LocalTest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
@@ -59,6 +61,7 @@ public class RTSProfilerTest {
     }
 
     @Test
+    @Category(LocalTest.class)
     public void testMainWithEkstaziGradle() throws IOException {
         Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
         String[] args = new String[]{"-p", "ekstazi", "-d", PROJECT_PATH_GRADLE, "-rts", "ekstazi", "-o", OUTPUT_CSV_PATH_GRADLE};

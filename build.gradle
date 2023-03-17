@@ -114,5 +114,9 @@ test {
         events "PASSED", "STARTED", "FAILED", "SKIPPED"
         //showStandardStreams = true
     }
+    useJUnit {
+        if (project.hasProperty("excludeCategory"))
+            excludeCategories "$excludeCategory"
+    }
 }
 

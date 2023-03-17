@@ -16,10 +16,15 @@ import org.pmw.tinylog.Logger;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 public class NSGAII extends Sampler {
 
+    @Serial
     private static final long serialVersionUID = 8547883760400442899L;
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
@@ -42,9 +47,8 @@ public class NSGAII extends Sampler {
 
     protected Random mutationRng;
     protected Random individualRng;
-
-    private String className;
     protected String methodName;
+    private String className;
     private float initTime;
     private long initMem;
     private List<UnitTest> tests;
@@ -70,11 +74,11 @@ public class NSGAII extends Sampler {
 
 
     private void printAdditionalArguments() {
-        Logger.info("Edit types: "+ editTypes);
-        Logger.info("Number of generations: "+ genNumber);
-        Logger.info("Number of individuals: "+ indNumber);
-        Logger.info("Random seed for mutation operator selection: "+ mutationSeed);
-        Logger.info("Random seed for individual selection: "+ individualSeed);
+        Logger.info("Edit types: " + editTypes);
+        Logger.info("Number of generations: " + genNumber);
+        Logger.info("Number of individuals: " + indNumber);
+        Logger.info("Random seed for mutation operator selection: " + mutationSeed);
+        Logger.info("Random seed for individual selection: " + individualSeed);
     }
 
     private void setup() {
@@ -123,7 +127,7 @@ public class NSGAII extends Sampler {
         dirs.add(-1);
         dirs.add(-1);
         NSGAIIPop P = new NSGAIIPop(2, dirs);
-        UnitTestResultSet resultSet = initRes;
+        UnitTestResultSet resultSet;
         Logger.info("Generating initial generation");
         for (int i = 0; i < indNumber; i++) {
             Patch patch = mutate(origPatch);
@@ -165,30 +169,28 @@ public class NSGAII extends Sampler {
         }
     }
 
-    public NSGAIIPop NSGAIIOffspring(NSGAIIPop pop, Patch origpatch){
+    public NSGAIIPop NSGAIIOffspring(NSGAIIPop pop, Patch origpatch) {
         Logger.info("Generating offspring");
         ArrayList<NSGAInd> population = pop.getPopulation();
         List<Patch> oldPatches = new ArrayList<>();
-        for (NSGAInd ind : population){
+        for (NSGAInd ind : population) {
             oldPatches.add(ind.getPatch());
         }
         List<Patch> patches = new ArrayList<>();
         //selection
-        for (int i = 0; i < population.size(); i++){
+        for (int i = 0; i < population.size(); i++) {
             NSGAInd ind1 = population.get(individualRng.nextInt(population.size()));
             NSGAInd ind2 = population.get(individualRng.nextInt(population.size()));
-            if (ind1.getRank() < ind2.getRank()){
+            if (ind1.getRank() < ind2.getRank()) {
                 patches.add(ind1.getPatch().clone());
             }
-            if (ind1.getRank() > ind2.getRank()){
+            if (ind1.getRank() > ind2.getRank()) {
                 patches.add(ind2.getPatch().clone());
-            }
-            else{
+            } else {
                 float coinFlip = mutationRng.nextFloat();
-                if(coinFlip < 0.5) {
+                if (coinFlip < 0.5) {
                     patches.add(ind1.getPatch().clone());
-                }
-                else {
+                } else {
                     patches.add(ind2.getPatch().clone());
                 }
             }
@@ -196,9 +198,9 @@ public class NSGAII extends Sampler {
         //crossover
         patches = crossover(patches, origpatch);
         //mutation
-        List<Patch>  mutatedPatches = new ArrayList<>();
-        for (Patch patch : patches){
-            if (mutationRng.nextFloat() <  0.5){
+        List<Patch> mutatedPatches = new ArrayList<>();
+        for (Patch patch : patches) {
+            if (mutationRng.nextFloat() < 0.5) {
                 mutatedPatches.add(mutate(patch));
             }
         }
@@ -208,7 +210,7 @@ public class NSGAII extends Sampler {
         dirs.add(-1);
         NSGAIIPop Q = new NSGAIIPop(2, dirs);
         //fitness
-        for (Patch patch: patches){
+        for (Patch patch : patches) {
             UnitTestResultSet resultSet;
             resultSet = testPatch(className, tests, patch);
 
@@ -224,8 +226,9 @@ public class NSGAII extends Sampler {
             Q.addInd(patch, fitnesses);
         }
 
-        return  Q;
+        return Q;
     }
+
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
 
         return testPatch(className, tests, origPatch);
@@ -322,14 +325,12 @@ public class NSGAII extends Sampler {
     }
 
     protected void writePatch(UnitTestResultSet resultSet, String methodName) {
-        float execTime  = resultSet.totalExecutionTime() / 1000000.0f;
-        if (execTime == 0 || ! resultSet.allTestsSuccessful()) execTime = Float.MAX_VALUE;
+        float execTime = resultSet.totalExecutionTime() / 1000000.0f;
+        if (execTime == 0 || !resultSet.allTestsSuccessful()) execTime = Float.MAX_VALUE;
         long memoryUsage = resultSet.totalMemoryUsage();
-        if(memoryUsage==0 || ! resultSet.allTestsSuccessful())memoryUsage=Long.MAX_VALUE;
+        if (memoryUsage == 0 || !resultSet.allTestsSuccessful()) memoryUsage = Long.MAX_VALUE;
         writePatch(resultSet, methodName, execTime, initTime - execTime, memoryUsage, initMem - memoryUsage);
     }
-
-
 
 
 }

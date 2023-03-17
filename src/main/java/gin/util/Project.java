@@ -47,11 +47,8 @@ public class Project implements Serializable {
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
     private static final boolean DEBUG = false;
-    private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = "7.6";
     private final File projectDir;
     private final String projectName;
-    private BuildType buildType;
     private final List<File> moduleDirs = new LinkedList<>();
     private final List<File> mainSourceDirs = new LinkedList<>();
     private final List<File> testSourceDirs = new LinkedList<>();
@@ -59,6 +56,9 @@ public class Project implements Serializable {
     private final List<File> testResourceDirs = new LinkedList<>();
     private final List<File> mainClassDirs = new LinkedList<>();
     private final List<File> testClassDirs = new LinkedList<>();
+    private File mavenHome = new File(DEFAULT_MAVEN_HOME);
+    private String gradleVersion = "7.6";
+    private BuildType buildType;
 
     /**
      * Builds a project object. You must call {@link #setUp()} or {@link #setUp(String, String)} before using it to capture the project's structure.
@@ -70,20 +70,6 @@ public class Project implements Serializable {
         projectDir = directory.getAbsoluteFile();
         projectName = name;
         detectBuildType();
-    }
-
-    public void setUp() {
-        detectDirs();
-    }
-
-    public void setUp(@Nullable String gradleVersion, @Nullable String mavenHome) {
-        if (!StringUtils.isBlank(gradleVersion)) {
-            this.setGradleVersion(gradleVersion);
-        }
-        if (!StringUtils.isBlank(mavenHome)) {
-            this.setMavenHome(FileUtils.getFile(mavenHome));
-        }
-        this.setUp();
     }
 
     protected static String getMethodSignature(File srcDir, String methodName, String className, int lineNumber) {
@@ -136,6 +122,20 @@ public class Project implements Serializable {
 
         return null;
 
+    }
+
+    public void setUp() {
+        detectDirs();
+    }
+
+    public void setUp(@Nullable String gradleVersion, @Nullable String mavenHome) {
+        if (!StringUtils.isBlank(gradleVersion)) {
+            this.setGradleVersion(gradleVersion);
+        }
+        if (!StringUtils.isBlank(mavenHome)) {
+            this.setMavenHome(FileUtils.getFile(mavenHome));
+        }
+        this.setUp();
     }
 
     public List<File> getMainSourceDirs() {
@@ -369,11 +369,7 @@ public class Project implements Serializable {
         try {
             model = reader.read(new FileReader(pomFile));
             model.setPomFile(pomFile);
-        } catch (IOException e) {
-            Logger.error("Error creating maven model from pom.xml");
-            Logger.error(e);
-            System.exit(-1);
-        } catch (XmlPullParserException e) {
+        } catch (IOException | XmlPullParserException e) {
             Logger.error("Error creating maven model from pom.xml");
             Logger.error(e);
             System.exit(-1);
@@ -420,7 +416,7 @@ public class Project implements Serializable {
 
         String outputTest = null;
         if (build != null) {
-            model.getBuild().getTestOutputDirectory();
+            outputTest = model.getBuild().getTestOutputDirectory();
         }
         if (outputTest == null) {
             outputTest = "target" + File.separator + "test-classes";
@@ -463,19 +459,10 @@ public class Project implements Serializable {
 
             // Extremely detailed debug output.
             if (DEBUG) {
-                request.setErrorHandler(new InvocationOutputHandler() {
-                    @Override
-                    public void consumeLine(String line) throws IOException {
-                        Logger.info(line);
-                    }
-                });
+                request.setErrorHandler(Logger::info);
             }
 
-            request.setOutputHandler(new InvocationOutputHandler() {
-                @Override
-                public void consumeLine(String line) throws IOException {
-                    // silent output on stdout
-                }
+            request.setOutputHandler(line -> {
             });
 
             try {
@@ -490,7 +477,7 @@ public class Project implements Serializable {
                 System.exit(-1);
             }
 
-            List<String> output = new LinkedList<String>();
+            List<String> output;
             Path path = depOutput.toPath();
             output = Files.readAllLines(path);
             Files.deleteIfExists(depOutput.toPath());
@@ -572,12 +559,7 @@ public class Project implements Serializable {
 
         // Extremely detailed debug output.
         if (DEBUG) {
-            request.setErrorHandler(new InvocationOutputHandler() {
-                @Override
-                public void consumeLine(String line) throws IOException {
-                    Logger.info(line);
-                }
-            });
+            request.setErrorHandler(Logger::info);
         }
 
         try {
@@ -712,7 +694,7 @@ public class Project implements Serializable {
                             test = new UnitTest(className + '$' + innerClassName, testMethodName, moduleName);
                         }
 
-                        Boolean success = rowEntries.get(2).text().equals("passed");
+                        boolean success = rowEntries.get(2).text().equals("passed");
                         if (!success) {
                             Logger.warn("Excluding ignored or failed test case: " + test);
                         } else {

@@ -1,35 +1,38 @@
 package gin.test;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.mdkt.compiler.CompiledCode;
+import org.mdkt.compiler.InMemoryJavaCompiler;
+import org.pmw.tinylog.Logger;
+
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-
-import org.mdkt.compiler.CompiledCode;
-import org.mdkt.compiler.InMemoryJavaCompiler;
-import org.pmw.tinylog.Logger;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Wraps the InMemoryJavaCompiler to compile a class given its name and a classpath.
  */
 public class Compiler implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -5411786808143665676L;
 
     /**
      * Compile a class to bytecode, given the fully qualified classname, a source string, and an optional classpath.
+     *
      * @param className Full class name, e.g. org.mypackage.StringHelper
-     * @param source String of full source file.
+     * @param source    String of full source file.
      * @param classPath Standard Java classpath string.
      * @return the compiled code
      */
-    public static CompiledCode compile(String className, String source, String classPath)  {
+    public static CompiledCode compile(String className, String source, String classPath) {
 
         CompiledCode code;
 
@@ -64,7 +67,7 @@ public class Compiler implements Serializable {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         boolean compiled = false;
-        try(StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)){
+        try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             List<String> options = new ArrayList<>();
             options.add("-cp");
             options.add(classPath + File.pathSeparator + System.getProperty("java.class.path"));
@@ -76,7 +79,6 @@ public class Compiler implements Serializable {
 
             if (!task.call()) {
                 Logger.warn("Error during compilation of source on disk: " + source);
-                compiled = false;
             } else {
                 compiled = true;
             }

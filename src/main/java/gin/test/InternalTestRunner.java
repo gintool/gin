@@ -1,30 +1,27 @@
 package gin.test;
 
+import gin.Patch;
+import org.mdkt.compiler.CompiledCode;
+import org.pmw.tinylog.Logger;
+
+import java.io.IOException;
 import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.mdkt.compiler.CompiledCode;
-import org.pmw.tinylog.Logger;
-
-import gin.Patch;
-import java.io.IOException;
-
 /**
  * Runs tests internally, through CacheClassLoader
  */
 public class InternalTestRunner extends TestRunner {
 
+    public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
     @Serial
     private static final long serialVersionUID = -2348071089493178903L;
-
-    public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
-
     /**
-     * If set to true, the tests will stop at the first failure and the next 
-     * patch will be executed. You probably don't want to set this to true for 
+     * If set to true, the tests will stop at the first failure and the next
+     * patch will be executed. You probably don't want to set this to true for
      * Automatic Program Repair.
      */
     private boolean failFast;
@@ -32,12 +29,12 @@ public class InternalTestRunner extends TestRunner {
     /**
      * Create an InternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
      * and a list of unit tests that will be used to test patches.
-     * 
+     *
      * @param fullyQualifiedClassName Class name including full package name.
-     * @param classPath Standard Java classpath format.
-     * @param unitTests List of unit tests to be run against each patch.
-     * @param failFast Whether the test execution should stop at the first
-     * failed test.
+     * @param classPath               Standard Java classpath format.
+     * @param unitTests               List of unit tests to be run against each patch.
+     * @param failFast                Whether the test execution should stop at the first
+     *                                failed test.
      */
     public InternalTestRunner(String fullyQualifiedClassName, String classPath, List<UnitTest> unitTests, boolean failFast) {
         super(fullyQualifiedClassName, classPath, unitTests);
@@ -47,22 +44,27 @@ public class InternalTestRunner extends TestRunner {
     /**
      * Create an InternalTestRunner given a package.ClassName, a classpath string separated by colons if needed,
      * and a list of unit tests that will be used to test patches.
-     * 
+     *
      * @param fullyQualifiedClassName Class name including full package name.
-     * @param classPath Standard Java classpath format.
-     * @param testClassName Fully qualified name of the test class to be run
-     * against each patch.
-     * @param failFast Whether the test execution should stop at the first
-     * failed test.
+     * @param classPath               Standard Java classpath format.
+     * @param testClassName           Fully qualified name of the test class to be run
+     *                                against each patch.
+     * @param failFast                Whether the test execution should stop at the first
+     *                                failed test.
      */
     public InternalTestRunner(String fullyQualifiedClassName, String classPath, String testClassName, boolean failFast) {
-        this(fullyQualifiedClassName, classPath, new LinkedList<UnitTest>(), failFast);
+        this(fullyQualifiedClassName, classPath, new LinkedList<>(), failFast);
         this.setTests(testsForClass(testClassName));
+    }
+
+    // Separated out so we can modify.
+    private static int getNumberOfThreads() {
+        return java.lang.Thread.activeCount();
     }
 
     /**
      * Returns whether this runner should fail fast. See {@link #failFast}.
-     * 
+     *
      * @return {@code true} if the runner should stop at the first failed test
      */
     public boolean isFailFast() {
@@ -71,9 +73,9 @@ public class InternalTestRunner extends TestRunner {
 
     /**
      * Sets whether this runner should fail fast. See {@link #failFast}.
-     * 
+     *
      * @param failFast {@code true} if the runner should stop at the first
-     * failed test
+     *                 failed test
      */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
@@ -81,8 +83,9 @@ public class InternalTestRunner extends TestRunner {
 
     /**
      * Apply and compile the given patch, then run all unit tests against it.
+     *
      * @param patch Patch to apply.
-     * @param reps Number of times to run each test.
+     * @param reps  Number of times to run each test.
      * @return the results of the tests
      */
     public UnitTestResultSet runTests(Patch patch, int reps) {
@@ -102,7 +105,7 @@ public class InternalTestRunner extends TestRunner {
             // The patch might be invalid due to a couple of edits, which
             // drop to being no-ops; remaining edits might be ok so still
             // try compiling and then running in case of no-op
-            if(patchValid) {
+            if (patchValid) {
                 // Compile
                 CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
                 compiledOK = (code != null);
@@ -129,9 +132,9 @@ public class InternalTestRunner extends TestRunner {
 
     /**
      * Run each of the tests against the modified class held in the class load, rep times.
-     * @param reps Number of times to run each test
+     *
+     * @param reps        Number of times to run each test
      * @param classLoader CacheClassLoader containing correct classpath and any modified classes.
-     * @return
      */
     private List<UnitTestResult> runTests(int reps, CacheClassLoader classLoader) {
 
@@ -160,7 +163,6 @@ public class InternalTestRunner extends TestRunner {
      * Loads JUnitBridge using a separate classloader and invokes jUnit using reflection.
      * This allows us to have jUnit load all classes from a CacheClassLoader, enabling us to override the modified
      * class with the freshly compiled version.
-     * @return
      */
     private UnitTestResult runSingleTest(UnitTest test, CacheClassLoader classLoader, int rep) {
 
@@ -175,7 +177,8 @@ public class InternalTestRunner extends TestRunner {
         Object runner = null;
         try {
             runner = runnerClass.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InstantiationException | NoSuchMethodException | IllegalAccessException |
+                 InvocationTargetException e) {
             Logger.error("Could not instantiate isolated test runner: " + e);
             System.exit(-1);
         }
@@ -190,7 +193,7 @@ public class InternalTestRunner extends TestRunner {
 
         int threadsBefore = getNumberOfThreads();
 
-        Object result = null;
+        Object result;
         try {
             result = method.invoke(runner, test, rep);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -210,11 +213,6 @@ public class InternalTestRunner extends TestRunner {
 
         return (UnitTestResult) result;
 
-    }
-
-    // Separated out so we can modify.
-    private static int getNumberOfThreads() {
-        return java.lang.Thread.activeCount();
     }
 
 

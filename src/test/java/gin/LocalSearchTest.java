@@ -1,24 +1,21 @@
 package gin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.Collections;
-
+import gin.edit.line.DeleteLine;
 import org.junit.Before;
 import org.junit.Test;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Level;
 
-import gin.edit.line.DeleteLine;
+import java.io.File;
+import java.util.Collections;
+
+import static org.junit.Assert.*;
 
 public class LocalSearchTest {
 
     public static final String FILENAME = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
     private final static String METHOD_NAME = "classifyTriangle(int,int,int)";
-    
+
     LocalSearch simpleLocalSearch;
 
     @Before
@@ -51,7 +48,7 @@ public class LocalSearchTest {
         assertEquals(neighbourPatch.size(), 1);
 
         // Now do 10 random neighbours
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
 
             Patch oneEditPatch = new Patch(sourceFile);
             DeleteLine delete = new DeleteLine(sourceFile.getFilename(), 15);

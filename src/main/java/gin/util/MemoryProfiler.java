@@ -3,77 +3,59 @@ package gin.util;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVWriter;
-
-import java.io.*;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.sampullara.cli.Argument;
 import com.sampullara.cli.Args;
-
+import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
 import org.pmw.tinylog.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof.
- *
+ * <p>
  * Run directly from the commandline.
- *
+ * <p>
  * You provide the project directory, output file, number of reps.... the MemoryProfiler does the rest.
  */
 public class MemoryProfiler {
 
-    // Commandline arguments
-    @Argument(alias = "p", description = "Project name, required", required = true)
-    protected String projectName;
-
-    @Argument(alias = "d", description = "Project Directory, reuqired", required = true)
-    protected File projectDir;
-
-    @Argument(alias = "o", description = "Results file hot methods")
-    protected File outputFile = new File("profile_results.csv");
-
-    @Argument(alias = "r", description = "Number of times to run each test")
-    protected Integer reps = 1;
-
-    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
-    protected File mavenHome = new File("/usr/local/");  // default on OS X
-
-    @Argument(alias = "v", description = "Set Gradle version")
-    protected String gradleVersion;
-
-    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
-    protected Boolean excludeMemoryProfiler = false;
-
-    @Argument(alias = "s", description = "Skip initial run of all tests, just parse reports. For debugging.")
-    protected Boolean skipInitialRun = false;
-
-    @Argument(alias = "n", description = "Only mavenProfile the first n tests. For debugging.")
-    protected Integer profileFirstNTests;
-
-    @Argument(alias = "t", description = "Run given maven task rather than test")
-    protected String mavenTaskName = "test";
-
-    @Argument(alias = "m", description="Maven mavenProfile to use, e.g. light-test")
-    protected String mavenProfile = "";
-
-    @Argument(alias = "hi", description="Interval for hprof's CPU sampling in milliseconds")
-    protected Long hprofInterval = 1L;
-
-    // Constants
-
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "hprof";
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
-
     // Instance Members
     private final File workingDir;
     private final Project project;
+    // Commandline arguments
+    @Argument(alias = "p", description = "Project name, required", required = true)
+    protected String projectName;
+    @Argument(alias = "d", description = "Project Directory, reuqired", required = true)
+    protected File projectDir;
+    @Argument(alias = "o", description = "Results file hot methods")
+    protected File outputFile = new File("profile_results.csv");
+    @Argument(alias = "r", description = "Number of times to run each test")
+    protected Integer reps = 1;
+    @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
+    protected File mavenHome = new File("/usr/local/");  // default on OS X
+    @Argument(alias = "v", description = "Set Gradle version")
+    protected String gradleVersion;
+    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
+    protected Boolean excludeMemoryProfiler = false;
 
-    public static void main(String[] args) {
-        MemoryProfiler profiler = new MemoryProfiler(args);
-        profiler.profile();
-    }
+    // Constants
+    @Argument(alias = "s", description = "Skip initial run of all tests, just parse reports. For debugging.")
+    protected Boolean skipInitialRun = false;
+    @Argument(alias = "n", description = "Only mavenProfile the first n tests. For debugging.")
+    protected Integer profileFirstNTests;
+    @Argument(alias = "t", description = "Run given maven task rather than test")
+    protected String mavenTaskName = "test";
+    @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
+    protected String mavenProfile = "";
+    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
+    protected Long hprofInterval = 1L;
 
     public MemoryProfiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -90,6 +72,11 @@ public class MemoryProfiler {
         project.setUp();
         // Adds the interval provided by the user
         HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+    }
+
+    public static void main(String[] args) {
+        MemoryProfiler profiler = new MemoryProfiler(args);
+        profiler.profile();
     }
 
     // Main Profile Method
@@ -117,8 +104,8 @@ public class MemoryProfiler {
         if (!this.excludeMemoryProfiler) {
             results = profileTestSuite(tests);
             tests = tests.stream()
-                        .filter(test -> results.containsKey(test) && results.get(test).success)
-                        .collect(Collectors.toSet());
+                    .filter(test -> results.containsKey(test) && results.get(test).success)
+                    .collect(Collectors.toSet());
             reportSummary(results);
         }
 
@@ -126,7 +113,7 @@ public class MemoryProfiler {
 
         List<HotMethod> hotMethods = calcHotMethods(testMemoryTraces);
 
-        Collections.sort(hotMethods, Collections.reverseOrder());
+        hotMethods.sort(Collections.reverseOrder());
 
         writeResults(hotMethods);
 
@@ -139,12 +126,12 @@ public class MemoryProfiler {
         Logger.info("Total number of tests run: " + results.size());
 
         List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
-                .collect(Collectors.toList());
+                .toList();
 
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");
-            for (ProfileResult result: failures) {
+            for (ProfileResult result : failures) {
                 Logger.warn("Failed to run test: " + result.test + " due to exception: " + result.exception);
             }
         } else {
@@ -168,7 +155,7 @@ public class MemoryProfiler {
         List<UnitTest> sortedTests = new LinkedList<>(tests);
         Collections.sort(sortedTests);
 
-        for (UnitTest test: sortedTests) {
+        for (UnitTest test : sortedTests) {
 
             if (isParameterizedTest(test)) {
                 Logger.warn("Ignoring parameterized test, as jUnit does not support running individual " +
@@ -180,12 +167,12 @@ public class MemoryProfiler {
 
             testCount++;
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 String args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
-                                                        test, testCount, tests.size(), rep, this.reps);
+                        test, testCount, tests.size(), rep, this.reps);
 
                 Logger.info(progressMessage);
 
@@ -209,28 +196,15 @@ public class MemoryProfiler {
 
     }
 
-    static class ProfileResult {
-        UnitTest test;
-        boolean success;
-        Exception exception;
-        ProfileResult(UnitTest test, boolean success, Exception exception) {
-            this.test = test;
-            this.success = success;
-            this.exception = exception;
-        }
-    }
-
     private boolean isParameterizedTest(UnitTest test) {
         return test.getMethodName().contains("[");
     }
-
-    // Parse traces from test suite
 
     protected List<MemoryTrace> parseMemoryTraces(Set<UnitTest> tests) {
 
         List<MemoryTrace> allMemoryTraces = new LinkedList<>();
 
-        for (UnitTest test: tests) {
+        for (UnitTest test : tests) {
 
             List<MemoryTrace> testMemoryTraces = new LinkedList<>();
 
@@ -238,7 +212,7 @@ public class MemoryProfiler {
                 continue;
             }
 
-            for (int rep=1; rep <= this.reps; rep++) {
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 Logger.info("Parsing trace for test: " + test);
 
@@ -258,6 +232,8 @@ public class MemoryProfiler {
 
     }
 
+    // Parse traces from test suite
+
     // For each method found in the entire test suite trace, record its overall count, and the name of
     // all tests that called it.
     private List<HotMethod> calcHotMethods(List<MemoryTrace> traces) {
@@ -266,7 +242,7 @@ public class MemoryProfiler {
 
         MemoryTrace entireTestSuiteMemoryTrace = MemoryTrace.mergeMemoryTraces(traces);
 
-        for (String hotMethod: entireTestSuiteMemoryTrace.allMethods()) {
+        for (String hotMethod : entireTestSuiteMemoryTrace.allMethods()) {
 
             Set<UnitTest> callingTests = findTestsCallingMethod(hotMethod, traces);
 
@@ -284,7 +260,7 @@ public class MemoryProfiler {
 
         Set<UnitTest> tests = new HashSet<>();
 
-        for (MemoryTrace trace: traces) {
+        for (MemoryTrace trace : traces) {
 
             if (trace.allMethods().contains(method)) {
                 tests.add(trace.getTest());
@@ -313,20 +289,20 @@ public class MemoryProfiler {
 
         int hotMethodIndex = 1;
 
-        for (HotMethod method: hotMethods) {
+        for (HotMethod method : hotMethods) {
 
             List<String> testNames = new LinkedList<>();
-            for (UnitTest test: method.tests) {
+            for (UnitTest test : method.tests) {
                 testNames.add(test.toString());
             }
             String allTestNames = String.join(",", testNames);
 
             String[] row = {this.projectName,
-                            Integer.toString(hotMethodIndex),
-                            method.methodName,
-                            Integer.toString(method.count),
-                            allTestNames
-                            };
+                    Integer.toString(hotMethodIndex),
+                    method.methodName,
+                    Integer.toString(method.count),
+                    allTestNames
+            };
 
             writer.writeNext(row);
 
@@ -344,26 +320,6 @@ public class MemoryProfiler {
 
     }
 
-    class HotMethod implements Comparable<HotMethod> {
-
-        HotMethod(String method, int count, Set<UnitTest> tests) {
-            this.methodName = method;
-            this.count = count;
-            this.tests = tests;
-        }
-
-
-        String methodName;
-        int count;
-        Set<UnitTest> tests;
-
-        @Override
-        public int compareTo(HotMethod o) {
-            return Integer.compare(this.count, o.count);
-        }
-
-    }
-
     private File hprofFile(UnitTest test, int rep) {
         String testName = test.getTestName();
         String cleanTest = testName.replace(" ", "_");
@@ -376,6 +332,37 @@ public class MemoryProfiler {
 
         if (!workingDir.exists()) {
             workingDir.mkdirs();
+        }
+
+    }
+
+    static class ProfileResult {
+        UnitTest test;
+        boolean success;
+        Exception exception;
+
+        ProfileResult(UnitTest test, boolean success, Exception exception) {
+            this.test = test;
+            this.success = success;
+            this.exception = exception;
+        }
+    }
+
+    static class HotMethod implements Comparable<HotMethod> {
+
+        String methodName;
+        int count;
+        Set<UnitTest> tests;
+
+        HotMethod(String method, int count, Set<UnitTest> tests) {
+            this.methodName = method;
+            this.count = count;
+            this.tests = tests;
+        }
+
+        @Override
+        public int compareTo(HotMethod o) {
+            return Integer.compare(this.count, o.count);
         }
 
     }

@@ -1,48 +1,41 @@
 package gin.util;
 
-import java.io.File;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.pmw.tinylog.Logger;
-
 import gin.Patch;
 import gin.edit.Edit;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
+import java.io.Serial;
+import java.util.*;
 
 
 /**
  * Method-based GPSimple search.
  * Includes: implementation of tournament selection, uniform crossover, and random mutation operator selection
- * Roughly based on: "A systematic study of automated program repair: Fixing 55 out of 105 bugs for $8 each." 
+ * Roughly based on: "A systematic study of automated program repair: Fixing 55 out of 105 bugs for $8 each."
  * by Claire Le Goues, Michael Dewey-Vogt, Stephanie Forrest, Westley Weimer (ICSE 2012)
- * and its Java implementation at https://github.com/squaresLab/genprog4java 
+ * and its Java implementation at <a href="https://github.com/squaresLab/genprog4java">...</a>
  */
 
 public abstract class GPSimple extends GP {
-    
+
     @Serial
     private static final long serialVersionUID = -3339464277865429122L;
+    // Percentage of population size to be selected during tournament selection
+    private static final double TOURNAMENT_PERCENTAGE = 0.2;
+    // Probability of adding an edit during uniform crossover
+    private static final double MUTATE_PROBABILITY = 0.5;
 
     public GPSimple(String[] args) {
         super(args);
-    }   
+    }
 
     // Constructor used for testing
     public GPSimple(File projectDir, File methodFile) {
         super(projectDir, methodFile);
-    }   
-
-    // Percentage of population size to be selected during tournament selection
-    private static final double TOURNAMENT_PERCENTAGE = 0.2;
-
-    // Probability of adding an edit during uniform crossover
-    private static final double MUTATE_PROBABILITY = 0.5;
+    }
 
     // Whatever initialisation needs to be done for fitness calculations
     @Override
@@ -55,7 +48,7 @@ public abstract class GPSimple extends GP {
     // Calculate fitness threshold, for selection to the next generation
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
-    
+
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/
@@ -110,7 +103,7 @@ public abstract class GPSimple extends GP {
             while (crossoverPatches.size() < indNumber) {
                 crossoverPatches.add(patches.get(super.individualRng.nextInt(patches.size())).clone());
             }
-            
+
             // Mutate the newly created population and check fitness
             for (Patch patch : crossoverPatches) {
 
@@ -130,11 +123,11 @@ public abstract class GPSimple extends GP {
                 super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
             }
 
-            population = new HashMap<Patch, Double>(newPopulation);
+            population = new HashMap<>(newPopulation);
             if (population.isEmpty()) {
                 population.put(origPatch, orig);
             }
-            
+
         }
 
     }
@@ -185,7 +178,7 @@ public abstract class GPSimple extends GP {
     }
 
     // Uniform crossover: patch1patch2 and patch2patch1 created, each edit added with x% probability
-    protected  List<Patch> crossover(List<Patch> patches, Patch origPatch) {
+    protected List<Patch> crossover(List<Patch> patches, Patch origPatch) {
 
         List<Patch> crossedPatches = new ArrayList<>();
 

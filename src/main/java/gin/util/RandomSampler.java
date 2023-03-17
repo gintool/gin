@@ -1,37 +1,37 @@
 package gin.util;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.commons.rng.simple.JDKRandomBridge;
-import org.apache.commons.rng.simple.RandomSource;
-import org.pmw.tinylog.Logger;
-
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
-
 import gin.Patch;
 import gin.SourceFile;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.test.UnitTestResultSet;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 
 /**
- * Random sampler. 
- *
+ * Random sampler.
+ * <p>
  * Creates patchNumber random method patches of size 1:patchSize
  */
 
 public class RandomSampler extends Sampler {
-    
+
+    @Serial
     private static final long serialVersionUID = 5754760811598365140L;
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
-    
+
     @Argument(alias = "ps", description = "Number of edits per patch")
     protected Integer patchSize = 1;
 
@@ -44,13 +44,10 @@ public class RandomSampler extends Sampler {
     @Argument(alias = "rp", description = "Random seed for edit type selection")
     protected Integer patchSeed = 123;
 
-    /**allowed edit types for sampling: parsed from editType*/
+    /**
+     * allowed edit types for sampling: parsed from editType
+     */
     protected List<Class<? extends Edit>> editTypes;
-
-    public static void main(String[] args) {
-        RandomSampler sampler = new RandomSampler(args);
-        sampler.sampleMethods();
-    }
 
     public RandomSampler(String[] args) {
         super(args);
@@ -65,18 +62,23 @@ public class RandomSampler extends Sampler {
         editTypes = Edit.parseEditClassesFromString(editType);
     }
 
-    private void printAdditionalArguments() {
-        Logger.info("Edit types: "+ editTypes);
-        Logger.info("Number of edits per patch: "+ patchSize);
-        Logger.info("Number of patches: "+ patchNumber);
-        Logger.info("Random seed for method selection: "+ methodSeed);
-        Logger.info("Random seed for edit type selection: "+ patchSeed);
+    public static void main(String[] args) {
+        RandomSampler sampler = new RandomSampler(args);
+        sampler.sampleMethods();
     }
 
-   protected void sampleMethodsHook() {
+    private void printAdditionalArguments() {
+        Logger.info("Edit types: " + editTypes);
+        Logger.info("Number of edits per patch: " + patchSize);
+        Logger.info("Number of patches: " + patchNumber);
+        Logger.info("Random seed for method selection: " + methodSeed);
+        Logger.info("Random seed for edit type selection: " + patchSeed);
+    }
 
-        Random mrng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(methodSeed)); 
-        
+    protected void sampleMethodsHook() {
+
+        Random mrng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(methodSeed));
+
         if (patchSize > 0) {
 
             writeHeader();
@@ -87,10 +89,10 @@ public class RandomSampler extends Sampler {
 
             for (int i = 0; i < patchNumber; i++) {
                 Random prng = new JDKRandomBridge(RandomSource.MT, patchSeed + (100000L * i));
-                
+
                 // Pick a random method
                 TargetMethod method = methodData.get(mrng.nextInt(size));
-                Integer methodID = method.getMethodID(); 
+                Integer methodID = method.getMethodID();
                 File source = method.getFileSource();
 
                 // Setup SourceFile for patching
@@ -108,13 +110,13 @@ public class RandomSampler extends Sampler {
                 writeResults(results, methodID);
             }
 
-        Logger.info("Results saved to: " + outputFile);
+            Logger.info("Results saved to: " + outputFile);
 
         } else {
             Logger.info("Number of edits  must be greater than 0.");
         }
 
-   }
+    }
 
 
 }

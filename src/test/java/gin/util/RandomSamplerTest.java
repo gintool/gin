@@ -1,27 +1,24 @@
 package gin.util;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
+import com.opencsv.CSVReader;
+import gin.TestConfiguration;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import org.junit.Before;
-import org.junit.After;
-import org.junit.Test;
-
-import com.opencsv.CSVReader;
-
-import gin.TestConfiguration;
+import static org.junit.Assert.assertEquals;
 
 public class RandomSamplerTest {
 
@@ -31,18 +28,6 @@ public class RandomSamplerTest {
     File outputFile = new File(packageDir, "random_sampler_results.csv");
 
     RandomSampler sampler;
-
-    @Before
-    public void setUp() throws Exception {
-
-        sampler = new RandomSampler(resourcesDir, methodFile);
-        sampler.outputFile = outputFile;
-        sampler.classPath = resourcesDir.getPath();
-        sampler.patchSize = 2;
-        sampler.setUp();
-
-        buildExampleClasses();
-    }
 
     // Compile source files.
     private static void buildExampleClasses() throws IOException {
@@ -59,8 +44,8 @@ public class RandomSamplerTest {
             File exampleBaseFile = new File(resourcesDir, "ExampleBase.java");
             Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(
                     exampleFile,
-                     exampleTestFile,
-                     exampleBaseFile
+                    exampleTestFile,
+                    exampleBaseFile
             ));
             JavaCompiler.CompilationTask task
                     = compiler.getTask(null, fm, null, options, null, compilationUnit);
@@ -69,6 +54,18 @@ public class RandomSamplerTest {
             }
         }
 
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        sampler = new RandomSampler(resourcesDir, methodFile);
+        sampler.outputFile = outputFile;
+        sampler.classPath = resourcesDir.getPath();
+        sampler.patchSize = 2;
+        sampler.setUp();
+
+        buildExampleClasses();
     }
 
     @Test

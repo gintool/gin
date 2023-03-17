@@ -1,24 +1,23 @@
 package gin;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.rng.simple.JDKRandomBridge;
-import org.apache.commons.rng.simple.RandomSource;
-import org.pmw.tinylog.Logger;
-
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
-
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Simple local search. Takes a source filename and a method signature, optimises it.
@@ -27,15 +26,16 @@ import gin.test.UnitTestResultSet;
  */
 public class LocalSearch implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -92020344633720482L;
 
     private static final int WARMUP_REPS = 10;
 
-    @Argument(alias = "f", description = "Required: Source filename", required=true)
+    @Argument(alias = "f", description = "Required: Source filename", required = true)
     protected File filename = null;
 
     @Argument(alias = "m", description = "Required: Method signature including arguments." +
-                                         "For example, \"classifyTriangle(int,int,int)\"", required=true)
+            "For example, \"classifyTriangle(int,int,int)\"", required = true)
     protected String methodSignature = "";
 
     @Argument(alias = "s", description = "Seed")
@@ -55,27 +55,23 @@ public class LocalSearch implements Serializable {
 
     @Argument(alias = "t", description = "Test class name")
     protected String testClassName;
-    
+
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
-    
-    /**allowed edit types for sampling: parsed from editType*/
+
+    /**
+     * allowed edit types for sampling: parsed from editType
+     */
     protected List<Class<? extends Edit>> editTypes;
-    
+
     @Argument(alias = "ff", description = "Fail fast. "
             + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
             + "You probably don't want to set this to true for Automatic Program Repair.")
     protected Boolean failFast = false;
 
     protected SourceFile sourceFile;
-    InternalTestRunner testRunner;
     protected Random rng;
-
-    // Instantiate a class and call search
-    public static void main(String[] args) {
-        LocalSearch simpleLocalSearch = new LocalSearch(args);
-        simpleLocalSearch.search();
-    }
+    InternalTestRunner testRunner;
 
     // Constructor parses arguments
     LocalSearch(String[] args) {
@@ -84,10 +80,10 @@ public class LocalSearch implements Serializable {
         editTypes = Edit.parseEditClassesFromString(editType);
 
         this.sourceFile = SourceFile.makeSourceFileForEditTypes(editTypes, this.filename.toString(), Collections.singletonList(this.methodSignature));
-        
+
         this.rng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(seed));
         if (this.packageDir == null) {
-            this.packageDir = (this.filename.getParentFile()!=null) ? this.filename.getParentFile().getAbsoluteFile() : new File(System.getProperty("user.dir"));
+            this.packageDir = (this.filename.getParentFile() != null) ? this.filename.getParentFile().getAbsoluteFile() : new File(System.getProperty("user.dir"));
         }
         if (this.classPath == null) {
             this.classPath = this.packageDir.getAbsolutePath();
@@ -100,6 +96,12 @@ public class LocalSearch implements Serializable {
         }
         this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
+    }
+
+    // Instantiate a class and call search
+    public static void main(String[] args) {
+        LocalSearch simpleLocalSearch = new LocalSearch(args);
+        simpleLocalSearch.search();
     }
 
     // Apply empty patch and return execution time
@@ -118,7 +120,7 @@ public class LocalSearch implements Serializable {
 
                 Logger.error("Original code failed to pass unit tests");
 
-                for (UnitTestResult testResult: resultSet.getResults()) {
+                for (UnitTestResult testResult : resultSet.getResults()) {
                     Logger.error(testResult);
                 }
 
@@ -171,9 +173,9 @@ public class LocalSearch implements Serializable {
         }
 
         Logger.info(String.format("Finished. Best time: %d (ns), Speedup (%%): %.2f, Patch: %s",
-                                    bestTime,
-                                    100.0f *((origTime - bestTime)/(1.0f * origTime)),
-                                    bestPatch));
+                bestTime,
+                100.0f * ((origTime - bestTime) / (1.0f * origTime)),
+                bestPatch));
 
         bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
 
@@ -182,6 +184,7 @@ public class LocalSearch implements Serializable {
 
     /**
      * Generate a neighbouring patch, by either deleting an edit, or adding a new one.
+     *
      * @param patch Generate a neighbour of this patch.
      * @return A neighbouring patch.
      */
@@ -194,7 +197,7 @@ public class LocalSearch implements Serializable {
         } else {
             neighbour.addRandomEditOfClasses(rng, editTypes);
         }
-        
+
         return neighbour;
 
     }

@@ -1,42 +1,33 @@
 package gin.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.nio.file.Files;
-
-import java.util.LinkedList;
-import java.util.List;
-
-
-import org.junit.Before;
-import org.junit.After;
-import org.junit.Test;
-import org.mdkt.compiler.CompiledCode;
-
 import gin.Patch;
 import gin.SourceFileLine;
 import gin.TestConfiguration;
 import gin.edit.line.DeleteLine;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mdkt.compiler.CompiledCode;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class TestRunnerTest {
-
-    private InternalTestRunner internalTestRunner;
 
     private final String packageName = "mypackage";
     private final String className = "Simple";
     private final String fullClassName = packageName + "." + className;
-
     private final String testClassName = "SimpleTest";
     private final String testMethodName = "testReturnsTrue";
     private final String fullTestClassName = packageName + "." + testClassName;
-
     private final File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
     private final File sourceFile = new File(packageDir, className + ".java");
-
+    private InternalTestRunner internalTestRunner;
     private SourceFileLine sourceFileLine;
 
 
@@ -60,7 +51,7 @@ public class TestRunnerTest {
     }
 
     // Compile source files
-    private void buildExampleClasses()  {
+    private void buildExampleClasses() {
 
         String[] sourceFilenames = new String[]{
                 this.className + ".java",
@@ -74,7 +65,7 @@ public class TestRunnerTest {
                 "ExampleWithInnerClass.java",
                 "ExampleWithInnerClassTest.java"};
 
-        for (String sourceFilename: sourceFilenames) {
+        for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
             Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
@@ -156,11 +147,8 @@ public class TestRunnerTest {
 
         File exampleSourceFile = new File(new File(TestConfiguration.EXAMPLE_DIR, "mypackage"), "Example.java");
 
-        InternalTestRunner internalTestRunner ;
+        InternalTestRunner internalTestRunner;
         internalTestRunner = new InternalTestRunner("mypackage.Example", classPath, tests, false);
-
-        LinkedList<String> methods = new LinkedList<>();
-        methods.add("returnOneHundred()");
 
         SourceFileLine sourceFile = new SourceFileLine(exampleSourceFile, "returnOneHundred()");
 
@@ -187,10 +175,7 @@ public class TestRunnerTest {
         String classWithInnerName = "mypackage.ExampleWithInnerClass";
         internalTestRunner = new InternalTestRunner(classWithInnerName, classPath, tests, false);
 
-        LinkedList<String> methods = new LinkedList<>();
-        methods.add("simpleMethod()");
-
-        File sourceWithInner = new File(TestConfiguration.EXAMPLE_DIR,"mypackage"+ File.separator +"ExampleWithInnerClass.java");
+        File sourceWithInner = new File(TestConfiguration.EXAMPLE_DIR, "mypackage" + File.separator + "ExampleWithInnerClass.java");
         SourceFileLine sourceFile = new SourceFileLine(sourceWithInner, "simpleMethod()");
 
         Patch patch = new Patch(sourceFile);
@@ -206,10 +191,9 @@ public class TestRunnerTest {
     /**
      * Test that compiling a class that implements an interface works, where the compiled class for that interface
      * is on the classpath.
-     * @throws Exception
      */
     @Test
-    public void usesInterfaceAndInterfaceClassOnClassPath() {
+    public void usesInterfaceAndInterfaceClassOnClassPath() throws IOException {
 
 
         String srcCode = "package mypackage;\n" +
@@ -227,17 +211,18 @@ public class TestRunnerTest {
 
         CompiledCode code = Compiler.compile("mypackage.NewExample", srcCode, TestConfiguration.EXAMPLE_DIR_NAME);
 
-        CacheClassLoader loader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME);
-        loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
+        try (CacheClassLoader loader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME)) {
+            loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
 
-        try {
-            loader.findClass("mypackage.NewExample");
-        } catch (ClassNotFoundException e) {
-            fail("Could not load NewExample class.");
+            try {
+                loader.findClass("mypackage.NewExample");
+            } catch (ClassNotFoundException e) {
+                fail("Could not load NewExample class.");
+            }
         }
 
     }
-    
+
     @Test
     public void testNotFailFast() {
 
@@ -251,7 +236,7 @@ public class TestRunnerTest {
 
         InternalTestRunner internalTestRunner;
         internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests, false);
-        
+
         Patch patch = new Patch(sourceFileLine);
 
         UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
@@ -265,7 +250,7 @@ public class TestRunnerTest {
         assertTrue(result.getPassed());
 
     }
-    
+
     @Test
     public void testFailFast() {
 
@@ -279,7 +264,7 @@ public class TestRunnerTest {
 
         InternalTestRunner internalTestRunner;
         internalTestRunner = new InternalTestRunner(fullClassName, TestConfiguration.EXAMPLE_DIR.getAbsolutePath(), tests, true);
-        
+
         Patch patch = new Patch(sourceFileLine);
 
         UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
@@ -294,16 +279,16 @@ public class TestRunnerTest {
 
     @After
     public void tearDown() throws Exception {
-            File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
-            resourcesDir = new File(resourcesDir, "mypackage");
-            Files.deleteIfExists(new File(resourcesDir, "ExampleInterface.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
-            Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
+        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+        resourcesDir = new File(resourcesDir, "mypackage");
+        Files.deleteIfExists(new File(resourcesDir, "ExampleInterface.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "Example.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleBase.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClassTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleWithInnerClass$MyInner.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
     }
 }

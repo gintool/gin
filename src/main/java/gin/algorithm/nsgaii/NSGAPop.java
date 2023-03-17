@@ -2,75 +2,76 @@ package gin.algorithm.nsgaii;
 
 import gin.Patch;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class NSGAPop {
 
     protected ArrayList<NSGAInd> population;
     protected int noObj;
     protected Map<Integer, ArrayList<NSGAInd>> fronts;
-    protected  ArrayList<Integer> fitnessDirs;
+    protected ArrayList<Integer> fitnessDirs = new ArrayList<>();
 
-    public NSGAPop(int noObj){
+    public NSGAPop(int noObj) {
         this.population = new ArrayList<>();
         this.noObj = noObj;
-        for (int i = 0; i < noObj; i++){
+        for (int i = 0; i < noObj; i++) {
             fitnessDirs.add(1);
         }
     }
 
-    public NSGAPop(int noObj, ArrayList<Integer> fitnessDirs){
+    public NSGAPop(int noObj, ArrayList<Integer> fitnessDirs) {
         this.population = new ArrayList<>();
         this.noObj = noObj;
         this.fitnessDirs = fitnessDirs;
     }
 
-    public NSGAPop(NSGAPop p, NSGAPop q){
-        if (p.noObj != q.noObj){
+    public NSGAPop(NSGAPop p, NSGAPop q) {
+        if (p.noObj != q.noObj) {
             throw new IllegalArgumentException("No objectives dont match");
         }
         noObj = p.noObj;
-        if (p.fitnessDirs.equals(q.fitnessDirs)){
+        if (p.fitnessDirs.equals(q.fitnessDirs)) {
             fitnessDirs = p.fitnessDirs;
 
-        }
-        else{
+        } else {
             throw new IllegalArgumentException("Fitness Directions do not match");
         }
         this.population = new ArrayList<>();
-        for (NSGAInd ind: p.getPopulation()){
+        for (NSGAInd ind : p.getPopulation()) {
             addInd(ind);
         }
-        for (NSGAInd ind: q.getPopulation()){
+        for (NSGAInd ind : q.getPopulation()) {
             addInd(ind);
         }
     }
 
     public abstract void addInd(Patch patch, ArrayList<Long> fitnesses);
 
-    public void addInd(NSGAInd ind){
+    public void addInd(NSGAInd ind) {
         population.add(ind);
     }
 
-    protected void nonDominatedSort(){
-        Map<NSGAInd, ArrayList<NSGAInd>> dominationSets = new HashMap<NSGAInd, ArrayList<NSGAInd>>();
-        Map<NSGAInd, Integer> dominationScores = new HashMap<NSGAInd, Integer>();
+    protected void nonDominatedSort() {
+        Map<NSGAInd, ArrayList<NSGAInd>> dominationSets = new HashMap<>();
+        Map<NSGAInd, Integer> dominationScores = new HashMap<>();
         fronts = new HashMap<>();
         fronts.put(1, new ArrayList<>());
-        for  (NSGAInd p: population){
+        for (NSGAInd p : population) {
             ArrayList<NSGAInd> dominationSet = new ArrayList<>();
             int dominationScore = 0;
-            for  (NSGAInd q: population){
-                if (dominates(p,q)){
+            for (NSGAInd q : population) {
+                if (dominates(p, q)) {
                     dominationSet.add(q);
-                }
-                else if (dominates(q,p)){
+                } else if (dominates(q, p)) {
                     dominationScore += 1;
                 }
             }
             dominationScores.put(p, dominationScore);
             dominationSets.put(p, dominationSet);
-            if (dominationScore == 0){
+            if (dominationScore == 0) {
                 fronts.get(1).add(p);
             }
         }
@@ -84,41 +85,40 @@ public abstract class NSGAPop {
                     score -= 1;
                     dominationScores.put(q, score);
                     if (score == 0) {
-                        q.setRank(i+1);
+                        q.setRank(i + 1);
                         nextFront.add(q);
                     }
                 }
             }
-            i +=1;
-            if (nextFront.size() == 0){
+            i += 1;
+            if (nextFront.size() == 0) {
                 break;
-            }
-            else {
+            } else {
                 fronts.put(i, nextFront);
             }
         }
     }
 
 
-
-    public boolean dominates(NSGAInd p, NSGAInd q){
+    public boolean dominates(NSGAInd p, NSGAInd q) {
         boolean better = false;
-        for (int i= 0; i < noObj; i++){
+        for (int i = 0; i < noObj; i++) {
             float dir = fitnessDirs.get(i);
-            if(p.getFitnesses().get(i) * dir < q.getFitnesses().get(i) * dir){
+            if (p.getFitnesses().get(i) * dir < q.getFitnesses().get(i) * dir) {
                 return false;
             }
-            if(p.getFitnesses().get(i) * dir > q.getFitnesses().get(i) * dir){
+            if (p.getFitnesses().get(i) * dir > q.getFitnesses().get(i) * dir) {
                 better = true;
             }
         }
         return better;
     }
-    public void sortByObj(int index){
-        Collections.sort(population, Comparator.comparing((NSGAInd ind) -> ind.getFitnesses().get(index)));
+
+    public void sortByObj(int index) {
+        population.sort(Comparator.comparing((NSGAInd ind) -> ind.getFitnesses().get(index)));
     }
 
-    public ArrayList<NSGAInd> getPopulation(){
+    public ArrayList<NSGAInd> getPopulation() {
         return population;
     }
 

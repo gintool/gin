@@ -1,35 +1,35 @@
 package gin.util;
 
-import java.io.IOException;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
-import org.apache.commons.rng.simple.JDKRandomBridge;
-import org.apache.commons.rng.simple.RandomSource;
-import org.pmw.tinylog.Logger;
-
 import gin.Patch;
 import gin.SourceFile;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
+import org.apache.commons.rng.simple.JDKRandomBridge;
+import org.apache.commons.rng.simple.RandomSource;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 
 /**
  * Method-based General GP search.
- *
  */
 
 public abstract class GP extends Sampler {
-    
+
+    @Serial
     private static final long serialVersionUID = 8547883760400442899L;
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
@@ -39,14 +39,14 @@ public abstract class GP extends Sampler {
     protected Integer genNumber = 1;
 
     @Argument(alias = "in", description = "Number of individuals")
-    protected Integer indNumber = 10; 
+    protected Integer indNumber = 10;
 
     @Argument(alias = "ms", description = "Random seed for mutation operator selection")
     protected Integer mutationSeed = 123;
 
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
-    
+
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;
 
@@ -67,11 +67,11 @@ public abstract class GP extends Sampler {
     }
 
     private void printAdditionalArguments() {
-        Logger.info("Edit types: "+ editTypes);
-        Logger.info("Number of generations: "+ genNumber);
-        Logger.info("Number of individuals: "+ indNumber);
-        Logger.info("Random seed for mutation operator selection: "+ mutationSeed);
-        Logger.info("Random seed for individual selection: "+ individualSeed);
+        Logger.info("Edit types: " + editTypes);
+        Logger.info("Number of generations: " + genNumber);
+        Logger.info("Number of individuals: " + indNumber);
+        Logger.info("Random seed for mutation operator selection: " + mutationSeed);
+        Logger.info("Random seed for individual selection: " + individualSeed);
     }
 
     private void setup() {
@@ -103,7 +103,7 @@ public abstract class GP extends Sampler {
 
     }
 
-       /*============== Abstract methods  ==============*/
+    /*============== Abstract methods  ==============*/
 
     // GP search strategy
     protected abstract void search(TargetMethod method, Patch origPatch);
@@ -133,13 +133,13 @@ public abstract class GP extends Sampler {
 
     protected void writeNewHeader() {
         String[] entry = {"MethodName"
-                        , "Patch"
-                        , "Compiled"
-                        , "AllTestsPassed"
-                        , "TotalExecutionTime(ms)"
-                        , "Fitness"
-                        , "FitnessImprovement"
-                        };
+                , "Patch"
+                , "Compiled"
+                , "AllTestsPassed"
+                , "TotalExecutionTime(ms)"
+                , "Fitness"
+                , "FitnessImprovement"
+        };
         try {
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
@@ -152,13 +152,13 @@ public abstract class GP extends Sampler {
 
     protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
         String[] entry = {methodName
-                        , results.getPatch().toString()
-                        , Boolean.toString(results.getCleanCompile())
-                        , Boolean.toString(results.allTestsSuccessful())
-                        , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                        , Double.toString(fitness)
-                        , Double.toString(improvement)
-                        };
+                , results.getPatch().toString()
+                , Boolean.toString(results.getCleanCompile())
+                , Boolean.toString(results.allTestsSuccessful())
+                , Float.toString(results.totalExecutionTime() / 1000000.0f)
+                , Double.toString(fitness)
+                , Double.toString(improvement)
+        };
         outputFileWriter.writeNext(entry);
     }
 

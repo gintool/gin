@@ -1,19 +1,16 @@
 package gin.util.regression.impl;
 
-import gin.util.HotMethod;
 import gin.test.UnitTest;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import gin.util.HotMethod;
 import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 /**
- *
  * @author Giovani
  */
 public class NoneRTSTest {
@@ -27,7 +24,7 @@ public class NoneRTSTest {
     public static void beforeClass() {
         noneRTS = new NoneRTS();
     }
-    
+
     @Test
     public void testGetGoal() {
         assertEquals("test", noneRTS.getTestGoal());

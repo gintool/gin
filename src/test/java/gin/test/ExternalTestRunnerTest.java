@@ -4,7 +4,9 @@ import gin.Patch;
 import gin.SourceFile;
 import gin.SourceFileLine;
 import gin.TestConfiguration;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -13,16 +15,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import org.junit.AfterClass;
 
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 
 public class ExternalTestRunnerTest {
 
+    static String packageName = "mypackage";
     ExternalTestRunner runnerReuse;
     ExternalTestRunner runnerMakeNew;
-    static String packageName = "mypackage";
     String className = "Simple";
     String fullClassName = packageName + "." + className;
     String methodName = "returnsTrue()";
@@ -36,15 +36,24 @@ public class ExternalTestRunnerTest {
     @BeforeClass
     public static void setUpClass() {
         String[] sourceFilenames = new String[]{
-            "Poison.java",
-            "ExampleFaultyTest.java",
-            "ExampleFaulty.java"};
+                "Poison.java",
+                "ExampleFaultyTest.java",
+                "ExampleFaulty.java"};
 
         for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
             Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
         }
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
+        resourcesDir = new File(resourcesDir, "mypackage");
+        Files.deleteIfExists(new File(resourcesDir, "Poison.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
+        Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
     }
 
     @Before
@@ -86,7 +95,7 @@ public class ExternalTestRunnerTest {
         assertTrue(expectedClassPath.toFile().exists());
 
     }
-    
+
     @Test
     public void testRunTests() throws IOException, InterruptedException {
 
@@ -214,7 +223,7 @@ public class ExternalTestRunnerTest {
         // The second repetition fails
         assertFalse(results.getResults().get(1).getPassed());
     }
-    
+
     @Test
     public void testPoisonShouldPass() throws IOException, InterruptedException {
         List<UnitTest> tests = new LinkedList<>();
@@ -225,7 +234,7 @@ public class ExternalTestRunnerTest {
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
     }
-    
+
     @Test
     public void testPoisonShouldPassWithJ() throws IOException, InterruptedException {
         List<UnitTest> tests = new LinkedList<>();
@@ -235,14 +244,5 @@ public class ExternalTestRunnerTest {
         UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        File resourcesDir = new File(TestConfiguration.EXAMPLE_DIR_NAME);
-        resourcesDir = new File(resourcesDir, "mypackage");
-        Files.deleteIfExists(new File(resourcesDir, "Poison.class").toPath());
-        Files.deleteIfExists(new File(resourcesDir, "ExampleFaultyTest.class").toPath());
-        Files.deleteIfExists(new File(resourcesDir, "ExampleFaulty.class").toPath());
     }
 }

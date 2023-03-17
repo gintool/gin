@@ -2,8 +2,8 @@ package gin.util;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
-import org.junit.Test;
 import org.junit.Assume;
+import org.junit.Test;
 
 /**
  * @author Giovani

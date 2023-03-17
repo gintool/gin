@@ -1,5 +1,6 @@
 package gin.misc;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -10,12 +11,13 @@ import java.util.ListIterator;
  */
 public class ArrayListOneBasedIndexing<T> extends ArrayList<T> {
 
+    @Serial
     private static final long serialVersionUID = 3184581859826091364L;
 
     public ArrayListOneBasedIndexing(List<T> l) {
         super(l);
     }
-    
+
     @Override
     public int indexOf(Object o) {
         int i = super.indexOf(o);
@@ -75,6 +77,6 @@ public class ArrayListOneBasedIndexing<T> extends ArrayList<T> {
     public List<T> subList(int fromIndex, int toIndex) {
         return super.subList(fromIndex - 1, toIndex - 1);
     }
-    
-    
+
+
 }

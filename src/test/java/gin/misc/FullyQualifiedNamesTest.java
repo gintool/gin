@@ -20,19 +20,21 @@ import static org.junit.Assert.assertEquals;
 
 public class FullyQualifiedNamesTest {
 
+    private final static String exampleSourceNoPackageFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
+    private final static String exampleSourceWithPackageFilename = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "Example.java";
+    private final static String exampleSourceWithInnerClasses = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "TestInnerClasses.java";
+    private final static String exampleForIssue52 = "examples/unittests/Triangle_Issue52.java";
+    private final static String exampleSourceEnum = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "EnumTest.java";
     private CompilationUnit compilationUnitNoPackage;
     private CompilationUnit compilationUnitWithPackage;
     private CompilationUnit compilationUnitWithInnerClasses;
     private CompilationUnit compilationUnitEnum;
 
-    private final static String exampleSourceNoPackageFilename = TestConfiguration.EXAMPLE_DIR_NAME + "Triangle.java";
-    private final static String exampleSourceWithPackageFilename = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "Example.java";
-
-    private final static String exampleSourceWithInnerClasses = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "TestInnerClasses.java";
-
-    private final static String exampleForIssue52 = "examples/unittests/Triangle_Issue52.java";
-
-    private final static String exampleSourceEnum = TestConfiguration.EXAMPLE_DIR_NAME + "mypackage" + File.separator + "EnumTest.java";
+    public static void assertEqualsWithoutWhitespace(String s1, String s2) {
+        String s1NoWhitespace = s1.replaceAll("\\s+", "");
+        String s2NoWhitespace = s2.replaceAll("\\s+", "");
+        assertEquals(s1NoWhitespace, s2NoWhitespace);
+    }
 
     @Before
     public void setup() throws FileNotFoundException {
@@ -101,7 +103,6 @@ public class FullyQualifiedNamesTest {
         assertArrayEquals(expectedEnum, methodNamesEnum.toArray());
     }
 
-
     @Test
     public void testIssue52() {
 
@@ -126,13 +127,6 @@ public class FullyQualifiedNamesTest {
         SourceFile sfBug4 = new SourceFileTree(exampleForIssue52,
                 Collections.singletonList("testMethodBug4(int,List<Integer>)"));
 
-    }
-
-
-    public static void assertEqualsWithoutWhitespace(String s1, String s2) {
-        String s1NoWhitespace = s1.replaceAll("\\s+", "");
-        String s2NoWhitespace = s2.replaceAll("\\s+", "");
-        assertEquals(s1NoWhitespace, s2NoWhitespace);
     }
 
 }

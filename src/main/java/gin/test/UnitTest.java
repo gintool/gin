@@ -1,16 +1,18 @@
 package gin.test;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
 import java.text.ParseException;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a test that needs to be run by Gin.
  */
 public class UnitTest implements Comparable<UnitTest>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3894012530058369753L;
 
     public static long defaultTimeoutMS = 10000L;
@@ -31,12 +33,50 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
         this.moduleName = moduleName;
     }
 
-    public void setTimeoutMS(long timeoutInMS) {
-        this.timeoutMS = timeoutInMS;
+    public static UnitTest fromString(String test) throws ParseException {
+
+        UnitTest ginTest;
+
+        test = StringUtils.strip(test);
+
+        String[] testSplit = test.split(" ");
+
+        if (testSplit.length == 2) {
+
+            String testName = testSplit[0];
+            String moduleName = testSplit[1];
+
+            if ((testName.contains(".")) && (moduleName.startsWith("[")) && (moduleName.endsWith("]"))) {
+
+                String className = StringUtils.substringBeforeLast(testName, ".");
+                String methodName = StringUtils.substringAfterLast(testName, ".");
+
+                moduleName = StringUtils.strip(moduleName, "[]");
+                if (moduleName.isEmpty()) {
+                    ginTest = new UnitTest(className, methodName);
+                } else {
+                    File moduleDir = new File(moduleName);
+                    if ((moduleDir.exists()) && (moduleDir.isDirectory())) {
+                        ginTest = new UnitTest(className, methodName, moduleName);
+                    } else {
+                        throw new ParseException("UnitTest " + test + " not created as module directory " + moduleName + "does not exist.", 0);
+                    }
+                }
+
+            } else {
+                throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
+
+            }
+
+        } else {
+            throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
+        }
+
+        return ginTest;
     }
 
     public String getTestName() {
-        return className + "." + methodName; 
+        return className + "." + methodName;
     }
 
     public String getFullClassName() {
@@ -57,6 +97,10 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
 
     public long getTimeoutMS() {
         return timeoutMS;
+    }
+
+    public void setTimeoutMS(long timeoutInMS) {
+        this.timeoutMS = timeoutInMS;
     }
 
     public String getMethodName() {
@@ -85,7 +129,7 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
     @Override
     public boolean equals(Object obj) {
 
-        return ( (obj instanceof UnitTest) && (this.toString()).equals( obj.toString() ) );
+        return ((obj instanceof UnitTest) && (this.toString()).equals(obj.toString()));
 
     }
 
@@ -97,48 +141,6 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
     @Override
     public String toString() {
         return String.format("%s.%s [%s]", className, methodName, moduleName);
-    }
-
-    public static UnitTest fromString(String test) throws ParseException {
-
-        UnitTest ginTest = null;
-
-        test = StringUtils.strip(test);
-        
-        String[] testSplit = test.split(" ");
-
-        if (testSplit.length == 2) {
-         
-             String testName = testSplit[0];
-             String moduleName = testSplit[1];
-
-             if ( (testName.contains(".")) && (moduleName.startsWith("[")) && (moduleName.endsWith("]")) ) {
-   
-                String className = StringUtils.substringBeforeLast(testName, ".");
-                String methodName = StringUtils.substringAfterLast(testName, ".");
-
-                moduleName = StringUtils.strip(moduleName, "[]");
-                if (moduleName.isEmpty()) {
-                    ginTest = new UnitTest(className, methodName);
-                } else {
-                    File moduleDir = new File(moduleName);
-                    if ( (moduleDir.exists()) && (moduleDir.isDirectory()) ) {
-                        ginTest = new UnitTest(className, methodName, moduleName);
-                    } else {
-                        throw new ParseException("UnitTest " + test + " not created as module directory " + moduleName + "does not exist.", 0);
-                    }
-                }
-
-            } else {
-                throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
-                
-            }
-
-        } else {
-             throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
-        }
-
-        return ginTest;
     }
 
 }

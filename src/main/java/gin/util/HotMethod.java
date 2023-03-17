@@ -2,6 +2,7 @@ package gin.util;
 
 import gin.test.UnitTest;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import java.util.Set;
  */
 public class HotMethod implements Comparable<HotMethod>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 853623680385176566L;
 
     /**
@@ -108,11 +110,11 @@ public class HotMethod implements Comparable<HotMethod>, Serializable {
      *
      * @param otherMethod other method
      * @return the value {@code 0} if
-     *         {@code this.getCount() == otherMethod.getCount()}; a value less
-     *         than {@code 0} if
-     *         {@code this.getCount() < otherMethod.getCount()}; and a value
-     *         greater than {@code 0} if
-     *         {@code this.getCount() > otherMethod.getCount()}
+     * {@code this.getCount() == otherMethod.getCount()}; a value less
+     * than {@code 0} if
+     * {@code this.getCount() < otherMethod.getCount()}; and a value
+     * greater than {@code 0} if
+     * {@code this.getCount() > otherMethod.getCount()}
      */
     @Override
     public int compareTo(HotMethod otherMethod) {

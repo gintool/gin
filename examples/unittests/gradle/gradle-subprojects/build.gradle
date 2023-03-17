@@ -1,15 +1,15 @@
 allprojects {
-  apply plugin: 'java'
-  
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
+    apply plugin: 'java'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 
 
-  dependencies {
-    testImplementation "junit:junit:${junitVersion}"
-  }
+    dependencies {
+        testImplementation "junit:junit:${junitVersion}"
+    }
 }
 
 

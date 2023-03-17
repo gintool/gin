@@ -6,18 +6,16 @@ import java.util.ArrayList;
 
 public abstract class NSGAInd {
 
-    private Patch patch;
-
-
-
-    private int rank;
     protected ArrayList<Long> fitnesses;
+    private Patch patch;
+    private int rank;
 
-    public NSGAInd(Patch patch, ArrayList<Long> fitnesses){
+    public NSGAInd(Patch patch, ArrayList<Long> fitnesses) {
         this.patch = patch;
         this.fitnesses = fitnesses;
     }
-    public NSGAInd(ArrayList<Long> fitnesses){
+
+    public NSGAInd(ArrayList<Long> fitnesses) {
         this.fitnesses = fitnesses;
     }
 

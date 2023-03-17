@@ -43,6 +43,12 @@ public class PatchTest {
     private Patch patchLine;
     private Patch patchTree;
 
+    public static void assertEqualsWithoutWhitespace(String s1, String s2) {
+        String s1NoWhitespace = s1.replaceAll("\\s+", "");
+        String s2NoWhitespace = s2.replaceAll("\\s+", "");
+        assertEquals(s1NoWhitespace, s2NoWhitespace);
+    }
+
     @Before
     public void setUp() throws Exception {
         sourceFileLine = new SourceFileLine(verySmallExampleSourceFilename, Collections.emptyList());
@@ -294,7 +300,7 @@ public class PatchTest {
         // now a few checks to ensure that move/swap/replace to the same location are just no-ops
         // (copy will just duplicate the line! so that's fine)
         // we will test for equality in the output (sourcefile is the same)
-        // and also that we are still able to retrieve the statementID that 
+        // and also that we are still able to retrieve the statementID that
         // was affected (i.e. no operation has occurred)
         s3 = this.sourceFileTree.getIDForStatementNumber(3);
         blockID = this.sourceFileTree.getIDForBlockNumber(0);
@@ -358,7 +364,6 @@ public class PatchTest {
 
 
     }
-
 
     @Test
     public void applyLines() throws Exception {
@@ -485,7 +490,7 @@ public class PatchTest {
         // now a few checks to ensure that move/swap/replace to the same location are just no-ops
         // (copy will just duplicate the line! so that's fine)
         // we will test for equality in the output (sourcefile is the same)
-        // and also that we are still able to retrieve the statementID that 
+        // and also that we are still able to retrieve the statementID that
         // was affected (i.e. no operation has occurred)
 
         // first an edit to delete the statement that we'll use to test whether it's still there
@@ -547,7 +552,6 @@ public class PatchTest {
 
 
     }
-
 
     @Test
     public void applyMatchedStatements() throws Exception {
@@ -641,7 +645,6 @@ public class PatchTest {
 
     }
 
-
     @Test
     public void applyModifyNodeEdits() throws Exception {
         // BinaryOperatorReplacement
@@ -704,7 +707,6 @@ public class PatchTest {
         assertEqualsWithoutWhitespace(rleExpected, modifiedSource);
     }
 
-
     @Test
     public void applyInsertNodeEdits() throws Exception {
         // InsertBreak
@@ -758,7 +760,7 @@ public class PatchTest {
         // this makes an InsertBreakWithIf without the "if"
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
-        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here
         ibf = new InsertBreakWithIf(sourceFileTree, rng);
         assertEquals(InsertBreakWithIf.fromString(ibf.toString()).toString(), ibf.toString());
 
@@ -817,7 +819,7 @@ public class PatchTest {
         // this makes an InsertcontinueWithIf without the "if"
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
-        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here
         icf = new InsertContinueWithIf(sourceFileTree, rng);
         assertEquals(InsertContinueWithIf.fromString(icf.toString()).toString(), icf.toString());
 
@@ -872,12 +874,11 @@ public class PatchTest {
         // this makes an InsertReturnWithIf without the "if"
         // (no in-scope variables at insert point)
         // and checks we can still fromString it
-        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here 
+        rng = new JDKRandomBridge(RandomSource.MT, 65L); // really, java.util.Random won't make a zero on the first nextInt() call, which is needed here
         irf = new InsertReturnWithIf(sourceFileTree, rng);
         assertEquals(InsertReturnWithIf.fromString(irf.toString()).toString(), irf.toString());
 
     }
-
 
     @Test
     public void addRandomEdit() throws Exception {
@@ -964,12 +965,6 @@ public class PatchTest {
         patchTree.add(move);
         assertEquals("| gin.edit.statement.DeleteStatement \"" + verySmallExampleSourceFilename + "\":13 | gin.edit.statement.CopyStatement \"" + verySmallExampleSourceFilename + "\":1 -> \"" + verySmallExampleSourceFilename + "\":3:2 " +
                 "| gin.edit.statement.MoveStatement \"" + verySmallExampleSourceFilename + "\":3 -> \"" + verySmallExampleSourceFilename + "\":4:2 |", patchTree.toString());
-    }
-
-    public static void assertEqualsWithoutWhitespace(String s1, String s2) {
-        String s1NoWhitespace = s1.replaceAll("\\s+", "");
-        String s2NoWhitespace = s2.replaceAll("\\s+", "");
-        assertEquals(s1NoWhitespace, s2NoWhitespace);
     }
 
 }

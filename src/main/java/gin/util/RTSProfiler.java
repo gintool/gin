@@ -13,10 +13,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.*;
@@ -36,6 +33,7 @@ import java.util.stream.Collectors;
  */
 public class RTSProfiler implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 6763826827126978230L;
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
@@ -43,6 +41,8 @@ public class RTSProfiler implements Serializable {
     private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
+    // Instance Members
+    private final File profDir;
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -75,12 +75,8 @@ public class RTSProfiler implements Serializable {
     protected Long hprofInterval = 10L;
     @Argument(alias = "pn", description = "Java profiler file name. If running in parallel, use a different name for each job.")
     protected String profFileName = "java.prof.jfr";
-
     @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
     protected String profilerChoice = "jfr";
-
-    // Instance Members
-    private final File profDir;
     protected Project project;
 
     public RTSProfiler(String[] args) {
@@ -108,20 +104,20 @@ public class RTSProfiler implements Serializable {
         valiateArguments();
     }
 
-    private void valiateArguments() {
-        if (this.project.isGradleProject()
-                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
-                && SystemUtils.IS_OS_WINDOWS) {
-            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
-        }
-    }
-
     public static void main(String[] args) throws IOException {
         StopWatch watch = StopWatch.createStarted();
         RTSProfiler profiler = new RTSProfiler(args);
         profiler.profile();
         watch.stop();
         profiler.writeTimingResults(watch);
+    }
+
+    private void valiateArguments() {
+        if (this.project.isGradleProject()
+                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
+                && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
+        }
     }
 
     // Main Profile Method
@@ -194,14 +190,14 @@ public class RTSProfiler implements Serializable {
         // Link the test cases to the methods based on the RTS technique
         rtsStrategy.linkTestsToMethods(hotMethods, allTestCases);
         // Order by hotness
-        Collections.sort(hotMethods, Collections.reverseOrder());
+        hotMethods.sort(Collections.reverseOrder());
         // Write target method file
         writeResults(hotMethods);
     }
 
     protected List<HotMethod> getHotMethods(File profFile) throws IOException {
         List<HotMethod> hotMethods = new ArrayList<>();
-        Map<String, Integer> methodCounts = new HashMap<>();
+        Map<String, Integer> methodCounts;
         if (profFile != null && profFile.exists()) {
             if (this.profilerChoice.equalsIgnoreCase("hprof")) {
                 methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;

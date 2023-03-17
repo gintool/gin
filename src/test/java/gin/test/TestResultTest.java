@@ -2,17 +2,15 @@ package gin.test;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.Result;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestResultTest {
-
-    UnitTestResult testResult;
 
     private static final String expectedToString = "UnitTestResult ExampleClass.exampleMethod []. " + "Rep number: 0; " +
             "Passed: true; Timed out: false; Exception Type: N/A; Exception Message: N/A; Assertion Expected: N/A" +
             "; Assertion Actual: N/A; Execution Time: 0; CPU Time: 0;";
+    UnitTestResult testResult;
 
     @Before
     public void setUp() throws Exception {

@@ -45,14 +45,16 @@ public class RTSProfilerTest {
 
         File profilerOutDir = FileUtils.getFile(PROJECT_DIR_MAVEN, "profiler_out");
         assertTrue(profilerOutDir.exists());
+        assertTrue(profilerOutDir.isDirectory());
         assertEquals(1, profilerOutDir.list().length);
         FileUtils.deleteQuietly(profilerOutDir);
 
         File ekstaziOut = FileUtils.getFile(PROJECT_DIR_MAVEN, ".ekstazi");
         assertTrue(ekstaziOut.exists());
+        assertTrue(ekstaziOut.isDirectory());
         assertEquals(4, ekstaziOut.list().length);
         Assertions.assertAll(Arrays.stream(ekstaziOut.listFiles())
-                .map(file -> () -> assertTrue("File " + file.getAbsolutePath() + " is empty.",file.length() > 0)));
+                .map(file -> () -> assertTrue("File " + file.getAbsolutePath() + " is empty.", file.length() > 0)));
         FileUtils.deleteQuietly(ekstaziOut);
 
         File csvResultFile = FileUtils.getFile(OUTPUT_CSV_PATH_MAVEN);
@@ -69,11 +71,13 @@ public class RTSProfilerTest {
 
         File profilerOutDir = FileUtils.getFile(PROJECT_DIR_GRADLE, "profiler_out");
         assertTrue(profilerOutDir.exists());
+        assertTrue(profilerOutDir.isDirectory());
         assertEquals(1, profilerOutDir.list().length);
         FileUtils.deleteQuietly(profilerOutDir);
 
         File ekstaziOut = FileUtils.getFile(PROJECT_DIR_GRADLE, ".ekstazi");
         assertTrue(ekstaziOut.exists());
+        assertTrue(ekstaziOut.isDirectory());
         assertEquals(4, ekstaziOut.list().length);
         Assertions.assertAll(Arrays.stream(ekstaziOut.listFiles())
                 .map(file -> () -> assertTrue(file.length() > 0)));

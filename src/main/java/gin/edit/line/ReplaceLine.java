@@ -1,27 +1,30 @@
 package gin.edit.line;
 
-import java.util.List;
-import java.util.Random;
-
 import gin.SourceFile;
 import gin.SourceFileLine;
 import gin.edit.Edit;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Random;
+
 public class ReplaceLine extends LineEdit {
 
+    @Serial
     private static final long serialVersionUID = 3306639963790671488L;
     public String sourceFile;
     public int sourceLine;
     public String destinationFile;
     public int destinationLine;
 
-    /** 
+    /**
      * create a random ReplaceLine for the given SourceFile, using the provided RNG
+     *
      * @param sourceFile to create an edit for
-     * @param rng random number generator, used to choose the target line
-     * */
+     * @param rng        random number generator, used to choose the target line
+     */
     public ReplaceLine(SourceFile sourceFile, Random rng) {
-        SourceFileLine sf = (SourceFileLine)sourceFile;
+        SourceFileLine sf = (SourceFileLine) sourceFile;
         List<Integer> allLines = sf.getLineIDsNonEmptyOrComments(false);
         List<Integer> targetMethodLines = sf.getLineIDsNonEmptyOrComments(true);
 
@@ -30,39 +33,16 @@ public class ReplaceLine extends LineEdit {
         this.destinationFile = sourceFile.getFilename();
         this.destinationLine = targetMethodLines.get(rng.nextInt(targetMethodLines.size()));
     }
-    
+
     public ReplaceLine(String sourceFile, int sourceLine, String destinationFile, int destinationLine) {
         this.sourceFile = sourceFile;
         this.sourceLine = sourceLine;
         this.destinationFile = destinationFile;
         this.destinationLine = destinationLine;
     }
-    
-    @Override
-    public SourceFile apply(SourceFile sourceFile) {
-        if (sourceLine == destinationLine) {
-            return sourceFile; // no-op
-        }
-        
-        SourceFileLine sf = (SourceFileLine)sourceFile;
-        String lineSource = sf.getLine(sourceLine);
-        String lineDestination = sf.getLine(sourceLine);
-        if ((lineSource != null) && (lineDestination != null)) { // neither source or target is already deleted
-            sf = sf.removeLine(destinationLine);
-            sf = sf.insertLine(destinationLine, lineSource);
-        }
-            
-        return sf;
-    }
-
-    @Override
-    public String toString() {
-        return this.getClass().getCanonicalName() + " \"" + sourceFile + "\":" + sourceLine + " -> \""
-                + destinationFile + "\":" + destinationLine;
-    }
 
     public static Edit fromString(String description) {
-            String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+        String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         String source = tokens[1];
         String destination = tokens[3];
         String[] sourceTokens = source.split(":");
@@ -72,6 +52,29 @@ public class ReplaceLine extends LineEdit {
         String destFile = destTokens[0].replace("\"", "");
         int destLine = Integer.parseInt(destTokens[1]);
         return new ReplaceLine(sourceFile, sourceLine, destFile, destLine);
+    }
+
+    @Override
+    public SourceFile apply(SourceFile sourceFile) {
+        if (sourceLine == destinationLine) {
+            return sourceFile; // no-op
+        }
+
+        SourceFileLine sf = (SourceFileLine) sourceFile;
+        String lineSource = sf.getLine(sourceLine);
+        String lineDestination = sf.getLine(sourceLine);
+        if ((lineSource != null) && (lineDestination != null)) { // neither source or target is already deleted
+            sf = sf.removeLine(destinationLine);
+            sf = sf.insertLine(destinationLine, lineSource);
+        }
+
+        return sf;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getCanonicalName() + " \"" + sourceFile + "\":" + sourceLine + " -> \""
+                + destinationFile + "\":" + destinationLine;
     }
 
 }

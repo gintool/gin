@@ -1,113 +1,24 @@
 package gin.misc;
 
 
-
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.commons.collections4.map.HashedMap;
-
-import com.github.javaparser.ast.ArrayCreationLevel;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.ImportDeclaration;
-import com.github.javaparser.ast.Modifier;
-import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.AnnotationDeclaration;
-import com.github.javaparser.ast.body.AnnotationMemberDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.InitializerDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
-import com.github.javaparser.ast.body.ReceiverParameter;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.*;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.BlockComment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.comments.LineComment;
-import com.github.javaparser.ast.expr.ArrayAccessExpr;
-import com.github.javaparser.ast.expr.ArrayCreationExpr;
-import com.github.javaparser.ast.expr.ArrayInitializerExpr;
-import com.github.javaparser.ast.expr.AssignExpr;
-import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.BooleanLiteralExpr;
-import com.github.javaparser.ast.expr.CastExpr;
-import com.github.javaparser.ast.expr.CharLiteralExpr;
-import com.github.javaparser.ast.expr.ClassExpr;
-import com.github.javaparser.ast.expr.ConditionalExpr;
-import com.github.javaparser.ast.expr.DoubleLiteralExpr;
-import com.github.javaparser.ast.expr.EnclosedExpr;
-import com.github.javaparser.ast.expr.FieldAccessExpr;
-import com.github.javaparser.ast.expr.InstanceOfExpr;
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
-import com.github.javaparser.ast.expr.LambdaExpr;
-import com.github.javaparser.ast.expr.LongLiteralExpr;
-import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
-import com.github.javaparser.ast.expr.MemberValuePair;
-import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.ast.expr.MethodReferenceExpr;
-import com.github.javaparser.ast.expr.Name;
-import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.expr.NormalAnnotationExpr;
-import com.github.javaparser.ast.expr.NullLiteralExpr;
-import com.github.javaparser.ast.expr.ObjectCreationExpr;
-import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
-import com.github.javaparser.ast.expr.StringLiteralExpr;
-import com.github.javaparser.ast.expr.SuperExpr;
-import com.github.javaparser.ast.expr.SwitchExpr;
-import com.github.javaparser.ast.expr.TextBlockLiteralExpr;
-import com.github.javaparser.ast.expr.ThisExpr;
-import com.github.javaparser.ast.expr.TypeExpr;
-import com.github.javaparser.ast.expr.UnaryExpr;
-import com.github.javaparser.ast.expr.VariableDeclarationExpr;
-import com.github.javaparser.ast.modules.ModuleDeclaration;
-import com.github.javaparser.ast.modules.ModuleExportsDirective;
-import com.github.javaparser.ast.modules.ModuleOpensDirective;
-import com.github.javaparser.ast.modules.ModuleProvidesDirective;
-import com.github.javaparser.ast.modules.ModuleRequiresDirective;
-import com.github.javaparser.ast.modules.ModuleUsesDirective;
-import com.github.javaparser.ast.stmt.AssertStmt;
-import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.BreakStmt;
-import com.github.javaparser.ast.stmt.CatchClause;
-import com.github.javaparser.ast.stmt.ContinueStmt;
-import com.github.javaparser.ast.stmt.DoStmt;
-import com.github.javaparser.ast.stmt.EmptyStmt;
-import com.github.javaparser.ast.stmt.ExplicitConstructorInvocationStmt;
-import com.github.javaparser.ast.stmt.ExpressionStmt;
-import com.github.javaparser.ast.stmt.ForEachStmt;
-import com.github.javaparser.ast.stmt.ForStmt;
-import com.github.javaparser.ast.stmt.IfStmt;
-import com.github.javaparser.ast.stmt.LabeledStmt;
-import com.github.javaparser.ast.stmt.LocalClassDeclarationStmt;
-import com.github.javaparser.ast.stmt.ReturnStmt;
-import com.github.javaparser.ast.stmt.SwitchEntry;
-import com.github.javaparser.ast.stmt.SwitchStmt;
-import com.github.javaparser.ast.stmt.SynchronizedStmt;
-import com.github.javaparser.ast.stmt.ThrowStmt;
-import com.github.javaparser.ast.stmt.TryStmt;
-import com.github.javaparser.ast.stmt.UnparsableStmt;
-import com.github.javaparser.ast.stmt.WhileStmt;
-import com.github.javaparser.ast.stmt.YieldStmt;
-import com.github.javaparser.ast.type.ArrayType;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.IntersectionType;
-import com.github.javaparser.ast.type.PrimitiveType;
-import com.github.javaparser.ast.type.TypeParameter;
-import com.github.javaparser.ast.type.UnionType;
-import com.github.javaparser.ast.type.UnknownType;
-import com.github.javaparser.ast.type.VarType;
-import com.github.javaparser.ast.type.VoidType;
-import com.github.javaparser.ast.type.WildcardType;
+import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.modules.*;
+import com.github.javaparser.ast.stmt.*;
+import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.CloneVisitor;
 import com.github.javaparser.ast.visitor.Visitable;
-
 import gin.SourceFileTree;
+import org.apache.commons.collections4.map.HashedMap;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * A visitor that clones (copies) a node and all its children.
@@ -115,14 +26,15 @@ import gin.SourceFileTree;
  */
 public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -7030362755496561991L;
-    private final Map<Integer,Node> nodesToReplace;
+    private final Map<Integer, Node> nodesToReplace;
 
     public CloneVisitorCopyIDs() {
         nodesToReplace = new HashedMap<>();
     }
 
-    public CloneVisitorCopyIDs(Map<Integer,Node> nodesToReplace) {
+    public CloneVisitorCopyIDs(Map<Integer, Node> nodesToReplace) {
         this.nodesToReplace = new HashedMap<>();
         this.nodesToReplace.putAll(nodesToReplace);
     }
@@ -132,7 +44,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((CompilationUnit)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((CompilationUnit) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -143,7 +55,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((PackageDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((PackageDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -154,7 +66,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((TypeParameter)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((TypeParameter) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -165,7 +77,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((LineComment)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((LineComment) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -176,7 +88,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((BlockComment)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((BlockComment) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -187,7 +99,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ClassOrInterfaceDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ClassOrInterfaceDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -198,7 +110,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((EnumDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((EnumDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -209,7 +121,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((EnumConstantDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((EnumConstantDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -220,7 +132,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((AnnotationDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((AnnotationDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -231,7 +143,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((AnnotationMemberDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((AnnotationMemberDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -242,7 +154,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((FieldDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((FieldDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -253,7 +165,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((VariableDeclarator)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((VariableDeclarator) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -264,7 +176,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ConstructorDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ConstructorDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -275,7 +187,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((MethodDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((MethodDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -286,7 +198,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((Parameter)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((Parameter) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -297,7 +209,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((InitializerDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((InitializerDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -308,7 +220,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((JavadocComment)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((JavadocComment) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -319,7 +231,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ClassOrInterfaceType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ClassOrInterfaceType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -330,7 +242,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((PrimitiveType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((PrimitiveType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -341,7 +253,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ArrayType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ArrayType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -352,7 +264,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ArrayCreationLevel)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ArrayCreationLevel) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -363,7 +275,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((IntersectionType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((IntersectionType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -374,7 +286,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((UnionType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((UnionType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -385,7 +297,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((VoidType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((VoidType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -396,7 +308,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((WildcardType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((WildcardType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -407,7 +319,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((UnknownType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((UnknownType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -418,7 +330,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ArrayAccessExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ArrayAccessExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -429,7 +341,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ArrayCreationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ArrayCreationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -440,7 +352,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ArrayInitializerExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ArrayInitializerExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -451,7 +363,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((AssignExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((AssignExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -467,7 +379,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((BinaryExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((BinaryExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -478,7 +390,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((CastExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((CastExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -489,7 +401,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ClassExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ClassExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -500,7 +412,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ConditionalExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ConditionalExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -511,7 +423,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((EnclosedExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((EnclosedExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -522,7 +434,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((FieldAccessExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((FieldAccessExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -533,7 +445,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((InstanceOfExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((InstanceOfExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -544,7 +456,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((StringLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((StringLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -555,7 +467,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((IntegerLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((IntegerLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -566,7 +478,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((LongLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((LongLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -577,7 +489,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((CharLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((CharLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -588,7 +500,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((DoubleLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((DoubleLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -599,7 +511,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((BooleanLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((BooleanLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -610,7 +522,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((NullLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((NullLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -621,7 +533,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((MethodCallExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((MethodCallExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -632,7 +544,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((NameExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((NameExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -643,7 +555,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ObjectCreationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ObjectCreationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -654,7 +566,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((Name)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((Name) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -665,7 +577,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SimpleName)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SimpleName) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -676,7 +588,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ThisExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ThisExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -687,7 +599,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SuperExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SuperExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -704,7 +616,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((UnaryExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((UnaryExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -715,7 +627,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((VariableDeclarationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((VariableDeclarationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -726,7 +638,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((MarkerAnnotationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((MarkerAnnotationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -737,7 +649,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SingleMemberAnnotationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SingleMemberAnnotationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -748,7 +660,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((NormalAnnotationExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((NormalAnnotationExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -759,7 +671,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((MemberValuePair)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((MemberValuePair) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -770,7 +682,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ExplicitConstructorInvocationStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ExplicitConstructorInvocationStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -781,7 +693,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((LocalClassDeclarationStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((LocalClassDeclarationStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -792,7 +704,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((AssertStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((AssertStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -803,7 +715,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((BlockStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((BlockStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -814,7 +726,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((LabeledStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((LabeledStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -825,7 +737,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((EmptyStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((EmptyStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -836,7 +748,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ExpressionStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ExpressionStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -847,7 +759,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SwitchStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SwitchStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -858,7 +770,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SwitchEntry)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SwitchEntry) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -869,7 +781,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((BreakStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((BreakStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -880,7 +792,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ReturnStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ReturnStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -891,7 +803,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((IfStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((IfStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -902,7 +814,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((WhileStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((WhileStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -913,7 +825,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ContinueStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ContinueStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -924,7 +836,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((DoStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((DoStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -935,7 +847,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ForEachStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ForEachStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -946,7 +858,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ForStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ForStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -957,7 +869,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ThrowStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ThrowStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -968,7 +880,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SynchronizedStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SynchronizedStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -979,7 +891,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((TryStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((TryStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -990,7 +902,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((CatchClause)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((CatchClause) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1001,7 +913,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((LambdaExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((LambdaExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1012,7 +924,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((MethodReferenceExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((MethodReferenceExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1023,7 +935,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((TypeExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((TypeExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1041,7 +953,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleDeclaration)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleDeclaration) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1052,7 +964,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleRequiresDirective)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleRequiresDirective) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1073,7 +985,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleExportsDirective)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleExportsDirective) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1084,7 +996,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleProvidesDirective)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleProvidesDirective) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1095,7 +1007,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleUsesDirective)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleUsesDirective) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1106,7 +1018,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ModuleOpensDirective)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ModuleOpensDirective) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1117,73 +1029,73 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
         Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((UnparsableStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((UnparsableStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(Modifier n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((Modifier)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((Modifier) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(ReceiverParameter n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((ReceiverParameter)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((ReceiverParameter) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(SwitchExpr n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((SwitchExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((SwitchExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(TextBlockLiteralExpr n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((TextBlockLiteralExpr)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((TextBlockLiteralExpr) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(VarType n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((VarType)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((VarType) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
     }
-    
+
     @Override
     public Visitable visit(YieldStmt n, Object arg) {
-    	Visitable r = checkForReplacement(n);
+        Visitable r = checkForReplacement(n);
         if (r == null) {
             r = super.visit(n, arg);
-            ((YieldStmt)r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
+            ((YieldStmt) r).setData(SourceFileTree.NODEKEY_ID, n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID);
         }
 
         return r;
@@ -1191,11 +1103,7 @@ public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
 
     private Node checkForReplacement(Node n) {
         Integer id = n.containsData(SourceFileTree.NODEKEY_ID) ? n.getData(SourceFileTree.NODEKEY_ID) : SourceFileTree.NODE_NULL_ID;
-        if (nodesToReplace.containsKey(id)) {
-            return nodesToReplace.get(id);
-        } else {
-            return null;
-        }
+        return nodesToReplace.getOrDefault(id, null);
     }
 
 }

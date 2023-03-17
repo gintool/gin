@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 public class CacheClassLoaderTest {
 
-    private static final File resourceDirectory = new File(".."+ File.separator +".."+ File.separator +"resources");
+    private static final File resourceDirectory = new File(".." + File.separator + ".." + File.separator + "resources");
     private CacheClassLoader loader;
 
     @Before

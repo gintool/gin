@@ -1,14 +1,11 @@
 package gin.test;
 
+import gin.Patch;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-//import java.util.HashMap;
-//import java.util.Map;
-//import java.util.stream.Collectors;
-
-import gin.Patch;
 
 /**
  * Holds the results of running a set of tests.
@@ -17,6 +14,7 @@ import gin.Patch;
  */
 public class UnitTestResultSet implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 672861195212496772L;
 
     private final List<UnitTestResult> results;
@@ -25,9 +23,11 @@ public class UnitTestResultSet implements Serializable {
     private final boolean patchValid;
     private final boolean compiledOK;
     private final List<Boolean> editsValid;
-    
-    /**was the patch effectively a no-op? i.e. was there some difference between
-     * input and output source?*/
+
+    /**
+     * was the patch effectively a no-op? i.e. was there some difference between
+     * input and output source?
+     */
     private final boolean noOp;
 
     public UnitTestResultSet(Patch patch, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, boolean noOp, List<UnitTestResult> results) {
@@ -46,7 +46,7 @@ public class UnitTestResultSet implements Serializable {
     public boolean getValidPatch() {
         return patchValid;
     }
-    
+
     public List<Boolean> getEditsValid() {
         return editsValid;
     }
@@ -54,7 +54,7 @@ public class UnitTestResultSet implements Serializable {
     public boolean getCleanCompile() {
         return compiledOK;
     }
-    
+
     public boolean getNoOp() {
         return noOp;
     }

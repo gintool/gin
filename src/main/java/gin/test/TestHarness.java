@@ -22,20 +22,21 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMetho
  */
 public class TestHarness implements Serializable {
 
+    public static final String PORT_PREFIX = "PORT";
+    @Serial
     private static final long serialVersionUID = -6547478455821943382L;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
-    public static final String PORT_PREFIX = "PORT";
-
-    public static void main(String[] args) {
-        new TestHarness(args);
-    }
 
     public TestHarness(String[] args) {
         Args.parseOrExit(this, args);
         start();
+    }
+
+    public static void main(String[] args) {
+        new TestHarness(args);
     }
 
     public void start() {
@@ -80,8 +81,8 @@ public class TestHarness implements Serializable {
     private String runTest(String command) throws ParseException {
 
         String testName;
-        Integer rep;
-        Long timeoutMS;
+        int rep;
+        long timeoutMS;
 
         String[] params = command.split(",");
         try {
@@ -133,7 +134,7 @@ public class TestHarness implements Serializable {
             result.setExceptionMessage(e.getMessage());
             return result;
 
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             Logger.error("Exception when instrumenting tests with a timeout: " + e);
             Logger.error(e.getMessage());
             Logger.trace(e);
@@ -142,14 +143,6 @@ public class TestHarness implements Serializable {
             result.setExceptionMessage(e.getMessage());
             return result;
 
-        } catch (IllegalAccessException e) {
-            Logger.error("Exception when instrumenting tests with a timeout: " + e);
-            Logger.error(e.getMessage());
-            Logger.trace(e);
-
-            result.setExceptionType(e.getClass().getName());
-            result.setExceptionMessage(e.getMessage());
-            return result;
         }
 
         try (LauncherSession session = LauncherFactory.openSession()) {

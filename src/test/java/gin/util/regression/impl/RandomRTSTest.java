@@ -5,20 +5,20 @@
  */
 package gin.util.regression.impl;
 
-import gin.util.HotMethod;
 import gin.test.UnitTest;
+import gin.util.HotMethod;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
- *
  * @author Giovani
  */
 public class RandomRTSTest {
@@ -41,7 +41,7 @@ public class RandomRTSTest {
         assertNotNull(argLine);
         assertTrue(argLine.trim().isEmpty());
     }
-    
+
     /**
      * Test of linkTestsToMethods method, of class RandomRTS.
      */

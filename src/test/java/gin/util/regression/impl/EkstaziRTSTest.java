@@ -1,27 +1,21 @@
 package gin.util.regression.impl;
 
 import gin.TestConfiguration;
-import gin.util.HotMethod;
 import gin.test.UnitTest;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import gin.util.HotMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ekstazi.Names;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import static org.junit.Assert.*;
+
 /**
- *
  * @author Giovani
  */
 public class EkstaziRTSTest {
@@ -227,7 +221,7 @@ public class EkstaziRTSTest {
         assertEquals(0, subsetTests.size());
         assertFalse(subsetTests.contains(ekstaziETest));
     }
-    
+
     @Test
     public void testGetTargetClassesToTestCases4() {
         List<String> classes = new ArrayList<>();

@@ -1,11 +1,18 @@
 package gin.util;
+
 import gin.test.UnitTest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,19 +30,6 @@ public class MemoryTrace {
         this.methodCounts = methodCounts;
     }
 
-
-    public Set<String> allMethods () {
-        return methodCounts.keySet();
-    }
-
-    public int getMethodCount(String method) {
-        return this.methodCounts.get(method);
-    }
-
-    public UnitTest getTest() {
-        return test;
-    }
-
     // Merge traces together, adding method counts where appropriate
     public static MemoryTrace mergeMemoryTraces(List<MemoryTrace> traces) {
 
@@ -49,8 +43,8 @@ public class MemoryTrace {
 
         Map<String, Integer> allSamples = new HashMap<>();
 
-        for (MemoryTrace trace: traces) {
-            trace.methodCounts.forEach((k, v) -> allSamples.merge(k, v, (v1, v2) -> v1 + v2));
+        for (MemoryTrace trace : traces) {
+            trace.methodCounts.forEach((k, v) -> allSamples.merge(k, v, Integer::sum));
         }
 
         return new MemoryTrace(test, allSamples);
@@ -117,7 +111,7 @@ public class MemoryTrace {
 
         }
 
-	// case where method is <empty>
+        // case where method is <empty>
         regex = "^TRACE (\\d+):(?:\\r\\n|\\r|\\n)^\\t<empty>$";
         p = Pattern.compile(regex, Pattern.MULTILINE);
         m = p.matcher(hprof);
@@ -137,18 +131,6 @@ public class MemoryTrace {
 
     }
 
-    static class MemoryTracePoint {
-
-        String method;
-        int lineNumber;  // -1 = unknown
-
-        public MemoryTracePoint (String method, int line) {
-            this.method = method;
-            this.lineNumber = line;
-        }
-
-    }
-
     /**
      * Parse the table containing samples, i.e. method names and the number of times seen on the stack.
      * <p>
@@ -158,10 +140,6 @@ public class MemoryTrace {
      * 1  5.36%  5.36%      71 300898 sun.font.CFontManager.loadNativeFonts
      * 2  5.29% 10.65%      70 300465 org.jcodec.codecs.h264.decode.deblock.DeblockingFilter.filterBlockEdgeVert
      * CPU SAMPLES END
-     *
-     * @param hprof
-     * @param tracePoints
-     * @return
      */
     private static Map<String, Integer> parseMethodCounts(String hprof, Map<Integer, MemoryTracePoint> tracePoints) {
 
@@ -169,11 +147,11 @@ public class MemoryTrace {
 
         // Extract table, stripping header and footer
 
-	// second number of "allocated bytes" is recorded
+        // second number of "allocated bytes" is recorded
         String header = "rank   self  accum     bytes objs     bytes  objs trace name$";
         String footer = "SITES END";
         String tableRegex = header + "(.*?)" + footer;
-	
+
         Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher m = p.matcher(hprof);
 
@@ -220,11 +198,11 @@ public class MemoryTrace {
         Set<String> mainClasses = project.allMainClasses();
         Set<String> testClasses = project.allTestClasses();
 
-        for (Map.Entry<String, Integer> entry: methodCounts.entrySet()) {
+        for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
 
             String method = entry.getKey();
 
-            String className = StringUtils.substringBeforeLast(method,".");
+            String className = StringUtils.substringBeforeLast(method, ".");
 
             boolean includeMethod = shouldIncludeMethod(method);
 
@@ -300,6 +278,30 @@ public class MemoryTrace {
         }
 
         return !method.contains("<clinit>");
+
+    }
+
+    public Set<String> allMethods() {
+        return methodCounts.keySet();
+    }
+
+    public int getMethodCount(String method) {
+        return this.methodCounts.get(method);
+    }
+
+    public UnitTest getTest() {
+        return test;
+    }
+
+    static class MemoryTracePoint {
+
+        String method;
+        int lineNumber;  // -1 = unknown
+
+        public MemoryTracePoint(String method, int line) {
+            this.method = method;
+            this.lineNumber = line;
+        }
 
     }
 

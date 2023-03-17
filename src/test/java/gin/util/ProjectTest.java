@@ -21,6 +21,7 @@ public class ProjectTest {
     private static final File MAVEN_SIMPLE = new File(TestConfiguration.MAVEN_SIMPLE_DIR);
 
     Project simpleProject = null;
+
     @Before
     public void setUp() throws Exception {
         simpleProject = new Project(GRADLE_SIMPLE, "simple");

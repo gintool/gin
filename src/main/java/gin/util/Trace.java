@@ -1,24 +1,27 @@
 package gin.util;
+
 import gin.test.UnitTest;
+import jdk.jfr.consumer.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
-import java.util.*;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import java.nio.file.Paths;
-
-import jdk.jfr.consumer.*;
 
 /**
  * Used by gin.util.Profiler.
  */
 public class Trace implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -4519079857156034044L;
     private final UnitTest test;
     Map<String, Integer> methodCounts;
@@ -26,18 +29,6 @@ public class Trace implements Serializable {
     private Trace(UnitTest test, Map<String, Integer> methodCounts) {
         this.test = test;
         this.methodCounts = methodCounts;
-    }
-
-    public Set<String> allMethods () {
-        return methodCounts.keySet();
-    }
-
-    public int getMethodCount(String method) {
-        return this.methodCounts.get(method);
-    }
-
-    public UnitTest getTest() {
-        return test;
     }
 
     // Merge traces together, adding method counts where appropriate
@@ -52,8 +43,8 @@ public class Trace implements Serializable {
 
         Map<String, Integer> allSamples = new HashMap<>();
 
-        for (Trace trace: traces) {
-            trace.methodCounts.forEach((k, v) -> allSamples.merge(k, v, (v1, v2) -> v1 + v2));
+        for (Trace trace : traces) {
+            trace.methodCounts.forEach((k, v) -> allSamples.merge(k, v, Integer::sum));
         }
 
         return new Trace(test, allSamples);
@@ -136,18 +127,6 @@ public class Trace implements Serializable {
 
     }
 
-    static class TracePoint {
-
-        String method;
-        int lineNumber;  // -1 = unknown
-
-        public TracePoint (String method, int line) {
-            this.method = method;
-            this.lineNumber = line;
-        }
-
-    }
-
     /**
      * Parse the table containing samples, i.e. method names and the number of times seen on the stack.
      * <p>
@@ -157,10 +136,6 @@ public class Trace implements Serializable {
      * 1  5.36%  5.36%      71 300898 sun.font.CFontManager.loadNativeFonts
      * 2  5.29% 10.65%      70 300465 org.jcodec.codecs.h264.decode.deblock.DeblockingFilter.filterBlockEdgeVert
      * CPU SAMPLES END
-     *
-     * @param hprof
-     * @param tracePoints
-     * @return
      */
     private static Map<String, Integer> parseHPROFMethodCounts(String hprof, Map<Integer, TracePoint> tracePoints) {
 
@@ -175,7 +150,7 @@ public class Trace implements Serializable {
         Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher m = p.matcher(hprof);
 
-        if(m.find()) {
+        if (m.find()) {
             String table = m.group(1);
 
             // Iterate over rows, separate by whitespace, get name and count
@@ -223,14 +198,14 @@ public class Trace implements Serializable {
                 String check = event.getEventType().getName();
 //System.out.println("******" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
-                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK 
+                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
                     RecordedStackTrace s = event.getStackTrace();
 
-                    if (s!= null) {
+                    if (s != null) {
 
                         //traverse the call stack, if a frame is part of the main program,
                         //return it
-                        for (int i = 0;i<s.getFrames().size();i++) {
+                        for (int i = 0; i < s.getFrames().size(); i++) {
 
                             RecordedFrame topFrame = s.getFrames().get(i);
                             RecordedMethod method = topFrame.getMethod();
@@ -239,13 +214,13 @@ public class Trace implements Serializable {
                             String className = StringUtils.substringBeforeLast(methodName, ".");
 
                             if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                methodName+= "." + method.getName() + ":" + topFrame.getLineNumber();
-                                samples.merge(methodName,1,Integer::sum);
+                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                samples.merge(methodName, 1, Integer::sum);
                                 break;
                             }
                         }
 
-                        
+
                     }
                 }
             }
@@ -264,10 +239,10 @@ public class Trace implements Serializable {
         Set<String> mainClasses = project.allMainClasses();
         Set<String> testClasses = project.allTestClasses();
 
-        for (Map.Entry<String, Integer> entry: methodCounts.entrySet()) {
+        for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
 
             String method = entry.getKey();
-            String className = StringUtils.substringBeforeLast(method,".");
+            String className = StringUtils.substringBeforeLast(method, ".");
 
             boolean includeMethod = shouldIncludeMethod(method);
 
@@ -343,6 +318,30 @@ public class Trace implements Serializable {
         }
 
         return !method.contains("clinit");
+
+    }
+
+    public Set<String> allMethods() {
+        return methodCounts.keySet();
+    }
+
+    public int getMethodCount(String method) {
+        return this.methodCounts.get(method);
+    }
+
+    public UnitTest getTest() {
+        return test;
+    }
+
+    static class TracePoint {
+
+        String method;
+        int lineNumber;  // -1 = unknown
+
+        public TracePoint(String method, int line) {
+            this.method = method;
+            this.lineNumber = line;
+        }
 
     }
 

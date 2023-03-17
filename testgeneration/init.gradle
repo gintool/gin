@@ -1,4 +1,4 @@
-allprojects { 
+allprojects {
 
     apply plugin: 'java'
 
@@ -6,6 +6,6 @@ allprojects {
         mavenCentral()
     }
     dependencies {
- 	    api group: 'org.evosuite', name: 'evosuite-standalone-runtime', version: '1.0.6'
+        api group: 'org.evosuite', name: 'evosuite-standalone-runtime', version: '1.0.6'
     }
 }

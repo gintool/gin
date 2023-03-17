@@ -1,10 +1,11 @@
 package gin.util;
 
-import java.io.File;
-import java.io.Serializable;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.io.Serial;
+import java.io.Serializable;
 
 /**
  * Util class to perform actions regarding maven.
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class MavenUtils implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 6646703137441264344L;
 
     /**
@@ -27,7 +29,7 @@ public class MavenUtils implements Serializable {
      * </ol>
      *
      * @return the path to maven home, or {@code /usr/local/} if not found
-     *
+     * <p>
      * Note: I really don't know how to write tests for this because it can
      * change from one environment to another. Let's just assume it's working :)
      */
@@ -62,7 +64,6 @@ public class MavenUtils implements Serializable {
      * </ol>
      *
      * @return the File to maven home, or {@code /usr/local/} if not found
-     *
      */
     public static File findMavenHomeFile() {
         return FileUtils.getFile(findMavenHomePath());

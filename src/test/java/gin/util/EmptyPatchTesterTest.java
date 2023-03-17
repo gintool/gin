@@ -55,6 +55,30 @@ public class EmptyPatchTesterTest {
 
     }
 
+    private static void validateOutputFile(File outputFile) throws IOException, CsvException {
+        try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
+            List<String[]> lines = reader.readAll();
+
+            assertTrue(lines.size() > 0);
+
+            String[] header = lines.get(0);
+
+            int validIndex = Arrays.asList(header).indexOf("PatchValid");
+            int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
+            int testIndex = Arrays.asList(header).indexOf("TestPassed");
+
+            lines.remove(0);
+
+            // Test whether all lines are true for all important stuff
+            Assertions.assertAll(lines.stream().map(line -> () -> {
+                assertEquals("Test not valid", "true", line[validIndex]);
+                assertEquals("Test not compiling", "true", line[compileIndex]);
+                assertEquals("Test not passing", "true", line[testIndex]);
+            }));
+        }
+        Files.deleteIfExists(outputFile.toPath());  // tidy up
+    }
+
     @Test
     public void testSampleMethod() throws Exception {
         buildExampleClasses();
@@ -241,30 +265,6 @@ public class EmptyPatchTesterTest {
         EmptyPatchTester.main(args);
 
         validateOutputFile(outputFile);
-    }
-
-    private static void validateOutputFile(File outputFile) throws IOException, CsvException {
-        try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
-            List<String[]> lines = reader.readAll();
-
-            assertTrue(lines.size() > 0);
-
-            String[] header = lines.get(0);
-
-            int validIndex = Arrays.asList(header).indexOf("PatchValid");
-            int compileIndex = Arrays.asList(header).indexOf("PatchCompiled");
-            int testIndex = Arrays.asList(header).indexOf("TestPassed");
-
-            lines.remove(0);
-
-            // Test whether all lines are true for all important stuff
-            Assertions.assertAll(lines.stream().map(line -> () -> {
-                assertEquals("Test not valid", "true", line[validIndex]);
-                assertEquals("Test not compiling","true", line[compileIndex]);
-                assertEquals("Test not passing","true", line[testIndex]);
-            }));
-        }
-        Files.deleteIfExists(outputFile.toPath());  // tidy up
     }
 
     @Test

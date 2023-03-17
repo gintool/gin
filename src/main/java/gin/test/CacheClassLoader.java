@@ -4,6 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,13 +20,12 @@ import java.util.Map;
  */
 public class CacheClassLoader extends URLClassLoader implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -9181563170107783961L;
 
     private static final String BRIDGE_CLASS_NAME = gin.test.JUnitBridge.class.getName();
-
-    protected Map<String, byte[]> customCompiledCode = new HashMap<>();
-
     private final URL[] providedClassPath;
+    protected Map<String, byte[]> customCompiledCode = new HashMap<>();
 
     /**
      * Constructs a ClassLoader with the system classpath and the elements given
@@ -44,54 +44,16 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
      * a colon.
      *
      * @param classpath a : separated classpath to append to the system's
-     * classpath.
+     *                  classpath.
      */
     public CacheClassLoader(String classpath) {
         this(classPathToURLs(classpath));
     }
 
     /**
-     * If the class can't be found using parents (I don't have any) then drops
-     * back here.
-     */
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-
-        // I have to intervene here, to ensure JUnitBridge uses me in the future.
-        if (name.equals(BRIDGE_CLASS_NAME)) {
-            return super.findClass(name);
-        }
-
-        // Modified class? Return the modified code.
-        if (customCompiledCode.containsKey(name)) {
-            byte[] byteCode = customCompiledCode.get(name);
-            return defineClass(name, byteCode, 0, byteCode.length);
-        }
-
-        // Otherwise, try the system class loader. If not there, must be part of the project, so load ourselves.
-        try {
-            ClassLoader system = ClassLoader.getSystemClassLoader();
-            return system.loadClass(name);
-        } catch (ClassNotFoundException e) {
-            return super.findClass(name);
-        }
-
-    }
-
-    /**
-     * Store the results of compilation from the InMemoryCompiler.
-     *
-     * @param className the fully qualified class name.
-     * @param compiledCode the compiled code for the given class.
-     */
-    public void setCustomCompiledCode(String className, byte[] compiledCode) {
-        this.customCompiledCode.put(className, compiledCode);
-    }
-
-    /**
      * Utility method to convert a : separated classpath into an array of URLs.
      *
-     * @return the set of converted classpath elements.
+     * @return the array of converted classpath elements.
      */
     public static URL[] classPathToURLs(String classPath) {
 
@@ -153,9 +115,47 @@ public class CacheClassLoader extends URLClassLoader implements Serializable {
     }
 
     /**
+     * If the class can't be found using parents (I don't have any) then drops
+     * back here.
+     */
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+
+        // I have to intervene here, to ensure JUnitBridge uses me in the future.
+        if (name.equals(BRIDGE_CLASS_NAME)) {
+            return super.findClass(name);
+        }
+
+        // Modified class? Return the modified code.
+        if (customCompiledCode.containsKey(name)) {
+            byte[] byteCode = customCompiledCode.get(name);
+            return defineClass(name, byteCode, 0, byteCode.length);
+        }
+
+        // Otherwise, try the system class loader. If not there, must be part of the project, so load ourselves.
+        try {
+            ClassLoader system = ClassLoader.getSystemClassLoader();
+            return system.loadClass(name);
+        } catch (ClassNotFoundException e) {
+            return super.findClass(name);
+        }
+
+    }
+
+    /**
+     * Store the results of compilation from the InMemoryCompiler.
+     *
+     * @param className    the fully qualified class name.
+     * @param compiledCode the compiled code for the given class.
+     */
+    public void setCustomCompiledCode(String className, byte[] compiledCode) {
+        this.customCompiledCode.put(className, compiledCode);
+    }
+
+    /**
      * Gets the provided classpath elements provided in the constructor;
      *
-     * @return the set of classpath elements given as input to the constructor
+     * @return the array of classpath elements given as input to the constructor
      * of the object.
      */
     public URL[] getProvidedClassPath() {

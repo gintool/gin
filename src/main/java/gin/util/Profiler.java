@@ -31,6 +31,9 @@ public class Profiler implements Serializable {
     private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
+    // Instance Members
+    private final File workingDir;
+    private final Project project;
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
     protected String projectName;
@@ -50,7 +53,6 @@ public class Profiler implements Serializable {
     protected Boolean skipInitialRun = false;
     @Argument(alias = "n", description = "Only mavenProfile the first n tests. For debugging.")
     protected Integer profileFirstNTests;
-
     // Constants
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
@@ -62,9 +64,6 @@ public class Profiler implements Serializable {
     protected String profilerChoice = "jfr";
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
-    // Instance Members
-    private final File workingDir;
-    private final Project project;
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -140,7 +139,7 @@ public class Profiler implements Serializable {
 
         List<HotMethod> hotMethods = calcHotMethods(testTraces);
 
-        Collections.sort(hotMethods, Collections.reverseOrder());
+        hotMethods.sort(Collections.reverseOrder());
 
         writeResults(hotMethods);
 
@@ -152,7 +151,7 @@ public class Profiler implements Serializable {
         Logger.info("Profiling report summary");
         Logger.info("Total number of tests run: " + results.size());
 
-        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).collect(Collectors.toList());
+        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).toList();
 
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
@@ -411,7 +410,7 @@ public class Profiler implements Serializable {
         }
     }
 
-    class HotMethod implements Comparable<HotMethod> {
+    static class HotMethod implements Comparable<HotMethod> {
 
         String methodName;
         int count;

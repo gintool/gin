@@ -4,11 +4,8 @@ import gin.SourceFile;
 import gin.SourceFileLine;
 import gin.TestConfiguration;
 import gin.edit.Edit;
-
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +15,9 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CopyLineTest {
 
@@ -99,7 +99,7 @@ public class CopyLineTest {
 
         List<String> sourceList = Files.readAllLines(Paths.get(TEST_SOURCE), StandardCharsets.UTF_8);
         sourceList.add(6, sourceList.get(1));
-        String[] sourceLines = sourceList.toArray(new String[sourceList.size()]);
+        String[] sourceLines = sourceList.toArray(new String[0]);
         String fullSource = String.join(System.getProperty("line.separator"), sourceLines);
 
         SourceFile result = specificCopyLine.apply(sourceFile);

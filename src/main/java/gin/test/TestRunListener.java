@@ -7,6 +7,7 @@ import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.pmw.tinylog.Logger;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class TestRunListener implements Serializable, TestExecutionListener {
 
+    @Serial
     private static final long serialVersionUID = -1768323084872818847L;
     private static final long MB = 1024 * 1024;
     private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();

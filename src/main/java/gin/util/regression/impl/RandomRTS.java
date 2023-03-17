@@ -2,17 +2,11 @@ package gin.util.regression.impl;
 
 import gin.test.UnitTest;
 import gin.util.regression.RTSStrategy;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGeneratorFactory;
+
+import java.io.Serial;
+import java.util.*;
 
 /**
  * This class simply selects a random number of test cases at random.
@@ -21,8 +15,9 @@ import org.apache.commons.math3.random.RandomGeneratorFactory;
  */
 public class RandomRTS extends RTSStrategy {
 
+    @Serial
     private static final long serialVersionUID = -1347083983560579003L;
-    
+
     /**
      * Random generator for selecting the test cases.
      */
@@ -30,7 +25,7 @@ public class RandomRTS extends RTSStrategy {
 
     /**
      * Builds this object with the given seed.
-     * 
+     *
      * @param seed random seed
      */
     public RandomRTS(long seed) {

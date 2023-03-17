@@ -1,27 +1,24 @@
 package gin.util;
 
-import java.io.File;
-import org.pmw.tinylog.Logger;
-
 import gin.SourceFileLine;
 import gin.test.UnitTestResultSet;
+import org.pmw.tinylog.Logger;
+
+import java.io.File;
+import java.io.Serial;
 
 /**
- * Runs all tests found in the methodFile for a given project through Gin. 
- *
+ * Runs all tests found in the methodFile for a given project through Gin.
+ * <p>
  * Required input: projectDirectory, methodFile, projectName (Gradle/Maven)
  * Required input: projectDirectory, methodFile, classPath (otherwise)
- * 
+ * <p>
  * methodFile will usually be the output file of gin.util.Profiler
  */
-public class EmptyPatchTester extends Sampler{
+public class EmptyPatchTester extends Sampler {
 
+    @Serial
     private static final long serialVersionUID = 833946988361588298L;
-
-    public static void main(String[] args) {
-        EmptyPatchTester sampler = new EmptyPatchTester(args);
-        sampler.sampleMethods();
-    }
 
     public EmptyPatchTester(String[] args) {
         super(args);
@@ -32,13 +29,18 @@ public class EmptyPatchTester extends Sampler{
         super(projectDir, methodFile);
     }
 
+    public static void main(String[] args) {
+        EmptyPatchTester sampler = new EmptyPatchTester(args);
+        sampler.sampleMethods();
+    }
+
     protected void sampleMethodsHook() {
-        
+
         writeHeader();
 
         // Get the first method
         TargetMethod method = super.methodData.get(0);
-        
+
         // Get method location
         File source = method.getFileSource();
         String className = method.getClassName();

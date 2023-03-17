@@ -1,27 +1,24 @@
 package gin.util;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
+import com.opencsv.CSVReader;
+import gin.TestConfiguration;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import org.junit.Before;
-import org.junit.After;
-import org.junit.Test;
-
-import com.opencsv.CSVReader;
-
-import gin.TestConfiguration;
+import static org.junit.Assert.assertEquals;
 
 public class GPFixTest {
 
@@ -31,17 +28,6 @@ public class GPFixTest {
     File outputFile = new File(packageDir, "gpfix_sampler_results.csv");
 
     GPFix sampler;
-
-    @Before
-    public void setUp() throws Exception {
-
-        sampler = new GPFix(resourcesDir, methodFile);
-        sampler.outputFile = outputFile;
-        sampler.classPath = resourcesDir.getPath();
-        sampler.setUp();
-
-        buildExampleClasses();
-    }
 
     // Compile source files.
     private static void buildExampleClasses() throws IOException {
@@ -58,8 +44,8 @@ public class GPFixTest {
             File exampleBaseFile = new File(resourcesDir, "ExampleBase.java");
             Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Arrays.asList(
                     exampleFile,
-                     exampleTestFile,
-                     exampleBaseFile
+                    exampleTestFile,
+                    exampleBaseFile
             ));
             JavaCompiler.CompilationTask task
                     = compiler.getTask(null, fm, null, options, null, compilationUnit);
@@ -68,6 +54,17 @@ public class GPFixTest {
             }
         }
 
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        sampler = new GPFix(resourcesDir, methodFile);
+        sampler.outputFile = outputFile;
+        sampler.classPath = resourcesDir.getPath();
+        sampler.setUp();
+
+        buildExampleClasses();
     }
 
     @Test
@@ -79,17 +76,16 @@ public class GPFixTest {
 
         try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
             List<String[]> lines = reader.readAll();
-        
+
             assertEquals(lines.size(), 7);
 
             String[] header = lines.get(0);
-            String[] result = lines.get(1);
 
             int compileIndex = Arrays.asList(header).indexOf("Compiled");
             int testIndex = Arrays.asList(header).indexOf("AllTestsPassed");
             int fitnessIndex = Arrays.asList(header).indexOf("Fitness");
 
-            result = lines.get(1);
+            String[] result = lines.get(1);
             assertEquals("true", result[compileIndex]);
             assertEquals("false", result[testIndex]);
             assertEquals("1.0", result[fitnessIndex]);

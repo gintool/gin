@@ -1,8 +1,9 @@
 package gin.util.regression;
 
-import gin.util.HotMethod;
 import gin.test.UnitTest;
+import gin.util.HotMethod;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
  */
 public abstract class RTSStrategy implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 7815012376032989736L;
 
     /**
@@ -30,7 +32,7 @@ public abstract class RTSStrategy implements Serializable {
      * and Gradle.
      *
      * @return the argument line (if any) to inject the RTS technique during the
-     *         execution of the program
+     * execution of the program
      */
     public String getArgumentLine() {
         return "";
@@ -60,7 +62,7 @@ public abstract class RTSStrategy implements Serializable {
                 .collect(Collectors.toSet());
         Map<String, Set<UnitTest>> results = getTargetClassesToTestCases(targetClasses, tests);
         // Assign test cases to the target methods based on their classes
-        targetMethods.stream()
+        targetMethods
                 .forEach(hotMethod -> hotMethod.setTests(results.get(hotMethod.getClassName())));
     }
 
@@ -73,7 +75,7 @@ public abstract class RTSStrategy implements Serializable {
      * @param targetClasses the classes to be improved
      * @param tests         the available unit tests
      * @return an one to many Map linking the target classes with the test cases
-     *         selected by the RTS technique
+     * selected by the RTS technique
      */
     protected abstract Map<String, Set<UnitTest>> getTargetClassesToTestCases(Collection<String> targetClasses, Collection<UnitTest> tests);
 

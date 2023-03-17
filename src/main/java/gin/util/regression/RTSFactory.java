@@ -4,6 +4,7 @@ import gin.util.regression.impl.EkstaziRTS;
 import gin.util.regression.impl.NoneRTS;
 import gin.util.regression.impl.RandomRTS;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -16,28 +17,26 @@ import java.io.Serializable;
  */
 public class RTSFactory implements Serializable {
 
-    private static final long serialVersionUID = -1494331220800782829L;
-
     /**
      * The identifier of {@link EkstaziRTS}. This should be given as input to
      * the factory method
      * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
      */
     public static final String EKSTAZI = "ekstazi";
-
     /**
      * The identifier of {@link RandomRTS}. This should be given as input to the
      * factory method
      * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
      */
     public static final String RANDOM = "random";
-
     /**
      * The identifier of {@link NoneRTS}. This should be given as input to the
      * factory method
      * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
      */
     public static final String NONE = "none";
+    @Serial
+    private static final long serialVersionUID = -1494331220800782829L;
 
     /**
      * Creates the RTS technique identified by the {@code rtsName} variable. The

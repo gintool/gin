@@ -2,33 +2,31 @@ package gin.util.regression.impl;
 
 import com.google.common.base.Functions;
 import gin.test.UnitTest;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.time.Duration;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import gin.util.RTSProfiler;
+import gin.util.regression.RTSStrategy;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.ekstazi.Config;
 import org.ekstazi.Names;
 import org.ekstazi.agent.EkstaziAgent;
-import static org.ekstazi.data.DependencyAnalyzer.CLASS_EXT;
 import org.ekstazi.data.RegData;
 import org.ekstazi.data.Storer;
 import org.ekstazi.util.Types;
 import org.pmw.tinylog.Logger;
-import gin.util.regression.RTSStrategy;
-import gin.util.RTSProfiler;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.lang3.time.StopWatch;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serial;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.ekstazi.data.DependencyAnalyzer.CLASS_EXT;
 
 /**
  * This class works as an off-line integration of Ekstazi with Gin during
@@ -37,12 +35,12 @@ import org.apache.commons.lang3.time.StopWatch;
  * for the target classes.
  *
  * @author Giovani
- *
  * @see <a href="http://ekstazi.org/">Ekstazi</a>
  * @see RTSProfiler
  */
 public class EkstaziRTS extends RTSStrategy {
 
+    @Serial
     private static final long serialVersionUID = 2828162141766700048L;
 
     /**
@@ -141,7 +139,7 @@ public class EkstaziRTS extends RTSStrategy {
                     // dependency files
                     Set<RegData> dependenciesOfThisTestClass = storer.load(this.ekstaziDir.getAbsolutePath(), testClass, CLASS_EXT);
                     // For each dependency found
-                    dependenciesOfThisTestClass.stream().forEach((regDatum) -> {
+                    dependenciesOfThisTestClass.forEach((regDatum) -> {
                         // Save the dependency external path and add all tests
                         // methods in the of the test class to it (if any)
                         Set<UnitTest> targetClassesToTest = externalFormResults.computeIfAbsent(regDatum.getURLExternalForm(), k -> new HashSet<>());
@@ -184,7 +182,7 @@ public class EkstaziRTS extends RTSStrategy {
                         // information, then we use all test cases for that
                         // class. This should rarely be executed, unless no
                         // dependency information was stored using Ekstazy.
-                        return new HashSet<UnitTest>(tests);
+                        return new HashSet<>(tests);
                     }
                 }));
         stopWatch.stop();

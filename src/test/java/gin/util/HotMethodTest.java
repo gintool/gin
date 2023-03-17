@@ -1,12 +1,13 @@
 package gin.util;
 
-import java.util.HashSet;
-import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.HashSet;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
- *
  * @author Giovani
  */
 public class HotMethodTest {
@@ -22,7 +23,7 @@ public class HotMethodTest {
         HotMethod hotMethod1 = new HotMethod("test.package.TestClass", "method1", 0, new HashSet<>());
         HotMethod hotMethod2 = new HotMethod("test.package.TestClass", "method2", 1, new HashSet<>());
         HotMethod hotMethod3 = new HotMethod("test.package.TestClass", "method3", 1, new HashSet<>());
-        
+
         assertEquals(0, hotMethod2.compareTo(hotMethod3));
         assertEquals(-1, hotMethod1.compareTo(hotMethod2));
         assertEquals(1, hotMethod2.compareTo(hotMethod1));

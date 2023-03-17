@@ -9,6 +9,7 @@ import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,12 @@ import java.util.Map;
  * Method-based GPFix search.
  * Roughly based on: "A systematic study of automated program repair: Fixing 55 out of 105 bugs for $8 each."
  * by Claire Le Goues, Michael Dewey-Vogt, Stephanie Forrest, Westley Weimer (ICSE 2012)
- * and its Java implementation at https://github.com/squaresLab/genprog4java
+ * and its Java implementation at <a href="https://github.com/squaresLab/genprog4java">...</a>
  */
 
 public class GPFix extends GPSimple {
 
+    @Serial
     private static final long serialVersionUID = 1043876194620277519L;
     // Arguments used in fitness calculation
     private final static double WEIGHT = 2.0;
@@ -32,11 +34,13 @@ public class GPFix extends GPSimple {
     private double targetFitness = -1.0;
     private Map<UnitTest, Boolean> testResults = new HashMap<>();
     private Map<Patch, Double> recordedFitness = new HashMap<>();
+
     public GPFix(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
         printAdditionalArguments();
     }
+
     // Constructor used for testing
     public GPFix(File projectDir, File methodFile) {
         super(projectDir, methodFile);

@@ -3,19 +3,14 @@ package gin.util;
 import gin.Patch;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
+
 import java.io.File;
 import java.util.List;
 
 /**
- *
  * @author Giovani
  */
 public class LocalSearchRuntime extends LocalSearchSimple {
-
-    public static void main(String[] args) {
-        LocalSearchRuntime sampler = new LocalSearchRuntime(args);
-        sampler.sampleMethods();
-    }
 
     public LocalSearchRuntime(String[] args) {
         super(args);
@@ -24,6 +19,11 @@ public class LocalSearchRuntime extends LocalSearchSimple {
     // Constructor used for testing
     public LocalSearchRuntime(File projectDir, File methodFile) {
         super(projectDir, methodFile);
+    }
+
+    public static void main(String[] args) {
+        LocalSearchRuntime sampler = new LocalSearchRuntime(args);
+        sampler.sampleMethods();
     }
 
     /*============== Implementation of abstract methods  ==============*/

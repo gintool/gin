@@ -58,11 +58,10 @@ code.
 
 Gin requires:
 
-* JDK 1.8.x  *note: there is currently a known [issue](https://github.com/gintool/gin/issues/29) that prevents Gin
-  running on JDK 9 and above*
-* Gradle (tested with version 6.8.2)
+* JDK 17
+* Gradle (tested with version 8.0.2)
 * A number of dependencies, which can be downloaded manually or via Gradle (recommended)
-* For Maven projects: make sure the Java version is set to 1.8.x
+* For Maven projects: make sure the Java version is set to the same version as Gin's.
 
 JDK downloads:<http://www.oracle.com/technetwork/java/javase/downloads/index.html>
 
@@ -71,12 +70,12 @@ Gradle can be downloaded from their website:<https://gradle.org/install>
 The library dependencies can be found in the build.gradle file.
 
 If you have multiple JREs on your system, you may need to call something
-like `export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64/jre"` as well as `switch-alternatives` to ensure that Gradle
-uses Java 8.
+like `export JAVA_HOME="/usr/lib/jvm/java-17-oracle/jre"` as well as `switch-alternatives` to ensure that Gradle
+uses Java 17.
 
 ### Installing and Building gin
 
-These instructions were tested on OS X and Ubuntu 18.04 LTS.
+These instructions were tested on OS X and Ubuntu 22.04 LTS.
 
 Clone the repo:
 
@@ -85,7 +84,7 @@ git clone https://github.com/gintool/gin.git
 ```
 
 Build using gradle (alternatively import into your favourite IDE, such as IntelliJ). We also provide a gradle wrapper
-with Gradle 6.8.2.
+with Gradle 8.0.2.
 
 ```
 cd gin
@@ -177,14 +176,14 @@ Before you run the below, please make sure you have Maven installed. The default
 /usr/local/' (with binary in '/usr/local/bin/mvn'). Please change the path with -mavenHome parameter, if need be.
 
 ```
-java -cp build/gin.jar gin.util.Profiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome>
+java -cp build/gin.jar gin.util.Profiler -p my-app -d examples/maven-simple/ -h <path_to_mavenHome>
 ```
 
 In case you want to use a Regression Test Selection (RTS) technique to speed up the profiling phase, you can use
 the `gin.util.RTSProfiler` class instead. RTS is fully supported for Maven projects.
 
 ```
-java -cp build/gin.jar gin.util.RTSProfiler -p my-app -d examples/maven-simple/ -mavenHome <path_to_mavenHome> -rts ekstazi
+java -cp build/gin.jar gin.util.RTSProfiler -p my-app -d examples/maven-simple/ -h <path_to_mavenHome> -rts ekstazi
 ```
 
 Gin integrates 2 RTS techniques: [Ekstazi](http://ekstazi.org/) (`-rts ekstazi` - default) and a Random
@@ -208,7 +207,7 @@ Before you run the below, please make sure you have Maven installed. The default
 /usr/local/' (with binary in '/usr/local/bin/mvn'). Please change the path with -mavenHome parameter, if need be.
 
 ```
-java -cp build/gin.jar gin.util.TestCaseGenerator -d examples/maven-simple -p my-app -classNames com.mycompany.app.App -generateTests -mavenHome <path_to_mavenHome>
+java -cp build/gin.jar gin.util.TestCaseGenerator -d examples/maven-simple -p my-app -classNames com.mycompany.app.App -generateTests -h <path_to_mavenHome>
 ```
 
 Generated tests can be run and integrated with Profiler, PatchAnalyser and Samplers for Maven projects only. Gradle
@@ -220,7 +219,7 @@ generated tests, please supply the EvoSuite dependency on the classpath, e.g., `
 testgeneration/evosuite-1.0.6.jar gin.<utility>'.
 
 ```
-java -cp build/gin.jar gin.util.TestCaseGenerator -projectDir examples/maven-simple -projectName my-app -test -mavenHome <path_to_mavenHome>
+java -cp build/gin.jar gin.util.TestCaseGenerator -projectDir examples/maven-simple -projectName my-app -test -h <path_to_mavenHome>
 ```
 
 You can also remove all tests from the project's directory before new test generation:
@@ -262,7 +261,7 @@ java -cp build/gin.jar gin.util.RandomSampler -d examples/triangle/ -c examples/
 Assuming EvoSuite tests were generated and original tests not removed:
 
 ```
-java -cp build/gin.jar:testgeneration/evosuite-1.0.6.jar gin.util.RandomSampler -d examples/maven-simple -p my-app -m examples/maven-simple/example_profiler_results.csv -mavenHome <path_to_mavenHome>
+java -cp build/gin.jar:testgeneration/evosuite-1.0.6.jar gin.util.RandomSampler -d examples/maven-simple -p my-app -m examples/maven-simple/example_profiler_results.csv -h <path_to_mavenHome>
 ```
 
 Gin also offers an implementation of the multi-objective algorithm NSGA-II for improving the execution time and memory

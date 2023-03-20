@@ -34,9 +34,9 @@ public class MoveStatement extends StatementEdit {
             insertStatementID = 0; // insert at start of empty block
         }
 
-        this.sourceFilename = sf.getFilename();
+        this.sourceFilename = sf.getRelativePathToWorkingDir();
         this.sourceStatement = statementToMove;
-        this.destinationFilename = sf.getFilename();
+        this.destinationFilename = sf.getRelativePathToWorkingDir();
         this.destinationBlock = insertBlock;
         this.destinationChildInBlock = insertStatementID;
     }

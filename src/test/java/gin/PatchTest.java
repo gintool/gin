@@ -81,7 +81,7 @@ public class PatchTest {
 
     @Test
     public void addLine() throws Exception {
-        Edit edit = new CopyLine(sourceFileLine.getFilename(), 1, sourceFileLine.getFilename(), 3);
+        Edit edit = new CopyLine(sourceFileLine.getRelativePathToWorkingDir(), 1, sourceFileLine.getRelativePathToWorkingDir(), 3);
         patchLine.add(edit);
         assertEquals(1, patchLine.size());
         assertEquals(edit, patchLine.edits.get(0));
@@ -933,7 +933,7 @@ public class PatchTest {
         // Patch the small example by deleting first line and write to file
         SourceFile sourceFile = new SourceFileLine(verySmallExampleSourceFilename, Collections.emptyList());
         Patch patch = new Patch(sourceFile);
-        Edit edit = new DeleteLine(sourceFile.getFilename(), 4);
+        Edit edit = new DeleteLine(sourceFile.getRelativePathToWorkingDir(), 4);
         patch.add(edit);
         patch.writePatchedSourceToFile(tmpPatchedFilenameLine);
 

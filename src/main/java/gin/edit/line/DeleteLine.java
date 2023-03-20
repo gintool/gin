@@ -25,7 +25,7 @@ public class DeleteLine extends LineEdit {
         SourceFileLine sf = (SourceFileLine) sourceFile;
         List<Integer> targetMethodLines = sf.getLineIDsNonEmptyOrComments(true);
 
-        this.file = sourceFile.getFilename();
+        this.file = sourceFile.getRelativePathToWorkingDir();
         this.lineToDelete = targetMethodLines.get(rng.nextInt(targetMethodLines.size()));
     }
 

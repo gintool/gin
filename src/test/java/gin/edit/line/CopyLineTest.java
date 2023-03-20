@@ -46,8 +46,8 @@ public class CopyLineTest {
     @Test
     public void testConstructorRandom() {
 
-        assertEquals(randomCopyLine.sourceFile, this.sourceFile.getFilename());
-        assertEquals(randomCopyLine.destinationFile, this.sourceFile.getFilename());
+        assertEquals(randomCopyLine.sourceFile, this.sourceFile.getRelativePathToWorkingDir());
+        assertEquals(randomCopyLine.destinationFile, this.sourceFile.getRelativePathToWorkingDir());
 
         int linesInFile = 100;
         int methodStart = 4;

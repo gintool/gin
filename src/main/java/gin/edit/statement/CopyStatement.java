@@ -35,9 +35,9 @@ public class CopyStatement extends StatementEdit {
             insertStatementID = 0; // insert at start of empty block
         }
 
-        this.sourceFilename = sourceFile.getFilename();
+        this.sourceFilename = sourceFile.getRelativePathToWorkingDir();
         this.sourceStatement = statementToCopy;
-        this.destinationFilename = sourceFile.getFilename();
+        this.destinationFilename = sourceFile.getRelativePathToWorkingDir();
         this.destinationBlock = insertBlock;
         this.destinationChildInBlock = insertStatementID;
     }

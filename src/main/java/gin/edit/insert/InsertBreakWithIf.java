@@ -49,7 +49,7 @@ public class InsertBreakWithIf extends InsertStatementEdit {
             insertStatementID = 0; // insert at start of empty block
         }
 
-        this.destinationFilename = sourceFile.getFilename();
+        this.destinationFilename = sourceFile.getRelativePathToWorkingDir();
         this.destinationBlock = insertBlock;
         this.destinationChildInBlock = insertStatementID;
 

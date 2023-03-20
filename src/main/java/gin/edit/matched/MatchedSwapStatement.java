@@ -26,7 +26,7 @@ public class MatchedSwapStatement extends SwapStatement {
     // @param cu is provided to allow a matching node to be chosen
     public MatchedSwapStatement(SourceFile sourceFile, Random rng) {
 
-        super(sourceFile.getFilename(), 0, sourceFile.getFilename(), 0);
+        super(sourceFile.getRelativePathToWorkingDir(), 0, sourceFile.getRelativePathToWorkingDir(), 0);
 
         SourceFileTree sf = (SourceFileTree) sourceFile;
 

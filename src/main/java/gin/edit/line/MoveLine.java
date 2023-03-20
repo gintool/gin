@@ -27,9 +27,9 @@ public class MoveLine extends LineEdit {
         SourceFileLine sf = (SourceFileLine) sourceFile;
         List<Integer> targetMethodLines = sf.getLineIDsNonEmptyOrComments(true);
 
-        this.sourceFile = sourceFile.getFilename();
+        this.sourceFile = sourceFile.getRelativePathToWorkingDir();
         this.sourceLine = targetMethodLines.get(rng.nextInt(targetMethodLines.size()));
-        this.destinationFile = sourceFile.getFilename();
+        this.destinationFile = sourceFile.getRelativePathToWorkingDir();
         this.destinationLine = targetMethodLines.get(rng.nextInt(targetMethodLines.size()));
     }
 

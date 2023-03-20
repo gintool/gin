@@ -44,7 +44,7 @@ public class SourceFileLineTest {
 
     @Test
     public void getFilename() throws Exception {
-        assertEquals(exampleSourceFilename, sourceFile.getFilename());
+        assertEquals(exampleSourceFilename, sourceFile.getRelativePathToWorkingDir());
     }
 
     @Test

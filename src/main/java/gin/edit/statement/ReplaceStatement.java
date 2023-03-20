@@ -26,8 +26,8 @@ public class ReplaceStatement extends StatementEdit {
     public ReplaceStatement(SourceFile sourceFile, Random rng) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
-        sourceFilename = sourceFile.getFilename();
-        destinationFilename = sourceFile.getFilename();
+        sourceFilename = sourceFile.getRelativePathToWorkingDir();
+        destinationFilename = sourceFile.getRelativePathToWorkingDir();
 
         // source can be anywhere in the class
         sourceStatement = sf.getRandomStatementID(false, rng);

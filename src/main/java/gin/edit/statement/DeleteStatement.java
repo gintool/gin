@@ -22,7 +22,7 @@ public class DeleteStatement extends StatementEdit {
      * @param rng        random number generator, used to choose the target statements
      */
     public DeleteStatement(SourceFile sourceFile, Random rng) {
-        this(sourceFile.getFilename(), ((SourceFileTree) sourceFile).getRandomStatementID(true, rng));
+        this(sourceFile.getRelativePathToWorkingDir(), ((SourceFileTree) sourceFile).getRandomStatementID(true, rng));
     }
 
     public DeleteStatement(String filename, int statementToDelete) {

@@ -6,13 +6,17 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import gin.edit.Edit;
 import gin.edit.line.LineEdit;
 import gin.misc.FullyQualifiedNames;
-import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * In practice SourceFile can be viewed as immutable. The only way it can be changed
@@ -25,6 +29,8 @@ public abstract class SourceFile implements Serializable {
     private static final long serialVersionUID = 4223075648256895407L;
 
     protected final String filename;
+
+    protected String workingDir = Path.of("").toAbsolutePath().toString();
 
     /**
      * high-level representation of the target methods
@@ -82,14 +88,11 @@ public abstract class SourceFile implements Serializable {
     }
 
     private static Set<TargetMethod> parseTargetMethods(List<String> targetMethodNames) {
-        Set<TargetMethod> methods = new HashSet<>();
-        for (String method : targetMethodNames) {
-            // Remove all spaces
-            method = method.replaceAll("\\s", "");
-            TargetMethod targetMethod = new TargetMethod(method);
-            methods.add(targetMethod);
-        }
-        return methods;
+        return targetMethodNames.stream()
+                // Remove all spaces
+                .map(method -> method.replaceAll("\\s", ""))
+                .map(TargetMethod::new)
+                .collect(Collectors.toSet());
     }
 
 
@@ -153,11 +156,22 @@ public abstract class SourceFile implements Serializable {
      */
     public abstract SourceFile copyOf();
 
-    public String getFilename() {
-        String base = (new File(".")).getAbsolutePath();
-        base = StringUtils.chop(base);
-        String filePath = (new File(this.filename)).getAbsolutePath();
-        return StringUtils.substringAfter(filePath, base);
+    /**
+     * Get the path to the file relative to the working directory.
+     *
+     * @return the file's path relative to the working directory.
+     */
+    public String getRelativePathToWorkingDir() {
+        Path workingDirPath;
+        Path filePath;
+        try {
+            // Call to toRealPath to resolve symbolic links
+            workingDirPath = Path.of(workingDir).normalize().toRealPath().toAbsolutePath();
+            filePath = Path.of(filename).normalize().toRealPath().toAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return workingDirPath.relativize(filePath).toString();
     }
 
     /*============== the following are some helper methods and classes ==============*/

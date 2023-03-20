@@ -4,7 +4,7 @@ import java.io.File;
 
 public class TestConfiguration {
 
-    public static final String EXAMPLE_DIR_NAME = "." + File.separator + "examples" + File.separator + "unittests" + File.separator;
+    public static final String EXAMPLE_DIR_NAME = "examples" + File.separator + "unittests" + File.separator;
 
     // Gradle tests
     public static final String GRADLE_SIMPLE_DIR = "examples" + File.separator + "unittests" + File.separator + "gradle" + File.separator + "gradle-simple" + File.separator;

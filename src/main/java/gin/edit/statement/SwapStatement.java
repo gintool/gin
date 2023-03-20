@@ -27,8 +27,8 @@ public class SwapStatement extends StatementEdit {
 
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
-        sourceFilename = sf.getFilename();
-        destinationFilename = sf.getFilename();
+        sourceFilename = sf.getRelativePathToWorkingDir();
+        destinationFilename = sf.getRelativePathToWorkingDir();
 
         // source and target in target method only
         sourceStatement = sf.getRandomStatementID(true, rng);

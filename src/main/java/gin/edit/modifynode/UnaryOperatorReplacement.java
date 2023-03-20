@@ -53,7 +53,7 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
 
         this.source = ((UnaryExpr) sf.getNode(this.targetNode)).getOperator();
         this.replacement = chooseRandomReplacement(source, rng);
-        this.targetFilename = sourceFile.getFilename();
+        this.targetFilename = sourceFile.getRelativePathToWorkingDir();
     }
 
     public UnaryOperatorReplacement(String sourceFileName, int targetNodeID, Operator sourceOperator, Operator replacementOperator) {

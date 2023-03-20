@@ -177,7 +177,7 @@ public class LocalSearch implements Serializable {
                 100.0f * ((origTime - bestTime) / (1.0f * origTime)),
                 bestPatch));
 
-        bestPatch.writePatchedSourceToFile(sourceFile.getFilename() + ".optimised");
+        bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised");
 
     }
 

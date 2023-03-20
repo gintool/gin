@@ -32,7 +32,7 @@ public class LocalSearchTest {
 
     @Test
     public void localSearch() {
-        assertEquals(new File(FILENAME).getPath(), simpleLocalSearch.sourceFile.getFilename());
+        assertEquals(new File(FILENAME).getPath(), simpleLocalSearch.sourceFile.getRelativePathToWorkingDir());
         assertNotNull(simpleLocalSearch.testRunner);
         assertNotNull(simpleLocalSearch.rng);
     }
@@ -51,7 +51,7 @@ public class LocalSearchTest {
         for (int i = 0; i < 10; i++) {
 
             Patch oneEditPatch = new Patch(sourceFile);
-            DeleteLine delete = new DeleteLine(sourceFile.getFilename(), 15);
+            DeleteLine delete = new DeleteLine(sourceFile.getRelativePathToWorkingDir(), 15);
             oneEditPatch.add(delete);
 
             Patch anotherNeighbour = simpleLocalSearch.neighbour(oneEditPatch);

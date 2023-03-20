@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 /**
  * Profiler for mvn/gradle projects to find the "hot" methods of a test suite
- * using hprof, and to optionally select test cases using a Regression Test
+ * using jfr, and to optionally select test cases using a Regression Test
  * Selection (RTS) technique.
  * <p>
  * Run directly from the commandline.
@@ -38,9 +38,7 @@ public class RTSProfiler implements Serializable {
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String PROF_DIR = "profiler_out";
-    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
+    private static final String JFR_ARGS = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Instance Members
     private final File profDir;
     // Commandline arguments
@@ -54,7 +52,7 @@ public class RTSProfiler implements Serializable {
     protected File timingOutputFile = new File("profile_timing.csv");
     @Argument(alias = "h", description = "Path to maven bin directory e.g. /usr/local/")
     protected File mavenHome;  // default on OS X
-    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
+    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse jfr traces.")
     protected Boolean excludeProfiler = false;
     @Argument(alias = "t", description = "Run given maven task rather than test")
     protected String mavenTaskName = "test";
@@ -71,12 +69,8 @@ public class RTSProfiler implements Serializable {
             + "Available: 'none', 'ekstazi', 'random'. "
             + "Default: 'ekstazi'.")
     protected String rts = "ekstazi";
-    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
-    protected Long hprofInterval = 10L;
     @Argument(alias = "pn", description = "Java profiler file name. If running in parallel, use a different name for each job.")
     protected String profFileName = "java.prof.jfr";
-    @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
-    protected String profilerChoice = "jfr";
     protected Project project;
 
     public RTSProfiler(String[] args) {
@@ -98,9 +92,6 @@ public class RTSProfiler implements Serializable {
 
         // Adds the interval provided by the user
         this.profDir = new File(projectDir, PROF_DIR);
-        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
-            HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
-        }
         valiateArguments();
     }
 
@@ -114,7 +105,6 @@ public class RTSProfiler implements Serializable {
 
     private void valiateArguments() {
         if (this.project.isGradleProject()
-                && this.profilerChoice.trim().equalsIgnoreCase("JFR")
                 && SystemUtils.IS_OS_WINDOWS) {
             throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
@@ -141,11 +131,7 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            String profilerArgumentLine = switch (this.profilerChoice.toUpperCase()) {
-                case "HPROF" -> HPROF_ARG;
-                default -> JavaUtils.getJavaVersion() < 11 ? JFR_ARG_BEFORE_11 : JFR_ARG_11_AFTER;
-            };
-            argLine.append(profilerArgumentLine).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
+            argLine.append(JFR_ARGS).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
 
             // Inject the RTS agent (if any)
             String rtsArg = rtsStrategy.getArgumentLine();
@@ -199,11 +185,7 @@ public class RTSProfiler implements Serializable {
         List<HotMethod> hotMethods = new ArrayList<>();
         Map<String, Integer> methodCounts;
         if (profFile != null && profFile.exists()) {
-            if (this.profilerChoice.equalsIgnoreCase("hprof")) {
-                methodCounts = Trace.fromHPROFFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-            } else {
-                methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
-            }
+            methodCounts = Trace.fromJFRFile(this.project, new UnitTest("", ""), profFile).methodCounts;
 
             hotMethods = methodCounts.entrySet()
                     .stream()

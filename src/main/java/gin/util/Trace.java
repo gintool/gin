@@ -51,34 +51,6 @@ public class Trace implements Serializable {
 
     }
 
-    // Parse a trace from a file
-    public static Trace fromHPROFFile(Project project, UnitTest test, File hprofFile) {
-
-        String traceText = "";
-
-        try {
-            traceText = FileUtils.readFileToString(hprofFile, "UTF-8");
-        } catch (IOException e) {
-            Logger.error("Error reading trace file: " + hprofFile);
-            Logger.error("One possible cause of this error is if build files are setting the argLine parameter");
-            Logger.error("grep through files for \"argLine\" to check.");
-            Logger.trace(e);
-            System.exit(-1);
-        }
-
-        // Details of tracepoint - method and line number, indexed by trace point number.
-        Map<Integer, TracePoint> tracePoints = parseTracePoints(traceText);
-
-        // Samples from the table at the end of the file. Use the tracePoints map to add line number.
-        Map<String, Integer> methodCounts = parseHPROFMethodCounts(traceText, tracePoints);
-
-        // Finally: clean up methodCounts, to exclude methods not in the project etc.
-        Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
-
-        return new Trace(test, cleanedCounts);
-
-    }
-
     public static Trace fromJFRFile(Project project, UnitTest test, File JFRFile) throws IOException {
 
         // Samples from the table at the end of the file. Use the tracePoints map to add line number.
@@ -88,98 +60,6 @@ public class Trace implements Serializable {
         Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
 
         return new Trace(test, cleanedCounts);
-
-    }
-
-    // Parse hprof file and extract the index that gives number, method, and and line number for a trace point.
-    private static Map<Integer, TracePoint> parseTracePoints(String hprof) {
-
-        Map<Integer, TracePoint> tracePoints = new HashMap<>();
-
-        // Here's an example of what we're parsing:
-        // TRACE 300938:
-        // \tsun.font.CFont.createNativeFont(CFont.java:Unknown line)
-        // We're extracting: the trace number, the name of the method, the line number ('Unknown line' special case).
-
-        String regex = "^TRACE (\\d+):(?:\\r\\n|\\r|\\n)^\\t(.*)\\(.*:(.*)\\)$";
-        Pattern p = Pattern.compile(regex, Pattern.MULTILINE);
-        Matcher m = p.matcher(hprof);
-
-        while (m.find()) {
-
-            int tracePointNumber = Integer.parseInt(m.group(1));
-
-            String methodName = m.group(2);
-
-            String lineNumberString = m.group(3);
-
-            int lineNumber = -1;
-            if (!lineNumberString.equals("Unknown line")) {
-                lineNumber = Integer.parseInt(lineNumberString);
-            }
-
-            TracePoint tp = new TracePoint(methodName, lineNumber);
-            tracePoints.put(tracePointNumber, tp);
-
-        }
-
-        return tracePoints;
-
-    }
-
-    /**
-     * Parse the table containing samples, i.e. method names and the number of times seen on the stack.
-     * <p>
-     * Example of what we're parsing:
-     * CPU SAMPLES BEGIN (total = 1324) Sat Sep 29 12:02:19 2018
-     * rank   self  accum   count trace method
-     * 1  5.36%  5.36%      71 300898 sun.font.CFontManager.loadNativeFonts
-     * 2  5.29% 10.65%      70 300465 org.jcodec.codecs.h264.decode.deblock.DeblockingFilter.filterBlockEdgeVert
-     * CPU SAMPLES END
-     */
-    private static Map<String, Integer> parseHPROFMethodCounts(String hprof, Map<Integer, TracePoint> tracePoints) {
-
-        Map<String, Integer> samples = new HashMap<>();
-
-        // Extract table, stripping header and footer
-
-        String header = "rank   self  accum   count trace method$";
-        String footer = "CPU SAMPLES END";
-        String tableRegex = header + "(.*?)" + footer;
-
-        Pattern p = Pattern.compile(tableRegex, Pattern.MULTILINE | Pattern.DOTALL);
-        Matcher m = p.matcher(hprof);
-
-        if (m.find()) {
-            String table = m.group(1);
-
-            // Iterate over rows, separate by whitespace, get name and count
-
-            BufferedReader bufReader = new BufferedReader(new StringReader(table));
-            String row;
-            try {
-                while ((row = bufReader.readLine()) != null) {
-                    if (!row.equals("")) {
-                        String[] fields = row.trim().split("\\s+");
-                        String methodName = fields[5];
-                        int count = Integer.parseInt(fields[3]);
-                        int tracePointNumber = Integer.parseInt(fields[4]);
-                        int lineNumber = tracePoints.get(tracePointNumber).lineNumber;
-                        String fullMethodName = methodName;
-                        if (lineNumber != -1) {
-                            fullMethodName += ":" + lineNumber;
-                        }
-                        samples.put(fullMethodName, count);
-                    }
-                }
-            } catch (IOException e) {
-                Logger.error("Error reading enumerate table from hprof file.");
-                Logger.trace(e);
-                System.exit(-1);
-            }
-        }
-
-        return samples;
 
     }
 
@@ -286,7 +166,7 @@ public class Trace implements Serializable {
 
                 } else if (!hasLineNumber) {
 
-                    Logger.info("Excluding method because hprof gave no line number: " + method);
+                    Logger.info("Excluding method because jfr gave no line number: " + method);
 
                 } else if (method.contains(project.getProjectName())) {
 

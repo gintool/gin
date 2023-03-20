@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof or jfr.
+ * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using jfr.
  * <p>
  * Run directly from the commandline.
  * <p>
@@ -27,12 +27,10 @@ public class Profiler implements Serializable {
     @Serial
     private static final long serialVersionUID = 766201566071524493L;
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String WORKING_DIR = "profiler_out";
-    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
-    private static String HPROF_ARG = "-agentlib:hprof=cpu=samples,lineno=y,depth=1,interval=$hprofInterval,file=";
+    private static final String JFR_OUTPUT_DIR = "profiler_out";
+    private static final String JFR_ARGS = "-XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename=";
     // Instance Members
-    private final File workingDir;
+    private final File jfrOutputDir;
     private final Project project;
     // Commandline arguments
     @Argument(alias = "p", description = "Project name, required", required = true)
@@ -47,7 +45,7 @@ public class Profiler implements Serializable {
     protected File mavenHome = null;
     @Argument(alias = "v", description = "Set Gradle version")
     protected String gradleVersion;
-    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse hprof traces.")
+    @Argument(alias = "x", description = "Exclude invocation of profiler, just parse jfr traces.")
     protected Boolean excludeProfiler = false;
     @Argument(alias = "s", description = "Skip initial run of all tests, just parse reports. For debugging.")
     protected Boolean skipInitialRun = false;
@@ -58,16 +56,13 @@ public class Profiler implements Serializable {
     protected String mavenTaskName = "test";
     @Argument(alias = "m", description = "Maven mavenProfile to use, e.g. light-test")
     protected String mavenProfile = "";
-    @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
-    protected Long hprofInterval = 10L;
-    @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
-    protected String profilerChoice = "jfr";
+
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
-        this.workingDir = new File(projectDir, WORKING_DIR);
+        this.jfrOutputDir = new File(projectDir, JFR_OUTPUT_DIR);
 
         project = new Project(projectDir, projectName);
         if (this.gradleVersion != null) {
@@ -85,10 +80,6 @@ public class Profiler implements Serializable {
             }
         }
         project.setUp();
-        // Adds the interval provided by the user
-        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
-            HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
-        }
 
         valiateArguments();
     }
@@ -99,7 +90,7 @@ public class Profiler implements Serializable {
     }
 
     private void valiateArguments() {
-        if (this.project.isGradleProject() && this.profilerChoice.trim().equalsIgnoreCase("JFR") && SystemUtils.IS_OS_WINDOWS) {
+        if (this.project.isGradleProject() && SystemUtils.IS_OS_WINDOWS) {
             throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
     }
@@ -166,8 +157,7 @@ public class Profiler implements Serializable {
     }
 
 
-    // Run entire test suite, one test at a time, with hprof enabled
-
+    // Run entire test suite, one test at a time, with jfr enabled
     protected Map<UnitTest, ProfileResult> profileTestSuite(Set<UnitTest> tests) {
 
         Map<UnitTest, ProfileResult> results = new HashMap<>();
@@ -193,17 +183,7 @@ public class Profiler implements Serializable {
 
             for (int rep = 1; rep <= this.reps; rep++) {
 
-                String args;
-
-                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
-                    args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
-                } else {
-                    if (JavaUtils.getJavaVersion() < 11) {
-                        args = JFR_ARG_BEFORE_11 + jfrFile(test, rep).getAbsolutePath();
-                    } else {
-                        args = JFR_ARG_11_AFTER + jfrFile(test, rep).getAbsolutePath();
-                    }
-                }
+                String args = JFR_ARGS + jfrFile(test, rep).getAbsolutePath();
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d", test, testCount, tests.size(), rep, this.reps);
 
@@ -252,20 +232,12 @@ public class Profiler implements Serializable {
                 File traceFile;
                 Trace trace;
 
-                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
-                    traceFile = hprofFile(test, rep);
-                    trace = Trace.fromHPROFFile(this.project, test, traceFile);
+                traceFile = jfrFile(test, rep);
+                try {
+                    trace = Trace.fromJFRFile(this.project, test, traceFile);
                     testTraces.add(trace);
-                } else {
-                    traceFile = jfrFile(test, rep);
-                    try {
-                        trace = Trace.fromJFRFile(this.project, test, traceFile);
-                        testTraces.add(trace);
-                    } catch (IOException e) {
-                        Logger.warn("Failed to read JFR file due to IOException: " + e);
-                    }
-
-
+                } catch (IOException e) {
+                    Logger.warn("Failed to read JFR file due to IOException: " + e);
                 }
 
                 //delete individual profiling files
@@ -378,24 +350,14 @@ public class Profiler implements Serializable {
         String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".jfr";
         String filenameNoBrackets = filename.replace("()", "");
-        return new File(workingDir, filenameNoBrackets);
+        return new File(jfrOutputDir, filenameNoBrackets);
 
-    }
-
-    private File hprofFile(UnitTest test, int rep) {
-        String testName = test.getTestName();
-        String cleanTest = testName.replace(" ", "_");
-        String filename = cleanTest + "_" + rep + ".hprof";
-        String filenameNoBrackets = filename.replace("()", "");
-        return new File(workingDir, filenameNoBrackets);
     }
 
     private void ensureWorkingDirectory() {
-
-        if (!workingDir.exists()) {
-            workingDir.mkdirs();
+        if (!jfrOutputDir.exists()) {
+            jfrOutputDir.mkdirs();
         }
-
     }
 
     static class ProfileResult {

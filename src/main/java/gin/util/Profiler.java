@@ -7,11 +7,15 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -237,6 +241,7 @@ public class Profiler implements Serializable {
 
         List<Trace> allTraces = new LinkedList<>();
 
+        outer:
         for (UnitTest test : tests) {
 
             List<Trace> testTraces = new LinkedList<>();
@@ -263,6 +268,7 @@ public class Profiler implements Serializable {
                         testTraces.add(trace);
                     } catch (IOException e) {
                         Logger.warn("Failed to read JFR file due to IOException: " + e);
+                        continue outer;
                     }
 
 
@@ -373,18 +379,15 @@ public class Profiler implements Serializable {
     }
 
     private File jfrFile(UnitTest test, int rep) {
-
         String testName = test.getTestName();
-        String cleanTest = testName.replace(" ", "_");
+        String cleanTest = testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String filename = cleanTest + "_" + rep + ".jfr";
-        String filenameNoBrackets = filename.replace("()", "");
-        return new File(workingDir, filenameNoBrackets);
-
+        return new File(workingDir, filename);
     }
 
     private File hprofFile(UnitTest test, int rep) {
         String testName = test.getTestName();
-        String cleanTest = testName.replace(" ", "_");
+        String cleanTest = testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
         return new File(workingDir, filenameNoBrackets);

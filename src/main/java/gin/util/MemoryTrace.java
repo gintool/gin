@@ -1,6 +1,12 @@
 package gin.util;
 
 import gin.test.UnitTest;
+import jdk.jfr.consumer.RecordedEvent;
+import jdk.jfr.consumer.RecordedFrame;
+import jdk.jfr.consumer.RecordedMethod;
+import jdk.jfr.consumer.RecordedStackTrace;
+import jdk.jfr.consumer.RecordingFile;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.pmw.tinylog.Logger;
@@ -9,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +59,7 @@ public class MemoryTrace {
     }
 
     // Parse a trace from a file
-    public static MemoryTrace fromFile(Project project, UnitTest test, File hprofFile) {
+    public static MemoryTrace fromHPROFFile(Project project, UnitTest test, File hprofFile) {
 
         String traceText = "";
 
@@ -70,7 +77,19 @@ public class MemoryTrace {
         Map<Integer, MemoryTracePoint> tracePoints = parseMemoryTracePoints(traceText);
 
         // Samples from the table at the end of the file. Use the tracePoints map to add line number.
-        Map<String, Integer> methodCounts = parseMethodCounts(traceText, tracePoints);
+        Map<String, Integer> methodCounts = parseHPROFMethodCounts(traceText, tracePoints);
+
+        // Finally: clean up methodCounts, to exclude methods not in the project etc.
+        Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
+
+        return new MemoryTrace(test, cleanedCounts);
+
+    }
+    
+    public static MemoryTrace fromJFRFile(Project project, UnitTest test, File JFRFile) throws IOException {
+
+        // Samples from the table at the end of the file. Use the tracePoints map to add line number.
+        Map<String, Integer> methodCounts = parseJFRMethodCounts(JFRFile, project);
 
         // Finally: clean up methodCounts, to exclude methods not in the project etc.
         Map<String, Integer> cleanedCounts = cleanMethodCounts(project, methodCounts);
@@ -141,7 +160,7 @@ public class MemoryTrace {
      * 2  5.29% 10.65%      70 300465 org.jcodec.codecs.h264.decode.deblock.DeblockingFilter.filterBlockEdgeVert
      * CPU SAMPLES END
      */
-    private static Map<String, Integer> parseMethodCounts(String hprof, Map<Integer, MemoryTracePoint> tracePoints) {
+    private static Map<String, Integer> parseHPROFMethodCounts(String hprof, Map<Integer, MemoryTracePoint> tracePoints) {
 
         Map<String, Integer> samples = new HashMap<>();
 
@@ -186,6 +205,58 @@ public class MemoryTrace {
         }
 
         return samples;
+
+    }
+    
+    private static Map<String, Integer> parseJFRMethodCounts(File jfrF, Project project) throws IOException {
+
+        Map<String, Integer> samples = new HashMap<>();
+
+        //use main classes to find methods in the main program
+        Set<String> mainClasses = project.allMainClasses();
+
+        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
+
+            //read all events from the JFR profiling file
+            while (jfr.hasMoreEvents()) {
+                RecordedEvent event = jfr.readEvent();
+                String check = event.getEventType().getName();
+
+                //there are two kinds of events we could be looking for
+                // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
+                // the latter is for temp objects, but importantly comes with
+                // stack trace info which we can use to identify location
+                // ObjectCount doesn't seem to have this (it would also need
+                // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
+                if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
+                    RecordedStackTrace s = event.getStackTrace();
+
+                    if (s != null) {
+
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
+                        for (int i = 0; i < s.getFrames().size(); i++) {
+
+                            RecordedFrame topFrame = s.getFrames().get(i);
+                            RecordedMethod method = topFrame.getMethod();
+
+                            String methodName = method.getType().getName();
+                            String className = StringUtils.substringBeforeLast(methodName, ".");
+
+                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                samples.merge(methodName, 1, Integer::sum);
+                                break;
+                            }
+                        }
+
+
+                    }
+                }
+            }
+            return samples;
+
+        }
 
     }
 

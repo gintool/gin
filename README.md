@@ -73,6 +73,13 @@ If you have multiple JREs on your system, you may need to call something
 like `export JAVA_HOME="/usr/lib/jvm/java-17-oracle/jre"` as well as `update-alternatives` (Linux) to ensure that Gradle
 uses Java 17.
 
+### Important to note
+
+There are a couple of known issues that should be noted:
+
+* Gin often has issues when running on one of its dependencies <https://github.com/gintool/gin/issues/55>
+* Gin's profiler will not work with Windows and Java Flight Recorder on Gradle projects
+
 ### Installing and Building gin
 
 These instructions were tested on OS X and Ubuntu 22.04 LTS.

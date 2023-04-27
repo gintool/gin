@@ -29,7 +29,7 @@ the [insert](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/i
 Brownlee, Justyna Petke, Anna F. Rasburn, CEC 2020.
 
 Please cite the following paper, if using Regression Test Selection (RTS) strategies:
-"Enhancing Genetic Improvement of Software with Regression Test Selection", Giovani Guizzo, Justyna Petke, Federica
+["Enhancing Genetic Improvement of Software with Regression Test Selection"](https://doi.org/10.1109/ICSE43902.2021.00120), Giovani Guizzo, Justyna Petke, Federica
 Sarro, Mark Harman, ICSE 2021.
 
 ## The Gin Design Philosophy
@@ -70,8 +70,15 @@ Gradle can be downloaded from their website:<https://gradle.org/install>
 The library dependencies can be found in the build.gradle file.
 
 If you have multiple JREs on your system, you may need to call something
-like `export JAVA_HOME="/usr/lib/jvm/java-17-oracle/jre"` as well as `switch-alternatives` to ensure that Gradle
+like `export JAVA_HOME="/usr/lib/jvm/java-17-oracle/jre"` as well as `update-alternatives` (Linux) to ensure that Gradle
 uses Java 17.
+
+### Important to note
+
+There are a couple of known issues that should be noted:
+
+* Gin often has issues when running on one of its dependencies <https://github.com/gintool/gin/issues/55>
+* Gin's profiler will not work with Windows and Java Flight Recorder on Gradle projects
 
 ### Installing and Building gin
 
@@ -173,7 +180,7 @@ Gin on a newer version.
 Gin also provides a Profiler that identifies those parts of the software most exercised by the project's unit tests.
 
 Before you run the below, please make sure you have Maven installed. The default Maven home path is set to '
-/usr/local/' (with binary in '/usr/local/bin/mvn'). Please change the path with -mavenHome parameter, if need be.
+/usr/local/' (with binary in '/usr/local/bin/mvn'). Please change the path with -mavenHome or -h parameter, if need be.
 
 ```
 java -cp build/gin.jar gin.util.Profiler -p my-app -d examples/maven-simple/ -h <path_to_mavenHome>

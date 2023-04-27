@@ -1,0 +1,4 @@
+"Project","MethodIndex","Method","Count","Tests"
+"gradle-simple","1","com.mycompany.app.App.make1000KIntArrays()","703","com.mycompany.app.AppTest.test1000KIntArray []"
+"gradle-simple","2","com.mycompany.app.App.make100KIntArrays()","62","com.mycompany.app.AppTest.test100KIntArray []"
+"gradle-simple","3","com.mycompany.app.App.make10KIntArrays()","8","com.mycompany.app.AppTest.test10KIntArray []"

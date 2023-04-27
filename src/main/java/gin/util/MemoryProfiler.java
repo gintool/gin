@@ -6,11 +6,14 @@ import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
+
+import org.apache.commons.lang3.SystemUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,9 @@ public class MemoryProfiler {
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "hprof";
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
+    private static String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename="; // Could replace ObjectAllocationInNewTLAB with ObjectCount (former is for tmp objects and includes stacktrace)
+    
+    
     // Instance Members
     private final File workingDir;
     private final Project project;
@@ -56,9 +62,20 @@ public class MemoryProfiler {
     protected String mavenProfile = "";
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 1L;
+    @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
+    protected String profilerChoice = "jfr";
+    @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
+    protected String saveChoice = "d";
 
     public MemoryProfiler(String[] args) {
         Args.parseOrExit(this, args);
+        
+        int javaVersion = JavaUtils.getJavaVersion();
+        if (javaVersion > 9 && javaVersion < 17) {
+        	Logger.error("Currently mem profiling only works with Java <=8 or >=17");
+        	Logger.error("Current version is " + javaVersion);
+        	System.exit(1);
+        }
 
         this.workingDir = new File(projectDir, WORKING_DIR);
 
@@ -70,14 +87,27 @@ public class MemoryProfiler {
             project.setMavenHome(this.mavenHome);
         }
         project.setUp();
-        // Adds the interval provided by the user
-        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        
+        if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
+	        // Adds the interval provided by the user
+	        HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
+        }
+        
+        valiateArguments();
     }
 
     public static void main(String[] args) {
         MemoryProfiler profiler = new MemoryProfiler(args);
         profiler.profile();
     }
+    
+    
+    private void valiateArguments() {
+        if (this.project.isGradleProject() && this.profilerChoice.trim().equalsIgnoreCase("JFR") && SystemUtils.IS_OS_WINDOWS) {
+            throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
+        }
+    }
+    
 
     // Main Profile Method
 
@@ -169,8 +199,14 @@ public class MemoryProfiler {
 
             for (int rep = 1; rep <= this.reps; rep++) {
 
-                String args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
+                String args;
 
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
+                    args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
+                } else {
+                    args = JFR_ARG + jfrFile(test, rep).getAbsolutePath();
+                }
+                
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
                         test, testCount, tests.size(), rep, this.reps);
 
@@ -204,6 +240,7 @@ public class MemoryProfiler {
 
         List<MemoryTrace> allMemoryTraces = new LinkedList<>();
 
+        outer:
         for (UnitTest test : tests) {
 
             List<MemoryTrace> testMemoryTraces = new LinkedList<>();
@@ -216,10 +253,34 @@ public class MemoryProfiler {
 
                 Logger.info("Parsing trace for test: " + test);
 
-                File traceFile = hprofFile(test, rep);
-                MemoryTrace trace = MemoryTrace.fromFile(this.project, test, traceFile);
-                testMemoryTraces.add(trace);
+                File traceFile;
+                MemoryTrace trace;
 
+                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
+                    traceFile = hprofFile(test, rep);
+                    trace = MemoryTrace.fromHPROFFile(this.project, test, traceFile);
+                    testMemoryTraces.add(trace);
+                } else {
+                    traceFile = jfrFile(test, rep);
+                    try {
+                        trace = MemoryTrace.fromJFRFile(this.project, test, traceFile);
+                        testMemoryTraces.add(trace);
+                    } catch (IOException e) {
+                        Logger.warn("Failed to read JFR file due to IOException: " + e);
+                        continue outer;
+                    }
+                }
+                
+                
+                //delete individual profiling files
+                if (saveChoice.equals("d")) {
+                    try {
+                        Files.deleteIfExists(traceFile.toPath());
+                    } catch (IOException e) {
+                        Logger.warn("Failed to delete profiling file with IOException: " + e);
+                    }
+                }
+                
             }
 
             MemoryTrace combinedMemoryTrace = MemoryTrace.mergeMemoryTraces(testMemoryTraces);
@@ -318,6 +379,13 @@ public class MemoryProfiler {
             System.exit(-1);
         }
 
+    }
+    
+    private File jfrFile(UnitTest test, int rep) {
+        String testName = test.getTestName();
+        String cleanTest = testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String filename = cleanTest + "_" + rep + ".jfr";
+        return new File(workingDir, filename);
     }
 
     private File hprofFile(UnitTest test, int rep) {

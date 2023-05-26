@@ -300,7 +300,8 @@ java -cp build/gin.jar gin.util.EmptyPatchTester -d examples/triangle/ -c exampl
 
 ## Full Example with a Maven Project
 
-We will now try cloning, profiling, and sampling for a project taken from GitHub: spatial4j.
+We will now try cloning, profiling, and sampling for a project taken from GitHub: spatial4j. 
+This example is intended to run with Java 8, so please use Gin version 2.1.
 
 First, move into the examples directory for working, and clone the project.
 

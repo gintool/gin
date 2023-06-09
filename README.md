@@ -79,7 +79,6 @@ There are a few known issues that should be noted:
 
 * Gin often has issues when running on one of its dependencies <https://github.com/gintool/gin/issues/55>
 * Gin's profiler will not work with Windows and Java Flight Recorder on Gradle projects <https://github.com/gintool/gin/issues/94>
-* If you get an error like "ERROR: TestExecutionException from gradle test launcher" when running a gradle project; this appears to be a problem with Gin having permission to download the right gradle wrapper to run the project and running as a super user seems to fix the trouble.
 
 ### Installing and Building gin
 

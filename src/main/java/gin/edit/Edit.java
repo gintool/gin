@@ -48,15 +48,13 @@ public abstract class Edit implements Serializable {
      * @return edit classes for a given edit type; for line/statement/matched these are delete/copy/replace/swap (move is excluded)
      */
     public static List<Class<? extends Edit>> getEditClassesOfType(EditType editType) {
-        return switch (editType) {
-            case LINE -> Arrays.asList(DeleteLine.class, CopyLine.class, ReplaceLine.class, SwapLine.class);
-            case STATEMENT ->
-                    Arrays.asList(DeleteStatement.class, CopyStatement.class, ReplaceStatement.class, SwapStatement.class);
-            case MATCHED_STATEMENT ->
-                    Arrays.asList(MatchedDeleteStatement.class, MatchedCopyStatement.class, MatchedReplaceStatement.class, MatchedSwapStatement.class);
-            case MODIFY_STATEMENT -> Arrays.asList(BinaryOperatorReplacement.class, UnaryOperatorReplacement.class);
-            default -> Collections.emptyList();
-        };
+        switch (editType) {
+            case LINE: return Arrays.asList(DeleteLine.class, CopyLine.class, ReplaceLine.class, SwapLine.class);
+            case STATEMENT: return Arrays.asList(DeleteStatement.class, CopyStatement.class, ReplaceStatement.class, SwapStatement.class);
+            case MATCHED_STATEMENT: return Arrays.asList(MatchedDeleteStatement.class, MatchedCopyStatement.class, MatchedReplaceStatement.class, MatchedSwapStatement.class);
+            case MODIFY_STATEMENT: return Arrays.asList(BinaryOperatorReplacement.class, UnaryOperatorReplacement.class);
+            default: return Collections.emptyList();
+        }
     }
 
     public static List<Class<? extends Edit>> getEditClassesOfTypes(List<EditType> editTypes) {

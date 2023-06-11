@@ -141,9 +141,10 @@ public class RTSProfiler implements Serializable {
             }
             StringBuilder argLine = new StringBuilder();
             // Inject hprof agent
-            String profilerArgumentLine = switch (this.profilerChoice.toUpperCase()) {
-                case "HPROF" -> HPROF_ARG;
-                default -> JavaUtils.getJavaVersion() < 11 ? JFR_ARG_BEFORE_11 : JFR_ARG_11_AFTER;
+            String profilerArgumentLine;
+            switch (this.profilerChoice.toUpperCase()) {
+                case "HPROF": profilerArgumentLine = HPROF_ARG; break;
+                default: profilerArgumentLine = JavaUtils.getJavaVersion() < 11 ? JFR_ARG_BEFORE_11 : JFR_ARG_11_AFTER; break;
             };
             argLine.append(profilerArgumentLine).append(FilenameUtils.normalize(profFile.getAbsolutePath()));
 

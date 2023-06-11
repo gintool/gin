@@ -49,11 +49,11 @@ public class RTSFactory implements Serializable {
      * @see #EKSTAZI
      */
     public static RTSStrategy createRTSStrategy(String rtsName, String projectRootDir) {
-        return switch (rtsName) {
-            case EKSTAZI -> new EkstaziRTS(projectRootDir);
-            case RANDOM -> new RandomRTS();
-            default -> new NoneRTS();
-        };
+        switch (rtsName) {
+            case EKSTAZI: return new EkstaziRTS(projectRootDir);
+            case RANDOM: return new RandomRTS();
+            default: return new NoneRTS();
+        }
     }
 
 }

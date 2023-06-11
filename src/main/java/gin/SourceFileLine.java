@@ -344,21 +344,35 @@ public class SourceFileLine extends SourceFile {
      * @param lineNumber original code line number
      * @param offset     this is used to sort inserted lines following the lineNumber they were inserted after
      */
-    private record LineID(boolean isOriginalLine, int lineNumber, int offset) implements Comparable<LineID> {
-
+    /**
+     * used to keep the list of lines in the correct order
+     */
+    private static final class LineID implements Comparable<LineID> {
+        private final boolean isOriginalLine;
+        private final int lineNumber; // original code line number
+        private final int offset; // this is used to sort inserted lines following the lineNumber they were inserted after 
+        
+        public LineID(boolean isOriginalLine, int lineNumber, int offset) {
+            this.isOriginalLine = isOriginalLine;
+            this.lineNumber = lineNumber;
+            this.offset = offset;
+        }
+        
         @Override
         public int compareTo(LineID that) {
             if (isOriginalLine || (this.lineNumber != that.lineNumber)) {
                 return Integer.compare(this.lineNumber, that.lineNumber);
             } else {
-                if (that.isOriginalLine) {
+                if (this.isOriginalLine) {
+                    return -1;
+                } else if (that.isOriginalLine) {
                     return 1;
                 } else {
                     return Integer.compare(this.offset, that.offset);
                 }
             }
         }
-
+        
         @Override
         public String toString() {
             return (this.isOriginalLine ? "O" : "I") + this.lineNumber + (this.isOriginalLine ? "" : "." + this.offset);

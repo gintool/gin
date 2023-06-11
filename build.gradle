@@ -5,8 +5,8 @@ plugins {
     id 'application'
 }
 
-sourceCompatibility = 17
-targetCompatibility = 17
+sourceCompatibility = 9
+targetCompatibility = 9
 
 mainClassName = "gin.LocalSearch"
 

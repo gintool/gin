@@ -3,7 +3,7 @@ package gin.util.regression;
 import gin.test.UnitTest;
 import gin.util.HotMethod;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public abstract class RTSStrategy implements Serializable {
 
-    @Serial
+    
     private static final long serialVersionUID = 7815012376032989736L;
 
     /**

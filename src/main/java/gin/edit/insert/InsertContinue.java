@@ -5,7 +5,7 @@ import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.List;
 import java.util.Random;
 
@@ -18,7 +18,7 @@ import java.util.Random;
  */
 public class InsertContinue extends InsertStatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -8933938677846749147L;
     public String destinationFilename;
     public int destinationBlock;

@@ -5,12 +5,12 @@ import gin.SourceFileTree;
 import gin.edit.Edit;
 import gin.misc.BlockedByJavaParserException;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 public class DeleteStatement extends StatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -8946372835353498185L;
     private final String sourceFilename;
     private final int statementToDelete;

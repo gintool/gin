@@ -2,7 +2,7 @@ package gin.test;
 
 import gin.Patch;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class UnitTestResultSet implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = 672861195212496772L;
 
     private final List<UnitTestResult> results;

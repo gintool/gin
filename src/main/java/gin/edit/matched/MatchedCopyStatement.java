@@ -4,7 +4,7 @@ import gin.SourceFile;
 import gin.edit.Edit;
 import gin.edit.statement.CopyStatement;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 /**
@@ -13,7 +13,7 @@ import java.util.Random;
  */
 public class MatchedCopyStatement extends CopyStatement {
 
-    @Serial
+   
     private static final long serialVersionUID = -8219981780665785484L;
 
     /**

@@ -4,7 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public class CacheClassLoader extends URLClassLoader implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = -9181563170107783961L;
 
     private static final String BRIDGE_CLASS_NAME = gin.test.JUnitBridge.class.getName();

@@ -17,7 +17,7 @@ import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.util.*;
 
 /**
@@ -38,7 +38,7 @@ public class SourceFileTree extends SourceFile {
      * all nodes from the original source have ID greater or equal to 0
      */
     public static final int NODE_NULL_ID = -1;
-    @Serial
+   
     private static final long serialVersionUID = -7236253343894593247L;
     /**
      * The compilation unit is only ever made available as a copy,

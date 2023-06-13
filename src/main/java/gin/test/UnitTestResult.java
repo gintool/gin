@@ -3,7 +3,7 @@ package gin.test;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.runner.notification.Failure;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Objects;
@@ -13,7 +13,7 @@ import java.util.Objects;
  */
 public class UnitTestResult implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = -1929539166632146849L;
     private final UnitTest test;
     private final int repNumber;

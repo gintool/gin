@@ -5,7 +5,7 @@ import gin.util.regression.RTSStrategy;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.RandomGeneratorFactory;
 
-import java.io.Serial;
+
 import java.util.*;
 
 /**
@@ -15,7 +15,6 @@ import java.util.*;
  */
 public class RandomRTS extends RTSStrategy {
 
-    @Serial
     private static final long serialVersionUID = -1347083983560579003L;
 
     /**

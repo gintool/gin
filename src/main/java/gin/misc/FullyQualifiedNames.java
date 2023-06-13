@@ -10,7 +10,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import org.pmw.tinylog.Logger;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,7 +37,7 @@ public class FullyQualifiedNames implements Serializable {
      * see note in getFQName() about this regex
      */
     final static Pattern methodSignaturePattern = Pattern.compile("[^\\s>]+\\(.*?\\)");
-    @Serial
+   
     private static final long serialVersionUID = 8560370140644331137L;
 
     // general approach was suggested here:

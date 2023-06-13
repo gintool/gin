@@ -13,7 +13,7 @@ import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,7 +26,6 @@ import java.util.List;
  */
 public class PatchAnalyser implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = -3749197264292832819L;
 
     private static final int REPS = 10;

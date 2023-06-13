@@ -4,7 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.io.Serializable;
 
 /**
@@ -14,7 +14,6 @@ import java.io.Serializable;
  */
 public class MavenUtils implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 6646703137441264344L;
 
     /**

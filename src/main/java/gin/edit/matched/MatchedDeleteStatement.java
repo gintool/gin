@@ -4,7 +4,7 @@ import gin.SourceFile;
 import gin.edit.Edit;
 import gin.edit.statement.DeleteStatement;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 /*
@@ -13,7 +13,7 @@ import java.util.Random;
  */
 public class MatchedDeleteStatement extends DeleteStatement {
 
-    @Serial
+   
     private static final long serialVersionUID = 6177385671420449098L;
 
     /**

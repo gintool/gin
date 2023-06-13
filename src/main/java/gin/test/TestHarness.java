@@ -23,7 +23,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMetho
 public class TestHarness implements Serializable {
 
     public static final String PORT_PREFIX = "PORT";
-    @Serial
+   
     private static final long serialVersionUID = -6547478455821943382L;
     private ServerSocket serverSocket;
     private Socket clientSocket;

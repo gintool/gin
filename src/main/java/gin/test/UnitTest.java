@@ -3,7 +3,7 @@ package gin.test;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.text.ParseException;
 
@@ -12,7 +12,7 @@ import java.text.ParseException;
  */
 public class UnitTest implements Comparable<UnitTest>, Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = -3894012530058369753L;
 
     public static long defaultTimeoutMS = 10000L;

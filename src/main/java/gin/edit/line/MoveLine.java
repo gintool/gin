@@ -4,13 +4,13 @@ import gin.SourceFile;
 import gin.SourceFileLine;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.List;
 import java.util.Random;
 
 public class MoveLine extends LineEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = 3879542500715518150L;
     public String sourceFile;
     public int sourceLine;

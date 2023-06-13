@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 public class Profiler implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = 766201566071524493L;
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "profiler_out";
@@ -155,7 +155,9 @@ public class Profiler implements Serializable {
         Logger.info("Profiling report summary");
         Logger.info("Total number of tests run: " + results.size());
 
-        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).toList();
+        //List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).toList();
+        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
+                .collect(Collectors.toList());
 
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
@@ -210,7 +212,7 @@ public class Profiler implements Serializable {
                 }
 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d", test, testCount, tests.size(), rep, this.reps);
-
+System.out.println("ARGS:" + args);
                 Logger.info(progressMessage);
 
                 ProfileResult profileResult;

@@ -15,7 +15,7 @@ import com.github.javaparser.ast.visitor.Visitable;
 import gin.SourceFileTree;
 import org.apache.commons.collections4.map.HashedMap;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import java.util.Optional;
  */
 public class CloneVisitorCopyIDs extends CloneVisitor implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = -7030362755496561991L;
     private final Map<Integer, Node> nodesToReplace;
 

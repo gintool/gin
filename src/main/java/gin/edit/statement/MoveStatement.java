@@ -6,12 +6,12 @@ import gin.SourceFileTree;
 import gin.edit.Edit;
 import gin.misc.BlockedByJavaParserException;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 public class MoveStatement extends StatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = 7928960721990003574L;
     private final String sourceFilename;
     private final int sourceStatement;

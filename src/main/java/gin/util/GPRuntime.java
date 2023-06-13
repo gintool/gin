@@ -5,7 +5,7 @@ import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.util.List;
 
 
@@ -15,7 +15,6 @@ import java.util.List;
 
 public class GPRuntime extends GPSimple {
 
-    @Serial
     private static final long serialVersionUID = 2553742317029378882L;
 
     public GPRuntime(String[] args) {

@@ -9,7 +9,7 @@ import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +24,6 @@ import java.util.Map;
 
 public class GPFix extends GPSimple {
 
-    @Serial
     private static final long serialVersionUID = 1043876194620277519L;
     // Arguments used in fitness calculation
     private final static double WEIGHT = 2.0;

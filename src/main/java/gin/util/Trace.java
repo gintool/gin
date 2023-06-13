@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
  */
 public class Trace implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = -4519079857156034044L;
     private final UnitTest test;
     Map<String, Integer> methodCounts;

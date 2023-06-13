@@ -7,12 +7,12 @@ import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.*;
 
 public class BinaryOperatorReplacement extends ModifyNodeEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = 3685538795989546595L;
     // the following list is not perfect! needs refinement, if not total replacement with a better way to do this
     private static final Map<Operator, List<Operator>> REPLACEMENTS = new LinkedHashMap<>();

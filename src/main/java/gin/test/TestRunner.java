@@ -8,7 +8,7 @@ import org.junit.runners.model.TestClass;
 import org.pmw.tinylog.Logger;
 
 import java.io.IOException;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 public abstract class TestRunner implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = 1333408488557880918L;
     private final String packageName;
     private final String className;

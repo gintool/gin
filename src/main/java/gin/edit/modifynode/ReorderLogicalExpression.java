@@ -7,7 +7,7 @@ import com.github.javaparser.ast.expr.Expression;
 import gin.SourceFile;
 import gin.SourceFileTree;
 
-import java.io.Serial;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -20,7 +20,7 @@ import java.util.Random;
  */
 public class ReorderLogicalExpression extends ModifyNodeEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = 5174511673772025047L;
     private final int targetNode;
 

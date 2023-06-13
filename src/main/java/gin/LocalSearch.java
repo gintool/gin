@@ -13,7 +13,6 @@ import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,6 @@ import java.util.Random;
  */
 public class LocalSearch implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = -92020344633720482L;
 
     private static final int WARMUP_REPS = 10;

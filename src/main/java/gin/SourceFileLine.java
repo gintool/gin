@@ -1,20 +1,28 @@
 package gin;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import org.pmw.tinylog.Logger;
+
 import com.github.javaparser.Position;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;
-import org.pmw.tinylog.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Serial;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * A SourceFile designed for supporting line-level edits
@@ -25,7 +33,6 @@ import java.util.Map.Entry;
  */
 public class SourceFileLine extends SourceFile {
 
-    @Serial
     private static final long serialVersionUID = -4661893718115291631L;
 
     /**
@@ -332,7 +339,7 @@ public class SourceFileLine extends SourceFile {
         getLineIDsEmpty().forEach(allLineIDs::remove);
         getLineIDsOnlyComments().forEach(allLineIDs::remove);
         // Unmodifiable list return
-        return List.copyOf(allLineIDs);
+        return Collections.unmodifiableList(new ArrayList<>(allLineIDs));
     }
 
 

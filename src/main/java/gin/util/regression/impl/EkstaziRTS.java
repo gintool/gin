@@ -19,7 +19,7 @@ import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.time.Duration;
@@ -40,7 +40,6 @@ import static org.ekstazi.data.DependencyAnalyzer.CLASS_EXT;
  */
 public class EkstaziRTS extends RTSStrategy {
 
-    @Serial
     private static final long serialVersionUID = 2828162141766700048L;
 
     /**

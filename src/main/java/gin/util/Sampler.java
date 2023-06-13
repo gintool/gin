@@ -1,23 +1,40 @@
 package gin.util;
 
-import com.opencsv.CSVReaderHeaderAware;
-import com.opencsv.CSVWriter;
-import com.opencsv.exceptions.CsvValidationException;
-import com.sampullara.cli.Args;
-import com.sampullara.cli.Argument;
-import gin.Patch;
-import gin.SourceFile;
-import gin.test.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.pmw.tinylog.Logger;
 
-import java.io.*;
-import java.lang.reflect.Field;
-import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.util.*;
+import com.opencsv.CSVReaderHeaderAware;
+import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+
+import gin.Patch;
+import gin.SourceFile;
+import gin.test.ExternalTestRunner;
+import gin.test.InternalTestRunner;
+import gin.test.UnitTest;
+import gin.test.UnitTestResult;
+import gin.test.UnitTestResultSet;
 
 /**
  * Handy class for mutating and running tests on mutated code.
@@ -34,7 +51,6 @@ public abstract class Sampler implements Serializable {
 
     /*============== Required  ==============*/
 
-    @Serial
     private static final long serialVersionUID = -567446476194791424L;
     // Arguments used in the method file
     private static final String TEST_SEPARATOR = ",";
@@ -184,7 +200,7 @@ public abstract class Sampler implements Serializable {
                 Logger.error("Failed results follow: ");
                 List<UnitTestResult> failingTests = resultSet.getResults().stream()
                         .filter(res -> !res.getPassed())
-                        .toList();
+                        .collect(Collectors.toList());
                 for (UnitTestResult failedResult : failingTests) {
                     Logger.error(failedResult);
                 }

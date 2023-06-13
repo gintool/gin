@@ -4,13 +4,13 @@ import gin.SourceFile;
 import gin.SourceFileLine;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.List;
 import java.util.Random;
 
 public class DeleteLine extends LineEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -101392700158097478L;
     public String file;
     public int lineToDelete;

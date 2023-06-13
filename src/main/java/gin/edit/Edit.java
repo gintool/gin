@@ -17,7 +17,7 @@ import gin.edit.statement.ReplaceStatement;
 import gin.edit.statement.SwapStatement;
 import org.pmw.tinylog.Logger;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public abstract class Edit implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = 4390559803708644574L;
 
     /**

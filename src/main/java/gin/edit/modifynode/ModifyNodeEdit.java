@@ -4,12 +4,12 @@ import gin.edit.Edit;
 import gin.edit.statement.StatementEdit;
 import org.apache.commons.lang3.NotImplementedException;
 
-import java.io.Serial;
+
 
 
 public abstract class ModifyNodeEdit extends StatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -2535228434612243480L;
 
     public static Edit fromString(String description) {

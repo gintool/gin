@@ -5,7 +5,7 @@ import gin.SourceFileTree;
 import gin.edit.Edit;
 import gin.edit.statement.SwapStatement;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 /*
@@ -13,7 +13,7 @@ import java.util.Random;
  */
 public class MatchedSwapStatement extends SwapStatement {
 
-    @Serial
+   
     private static final long serialVersionUID = -5831284385801518450L;
 
     /**

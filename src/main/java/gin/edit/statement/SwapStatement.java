@@ -5,12 +5,12 @@ import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 public class SwapStatement extends StatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -1356499381121956722L;
     public String sourceFilename;
     public int sourceStatement;

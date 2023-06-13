@@ -4,7 +4,7 @@ import gin.util.regression.impl.EkstaziRTS;
 import gin.util.regression.impl.NoneRTS;
 import gin.util.regression.impl.RandomRTS;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 
 /**
@@ -35,7 +35,7 @@ public class RTSFactory implements Serializable {
      * {@link #createRTSStrategy(java.lang.String, java.lang.String) createRTSStrategy}.
      */
     public static final String NONE = "none";
-    @Serial
+    
     private static final long serialVersionUID = -1494331220800782829L;
 
     /**

@@ -5,7 +5,7 @@ import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
+
 
 /**
  * Runs all tests found in the methodFile for a given project through Gin.
@@ -17,7 +17,6 @@ import java.io.Serial;
  */
 public class EmptyPatchTester extends Sampler {
 
-    @Serial
     private static final long serialVersionUID = 833946988361588298L;
 
     public EmptyPatchTester(String[] args) {

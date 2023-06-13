@@ -7,12 +7,12 @@ import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.*;
 
 public class UnaryOperatorReplacement extends ModifyNodeEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -3582626839165494107L;
     // the following list is not perfect! needs refinement, if not total replacement with a better way to do this
     // also missing removal/insertion of these - e.g. where we have a complement, there isn't a "no-complement" operator,

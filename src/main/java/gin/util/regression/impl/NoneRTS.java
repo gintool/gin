@@ -4,7 +4,7 @@ import gin.test.UnitTest;
 import gin.util.HotMethod;
 import gin.util.regression.RTSStrategy;
 
-import java.io.Serial;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
  */
 public class NoneRTS extends RTSStrategy {
 
-    @Serial
     private static final long serialVersionUID = -8965975698685542627L;
 
     @Override

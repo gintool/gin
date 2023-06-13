@@ -8,7 +8,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.pmw.tinylog.Logger;
 
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
@@ -23,7 +23,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMetho
 public class JUnitBridge implements Serializable {
 
     public static final String BRIDGE_METHOD_NAME = "runTest";
-    @Serial
+   
     private static final long serialVersionUID = -1984013159496571086L;
 
     /**

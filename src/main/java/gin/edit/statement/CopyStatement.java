@@ -5,13 +5,13 @@ import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.List;
 import java.util.Random;
 
 public class CopyStatement extends StatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = 5742471997384065345L;
     public String sourceFilename;
     public int sourceStatement;

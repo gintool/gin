@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
  */
 public class RTSProfiler implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 6763826827126978230L;
     // Constants
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};

@@ -11,7 +11,7 @@ import gin.SourceFileTree;
 import gin.SourceFileTree.VariableTypeAndName;
 import gin.edit.Edit;
 
-import java.io.Serial;
+
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class InsertContinueWithIf extends InsertStatementEdit {
 
-    @Serial
+   
     private static final long serialVersionUID = -4419249667163580559L;
     static Pattern p = Pattern.compile("\\[if \\((.*)\\)\\s+continue;\\]");
     private final Statement toInsert;

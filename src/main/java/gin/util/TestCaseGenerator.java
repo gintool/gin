@@ -28,7 +28,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class TestCaseGenerator implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = -2311248061581562068L;
     // below settings to get deterministic results according to: https://github.com/EvoSuite/evosuite/issues/48
     private static final String p_functional_mocking = "0";

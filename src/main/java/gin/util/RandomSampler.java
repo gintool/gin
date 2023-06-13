@@ -12,7 +12,7 @@ import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -26,7 +26,6 @@ import java.util.Random;
 
 public class RandomSampler extends Sampler {
 
-    @Serial
     private static final long serialVersionUID = 5754760811598365140L;
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")

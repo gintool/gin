@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class ExternalTestRunner extends TestRunner {
 
     public static final String HARNESS_CLASS = "gin.test.TestHarness";
-    @Serial
+   
     private static final long serialVersionUID = 2253018385180472967L;
     /**
      * If true, each test is run in a new JVM.

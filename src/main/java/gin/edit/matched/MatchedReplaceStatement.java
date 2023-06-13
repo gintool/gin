@@ -5,7 +5,7 @@ import gin.SourceFileTree;
 import gin.edit.Edit;
 import gin.edit.statement.ReplaceStatement;
 
-import java.io.Serial;
+
 import java.util.Random;
 
 /*
@@ -13,7 +13,7 @@ import java.util.Random;
  */
 public class MatchedReplaceStatement extends ReplaceStatement {
 
-    @Serial
+   
     private static final long serialVersionUID = -8305735047498343396L;
 
     /**

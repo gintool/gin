@@ -10,7 +10,7 @@ import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -20,7 +20,6 @@ import java.util.*;
  */
 public class Patch implements Serializable, Cloneable {
 
-    @Serial
     private static final long serialVersionUID = 1645891147232089192L;
     protected LinkedList<Edit> edits = new LinkedList<>();
     protected SourceFile sourceFile;

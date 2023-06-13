@@ -156,8 +156,8 @@ public class MemoryProfiler {
         Logger.info("Total number of tests run: " + results.size());
 
         List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
-                .toList();
-
+        		.collect(Collectors.toList());
+        
         if (!failures.isEmpty()) {
             Logger.warn("Failed to run some tests!");
             Logger.warn(failures.size() + " tests were not executed");

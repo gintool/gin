@@ -10,7 +10,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class Compiler implements Serializable {
 
-    @Serial
+   
     private static final long serialVersionUID = -5411786808143665676L;
 
     /**

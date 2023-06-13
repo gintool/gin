@@ -5,7 +5,7 @@ import org.mdkt.compiler.CompiledCode;
 import org.pmw.tinylog.Logger;
 
 import java.io.IOException;
-import java.io.Serial;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
@@ -17,7 +17,7 @@ import java.util.List;
 public class InternalTestRunner extends TestRunner {
 
     public static final String ISOLATED_TEST_RUNNER_METHOD_NAME = "runTests";
-    @Serial
+   
     private static final long serialVersionUID = -2348071089493178903L;
     /**
      * If set to true, the tests will stop at the first failure and the next

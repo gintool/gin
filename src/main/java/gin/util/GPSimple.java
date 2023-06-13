@@ -7,7 +7,7 @@ import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
-import java.io.Serial;
+
 import java.util.*;
 
 
@@ -21,7 +21,6 @@ import java.util.*;
 
 public abstract class GPSimple extends GP {
 
-    @Serial
     private static final long serialVersionUID = -3339464277865429122L;
     // Percentage of population size to be selected during tournament selection
     private static final double TOURNAMENT_PERCENTAGE = 0.2;

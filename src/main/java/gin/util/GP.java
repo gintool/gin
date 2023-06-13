@@ -16,7 +16,7 @@ import org.pmw.tinylog.Logger;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serial;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,6 @@ import java.util.Random;
 
 public abstract class GP extends Sampler {
 
-    @Serial
     private static final long serialVersionUID = 8547883760400442899L;
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")

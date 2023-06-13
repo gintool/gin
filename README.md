@@ -2,6 +2,8 @@
 
 # Gin: A Tool for Experimentation with GI
 
+**This branch targets JDK9 - it must be used with the Oracle JDK 9 rather than Open JDK due to use of Java Flight Recorder**
+
 Gin is a [Genetic Improvement](https://en.wikipedia.org/wiki/Genetic_improvement_(computer_science)) (GI) tool. Genetic
 Improvement is the application of [Genetic Programming](https://en.wikipedia.org/wiki/Genetic_programming) and
 other [Metaheuristics](https://en.wikipedia.org/wiki/Metaheuristic) to existing software, to improve it in some way. In

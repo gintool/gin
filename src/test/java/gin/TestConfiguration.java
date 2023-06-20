@@ -13,6 +13,7 @@ public class TestConfiguration {
 
     // Maven tests
     public static final String MAVEN_SIMPLE_DIR = "examples" + File.separator + "maven-simple" + File.separator;
+    public static final String MAVEN_SIMPLE_MEMORY_DIR = "examples" + File.separator + "unittests" + File.separator + "maven" + File.separator + "maven-simple-memory" + File.separator;
     public static final String MAVEN_SIMPLE_JUNIT5_DIR = "examples" + File.separator + "unittests" + File.separator + "maven" + File.separator + "maven-simple-junit5" + File.separator;
 
     public static final File EXAMPLE_DIR = new File(EXAMPLE_DIR_NAME);

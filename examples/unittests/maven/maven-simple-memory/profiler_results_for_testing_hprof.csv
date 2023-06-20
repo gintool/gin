@@ -1,0 +1,4 @@
+"Project","MethodIndex","Method","Count","Tests"
+"maven-simple-memory","1","com.mycompany.app.App.make1000KIntArrays()","6","com.mycompany.app.AppTest.test1000KIntArray []"
+"maven-simple-memory","2","com.mycompany.app.App.make100KIntArrays()","2","com.mycompany.app.AppTest.test100KIntArray []"
+"maven-simple-memory","3","com.mycompany.app.App.make10KIntArrays()","1","com.mycompany.app.AppTest.test10KIntArray []"

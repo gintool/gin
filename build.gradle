@@ -1,6 +1,6 @@
 // To create fat (uber) jar
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'java'
     id 'application'
 }
@@ -22,10 +22,10 @@ dependencies {
     implementation platform('org.junit:junit-bom:5.9.2')
     implementation 'org.junit.jupiter:junit-jupiter'
     implementation 'org.junit.jupiter:junit-jupiter-engine'
-    implementation "org.junit.vintage:junit-vintage-engine"
     implementation 'org.junit.platform:junit-platform-launcher'
     implementation 'org.junit.platform:junit-platform-engine'
-    implementation "org.apiguardian:apiguardian-api:1.1.2"
+    implementation 'org.junit.vintage:junit-vintage-engine:5.9.2'
+    implementation 'org.apiguardian:apiguardian-api:1.1.2'
     implementation group: 'junit', name: 'junit', version: '4.13.1'
     implementation group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
     implementation group: 'com.github.javaparser', name: 'javaparser-core', version: '3.24.0'
@@ -102,7 +102,7 @@ javadoc {
 }
 
 shadowJar {
-    destinationDirectory = buildDir
+	destinationDirectory = buildDir
     archiveBaseName = 'gin'
     archiveVersion = null
     archiveClassifier = null

@@ -8,7 +8,7 @@ other [Metaheuristics](https://en.wikipedia.org/wiki/Metaheuristic) to existing 
 its initial incarnation, Gin was designed to reduce the execution time of Java code by modifying source files whilst
 preserving functionality as embodied by a set of JUnit tests.
 
-This repository is still undergoing development. Please raise an issue if you have a specific request or notice a bug.
+This repository is undergoing active development. Please raise an issue if you have a specific request or notice a bug.
 If you want to learn more about GI, please see the
 dedicated [Genetic Improvement website](http://geneticimprovementofsoftware.com/).
 
@@ -301,7 +301,7 @@ java -cp build/gin.jar gin.util.EmptyPatchTester -d examples/triangle/ -c exampl
 ## Full Example with a Maven Project
 
 We will now try cloning, profiling, and sampling for a project taken from GitHub: spatial4j. 
-This example is intended to run with Java 8, so please use Gin version 2.1.
+This example is intended to run with Java 8, so please use Gin version 2.1 (check out tag v2.1). Until we have a chance to update this tutorial, please try substituting spatial4j with jCodec [https://github.com/jcodec/jcodec] - it is longer running but does work under Java 17.
 
 First, move into the examples directory for working, and clone the project.
 
@@ -344,7 +344,7 @@ projectnameforgin='spatial4j'; editType='STATEMENT'; patchSize='1'; patchNumber=
 ## Contributing
 
 Please feel free to open issues and submit pull requests. If you'd like to aid in the development of Gin more generally,
-please get in touch with [Sandy Brownlee](mailto:sbr@cs.stir.ac.uk) or [Justyna Petke](mailto:j.petke@ucl.ac.uk).
+please get in touch with [Sandy Brownlee](mailto:alexander.brownlee@stir.ac.uk) and [Justyna Petke](mailto:j.petke@ucl.ac.uk).
 
 ## License
 

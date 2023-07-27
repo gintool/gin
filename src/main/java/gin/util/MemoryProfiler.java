@@ -71,11 +71,11 @@ public class MemoryProfiler {
         Args.parseOrExit(this, args);
         
         int javaVersion = JavaUtils.getJavaVersion();
-        if (javaVersion > 9 && javaVersion < 17) {
-        	Logger.error("Currently mem profiling only works with Java <=8 or >=17");
-        	Logger.error("Current version is " + javaVersion);
-        	System.exit(1);
-        }
+//        if (javaVersion > 9 && javaVersion < 17) {
+//        	Logger.error("Currently mem profiling only works with Java <=8 or >=17");
+//        	Logger.error("Current version is " + javaVersion);
+//        	System.exit(1);
+//        }
 
         this.workingDir = new File(projectDir, WORKING_DIR);
 

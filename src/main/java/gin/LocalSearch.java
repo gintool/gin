@@ -4,6 +4,8 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
+import gin.edit.llm.LLMConfig;
+import gin.edit.llm.LLMConfig.PromptType;
 import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
@@ -58,12 +60,20 @@ public class LocalSearch implements Serializable {
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
-
+    
     /**
      * allowed edit types for sampling: parsed from editType
      */
     protected List<Class<? extends Edit>> editTypes;
 
+
+    @Argument(alias = "oaik", description = "OpenAI API key for LLM edits")
+    protected String openAIKey = "demo";
+    
+    @Argument(alias = "pt", description = "Prompt Type for LLM edits")
+    protected PromptType llmPromptType = PromptType.MEDIUM;
+    
+    
     @Argument(alias = "ff", description = "Fail fast. "
             + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
             + "You probably don't want to set this to true for Automatic Program Repair.")
@@ -96,6 +106,9 @@ public class LocalSearch implements Serializable {
         }
         this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
+        LLMConfig.openAIKey = openAIKey;
+        LLMConfig.promptType = llmPromptType;
+        // TODO other LLM args
     }
 
     // Instantiate a class and call search

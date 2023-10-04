@@ -7,6 +7,8 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.Patch;
 import gin.SourceFile;
+import gin.edit.llm.LLMConfig;
+import gin.edit.llm.LLMConfig.PromptType;
 import gin.test.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -91,6 +93,12 @@ public abstract class Sampler implements Serializable {
     protected Project project = null;
     protected List<TargetMethod> methodData = new ArrayList<>();
 
+    @Argument(alias = "oaik", description = "OpenAI API key for LLM edits")
+    protected String openAIKey = "demo";
+    
+    @Argument(alias = "pt", description = "Prompt Type for LLM edits")
+    protected PromptType llmPromptType = PromptType.MEDIUM;
+    
     /*============== Structures holding all project data  ==============*/
     protected Set<UnitTest> testData = new LinkedHashSet<>();
     private int patchCount = 0;
@@ -135,6 +143,11 @@ public abstract class Sampler implements Serializable {
         } else if (numberOfMethodsToSample > 0 && this.numberOfMethodsToSample < this.methodData.size()) {
             this.methodData = this.methodData.subList(0, this.numberOfMethodsToSample);
         }
+        
+        LLMConfig.openAIKey = openAIKey;
+        LLMConfig.promptType = llmPromptType;
+        LLMConfig.projectName = projectName;
+        // TODO other LLM args
     }
 
     /*============== the following is used to store method information  ==============*/

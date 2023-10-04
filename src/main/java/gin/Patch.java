@@ -139,6 +139,8 @@ public class Patch implements Serializable, Cloneable {
                 editsValidOnLastApply.add(false);
                 // any unexpected problem applying the edit means 
                 // we just don't apply it
+                
+                e.printStackTrace();
             }
         }
 

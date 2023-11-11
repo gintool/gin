@@ -26,12 +26,12 @@ public class FullyQualifiedNames implements Serializable {
     /**
      * the key used to track fully qualified names for methods in JavaParser nodes
      */
-    public static final DataKey<String> NODEKEY_FQ_METHOD_NAME = new DataKey<>() {
+    public static final DataKey<String> NODEKEY_FQ_METHOD_NAME = new DataKey<String>() {
     };
     /**
      * the key used to track numbers of anon inner classes in JavaParser nodes
      */
-    public static final DataKey<Integer> NODEKEY_ANON_INNER_CLASS_NUM = new DataKey<>() {
+    public static final DataKey<Integer> NODEKEY_ANON_INNER_CLASS_NUM = new DataKey<Integer>() {
     };
     /**
      * see note in getFQName() about this regex

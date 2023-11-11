@@ -147,7 +147,7 @@ public class SourceFileTreeTest {
         expected.put(11, Arrays.asList(11, 17, 23, 48));
         expected.put(17, Arrays.asList(11, 17, 23, 48));
         expected.put(23, Arrays.asList(11, 17, 23, 48));
-        expected.put(33, List.of(33));
+        expected.put(33, Arrays.asList(33));
         expected.put(47, Arrays.asList(10, 47));
         expected.put(48, Arrays.asList(11, 17, 23, 48));
 
@@ -166,9 +166,9 @@ public class SourceFileTreeTest {
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, IfStmt.class));
         expected = Arrays.asList(49, 75, 101, 127, 140, 156);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, IfStmt.class));
-        expected = List.of(182);
+        expected = Arrays.asList(182);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(true, TryStmt.class));
-        expected = List.of(182);
+        expected = Arrays.asList(182);
         assertEquals(expected, sourceFileWithMethod.getNodeIDsByClass(false, TryStmt.class));
     }
 

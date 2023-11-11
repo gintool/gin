@@ -1,20 +1,27 @@
 package gin.util;
 
-import gin.test.UnitTest;
-import jdk.jfr.consumer.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.pmw.tinylog.Logger;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+//import jdk.jfr.consumer.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.pmw.tinylog.Logger;
+
+import gin.test.UnitTest;
+import oracle.jrockit.jfr.parser.*;
 
 /**
  * Used by gin.util.Profiler.
@@ -189,43 +196,52 @@ public class Trace implements Serializable {
         //use main classes to find methods in the main program
         Set<String> mainClasses = project.allMainClasses();
 
-        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
+        // https://stackoverflow.com/questions/66555850/how-to-parse-a-jfr-file-in-oracle-jdk7-or-jdk8-programatically
+        //try {
+    	File recordingFile = Paths.get(jfrF.getAbsolutePath()).toFile();
+    	Parser parser = new Parser(recordingFile);
 
-            //read all events from the JFR profiling file
-            while (jfr.hasMoreEvents()) {
-                RecordedEvent event = jfr.readEvent();
-                String check = event.getEventType().getName();
+        //read all events from the JFR profiling file
+    	Iterator<ChunkParser> chunkIter = parser.iterator();
+        while (chunkIter.hasNext()) {
+        	ChunkParser chunkParser = chunkIter.next();
+        	for (FLREvent event : chunkParser) {
+            	
+        		System.out.println(event);
+//            	String check = event.getEventType().getName();
 //System.out.println("******" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
-                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
-                    RecordedStackTrace s = event.getStackTrace();
-
-                    if (s != null) {
-
-                        //traverse the call stack, if a frame is part of the main program,
-                        //return it
-                        for (int i = 0; i < s.getFrames().size(); i++) {
-
-                            RecordedFrame topFrame = s.getFrames().get(i);
-                            RecordedMethod method = topFrame.getMethod();
-
-                            String methodName = method.getType().getName();
-                            String className = StringUtils.substringBeforeLast(methodName, ".");
-
-                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                                samples.merge(methodName, 1, Integer::sum);
-                                break;
-                            }
-                        }
-
-
-                    }
+//                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+//                    RecordedStackTrace s = event.getStackTrace();
+//
+//                    if (s != null) {
+//
+//                        //traverse the call stack, if a frame is part of the main program,
+//                        //return it
+//                        for (int i = 0; i < s.getFrames().size(); i++) {
+//
+//                            RecordedFrame topFrame = s.getFrames().get(i);
+//                            RecordedMethod method = topFrame.getMethod();
+//
+//                            String methodName = method.getType().getName();
+//                            String className = StringUtils.substringBeforeLast(methodName, ".");
+//
+//                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+//                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+//                                samples.merge(methodName, 1, Integer::sum);
+//                                break;
+//                            }
+//                        }
+//
+//
+//                    }
                 }
+                
+                parser.close();
             }
             return samples;
 
-        }
+        
 
     }
 

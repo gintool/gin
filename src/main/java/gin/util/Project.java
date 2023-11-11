@@ -323,17 +323,17 @@ public class Project implements Serializable {
                     this.mainSourceDirs.add(dir.getDirectory());
                 }
 
-                for (IdeaSourceDirectory dir : root.getResourceDirectories()) {
-                    this.mainResourceDirs.add(dir.getDirectory());
-                }
+//                for (IdeaSourceDirectory dir : root.getResourceDirectories()) {
+//                    this.mainResourceDirs.add(dir.getDirectory());
+//                }
 
                 for (IdeaSourceDirectory dir : root.getTestDirectories()) {
                     this.testSourceDirs.add(dir.getDirectory());
                 }
 
-                for (IdeaSourceDirectory dir : root.getTestResourceDirectories()) {
-                    this.testResourceDirs.add(dir.getDirectory());
-                }
+//                for (IdeaSourceDirectory dir : root.getTestResourceDirectories()) {
+//                    this.testResourceDirs.add(dir.getDirectory());
+//                }
             }
 
         }

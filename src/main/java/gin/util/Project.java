@@ -337,7 +337,7 @@ public class Project implements Serializable {
             }
 
         }
-
+        
         // Class directories (build output)
         File buildDir = gradleProject.getBuildDirectory();
         File classDir = new File(buildDir, "classes");
@@ -803,11 +803,20 @@ public class Project implements Serializable {
 
     public void runUnitTestGradle(UnitTest test, String args) {
 
+    	
+    	Logger.debug("RUNNING: " + test);
+    	
         File connectionDir = projectDir;
 
+      THE DIR WAS COMING OUT AS ..
+        
         if (!test.getModuleName().isEmpty()) {
             connectionDir = new File(test.getModuleName());
         }
+        
+        connectionDir = new File(".");
+      
+        System.out.println("DIR:" + connectionDir);
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
 
@@ -822,6 +831,8 @@ public class Project implements Serializable {
         Map<String, String> variables = new HashMap<>();
         variables.put("JAVA_TOOL_OPTIONS", args);
 
+        System.out.println("AAA:" + variables);
+        
         // Workaround for inner classes, see https://github.com/gradle/gradle/issues/5763
         if (test.getInnerClassName().isEmpty()) {
             testLauncher = testLauncher.withJvmTestClasses(test.getTopClassName());
@@ -840,6 +851,7 @@ public class Project implements Serializable {
             Logger.error("Message: " + exception.getMessage());
             Logger.error("Cause: " + exception.getCause());
             exception.printStackTrace();
+            Logger.error("When attempting to run: " + test.getTopClassName());
             System.exit(-1);
         }
 

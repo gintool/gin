@@ -808,15 +808,14 @@ public class Project implements Serializable {
     	
         File connectionDir = projectDir;
 
-      THE DIR WAS COMING OUT AS ..
+        // THE DIR WAS COMING OUT AS ..
+        //if (!test.getModuleName().isEmpty()) {
+        //    connectionDir = new File(test.getModuleName());
+        //}
         
-        if (!test.getModuleName().isEmpty()) {
-            connectionDir = new File(test.getModuleName());
-        }
-        
-        connectionDir = new File(".");
+//        connectionDir = new File(".");
       
-        System.out.println("DIR:" + connectionDir);
+//        System.out.println("DIR:" + connectionDir);
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
 
@@ -831,7 +830,7 @@ public class Project implements Serializable {
         Map<String, String> variables = new HashMap<>();
         variables.put("JAVA_TOOL_OPTIONS", args);
 
-        System.out.println("AAA:" + variables);
+//        System.out.println("AAA:" + variables);
         
         // Workaround for inner classes, see https://github.com/gradle/gradle/issues/5763
         if (test.getInnerClassName().isEmpty()) {

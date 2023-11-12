@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections.bag.SynchronizedSortedBag;
 //import jdk.jfr.consumer.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -206,19 +207,23 @@ public class Trace implements Serializable {
         while (chunkIter.hasNext()) {
         	ChunkParser chunkParser = chunkIter.next();
         	for (FLREvent event : chunkParser) {
-            	
-        		System.out.println(event);
-//            	String check = event.getEventType().getName();
-//System.out.println("******" + check);
+        		
+//        		System.out.println(event);
+            	String check = event.getName();
+//            	System.out.println("CHECK:" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
-//                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
-//                    RecordedStackTrace s = event.getStackTrace();
-//
-//                    if (s != null) {
+                if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+                    FLRStruct s = event.getStackTrace();
+                	System.out.println(check + " " + s);
+                    if (s != null) {
 //
 //                        //traverse the call stack, if a frame is part of the main program,
 //                        //return it
-//                        for (int i = 0; i < s.getFrames().size(); i++) {
+                        for (Object str : s.getResolvedValues()) {
+                        	System.out.println("AAA");
+                        	((FLRStruct)str).getValues();
+                        	System.out.println("BBB");
+                        	((FLRStruct)str).getResolvedValues();
 //
 //                            RecordedFrame topFrame = s.getFrames().get(i);
 //                            RecordedMethod method = topFrame.getMethod();
@@ -230,16 +235,16 @@ public class Trace implements Serializable {
 //                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
 //                                samples.merge(methodName, 1, Integer::sum);
 //                                break;
-//                            }
-//                        }
-//
-//
-//                    }
+                        }
+                    }
+
+
                 }
-                
-                parser.close();
             }
-            return samples;
+            
+            parser.close();
+        }
+        return samples;
 
         
 

@@ -215,15 +215,18 @@ public class Trace implements Serializable {
                 if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
                     FLRStruct s = event.getStackTrace();
                 	System.out.println(check + " " + s);
+                	System.out.println("BBB");
+                	System.out.println(((FLRStruct)event).getResolvedValues());
+                	Object traceList = ((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
                     if (s != null) {
 //
 //                        //traverse the call stack, if a frame is part of the main program,
 //                        //return it
                         for (Object str : s.getResolvedValues()) {
-                        	System.out.println("AAA");
-                        	((FLRStruct)str).getValues();
-                        	System.out.println("BBB");
-                        	((FLRStruct)str).getResolvedValues();
+                        	System.out.println("CCC");
+                        	System.out.println(((FLRStruct)str).getValues());
+                        	System.out.println("DDD");
+                        	System.out.println(((FLRStruct)str).getResolvedValues());
 //
 //                            RecordedFrame topFrame = s.getFrames().get(i);
 //                            RecordedMethod method = topFrame.getMethod();

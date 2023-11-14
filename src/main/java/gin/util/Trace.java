@@ -207,40 +207,36 @@ public class Trace implements Serializable {
         while (chunkIter.hasNext()) {
         	ChunkParser chunkParser = chunkIter.next();
         	for (FLREvent event : chunkParser) {
-        		
 //        		System.out.println(event);
             	String check = event.getName();
 //            	System.out.println("CHECK:" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
                 if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
                     FLRStruct s = event.getStackTrace();
-                	System.out.println(check + " " + s);
-                	System.out.println("BBB");
                 	System.out.println(((FLRStruct)event).getResolvedValues());
-                	Object traceList = ((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
-                    if (s != null) {
-//
-//                        //traverse the call stack, if a frame is part of the main program,
-//                        //return it
-                        for (Object str : s.getResolvedValues()) {
-                        	System.out.println("CCC");
-                        	System.out.println(((FLRStruct)str).getValues());
-                        	System.out.println("DDD");
-                        	System.out.println(((FLRStruct)str).getResolvedValues());
-//
+                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
+//                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
+                	for (FLRStruct trace : traces) {
+                		StackEntry stackEntry = new StackEntry(trace);
+                	
+
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
 //                            RecordedFrame topFrame = s.getFrames().get(i);
 //                            RecordedMethod method = topFrame.getMethod();
 //
 //                            String methodName = method.getType().getName();
 //                            String className = StringUtils.substringBeforeLast(methodName, ".");
+                		String methodName = stackEntry.methodName;
+                		String className = stackEntry.className;
 //
-//                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
 //                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-//                                samples.merge(methodName, 1, Integer::sum);
-//                                break;
+                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
+                                samples.merge(methodName, 1, Integer::sum);
+                                break;
                         }
                     }
-
 
                 }
             }
@@ -251,6 +247,49 @@ public class Trace implements Serializable {
 
         
 
+    }
+    
+    private static class StackEntry {
+    	private String methodName; // bare name of method
+    	private String methodArgs; // FQ args, with brackets
+    	private String className; // FQ class name
+    	private int lineNumber;
+    	
+    	public StackEntry(FLRStruct struct) {
+    		// use e.g. ((FLRStruct)((List)firstTrace).get(0)).getValueInfos() to figure out IDs of fields
+    		
+    		FLRStruct methodStruct = (FLRStruct)(struct.getResolvedValue("method"));
+    		
+//    		Object firstTrace = struct.getResolvedValues();
+    		String name = methodStruct.getResolvedValue("name").toString();
+    		String signature = methodStruct.getResolvedValue("signature").toString();
+    		String clazz = ((FLRStruct)(methodStruct.getResolvedValue("class"))).getResolvedValue("name").toString();
+    		int lineNumber = (Integer)(struct.getResolvedValue("line"));
+    		
+//    		System.out.println("parsed " + name + " | " + signature + " | " + clazz + " | " + lineNumber);
+    		
+    		// class name is from bytecode e.g. java/lang/reflect/Method so convert (needs L and ;)
+    		className = org.objectweb.asm.Type.getType("L"+clazz+";").getClassName();
+    		
+    		// signature looks like this...
+    		// (Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    		// i.e. args, then return val. convert to this:
+    		// methodName(Object,Object)
+    		// get all between the brackets, each terminated by ; and convert...
+    		org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getType(signature).getArgumentTypes();
+    		String args = "(";
+    		boolean first = true;
+    		for (org.objectweb.asm.Type type : argTypes) {
+    			args += (first ? "" : ",") + type.getClassName().replaceAll("^.*\\.", "");
+    			first = false;
+    		}
+    		args += ")";
+    		methodName = name;
+    		methodArgs = args;
+    		
+//    		System.out.println("Class:" + className);
+//    		System.out.println("Method:" + name + "|" + signature + "--->" + methodName);
+    	}
     }
 
     // Run through method counts and cleanup

@@ -29,8 +29,9 @@ public class MemoryProfiler {
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "hprof";
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename="; // Could replace ObjectAllocationInNewTLAB with ObjectCount (former is for tmp objects and includes stacktrace)
-    
+    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename=";
+   
     
     // Instance Members
     private final File workingDir;
@@ -204,7 +205,11 @@ public class MemoryProfiler {
                 if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                    args = JFR_ARG + jfrFile(test, rep).getAbsolutePath();
+                    if (JavaUtils.getJavaVersion() < 11) {
+                        args = JFR_ARG_BEFORE_11 + jfrFile(test, rep).getAbsolutePath();
+                    } else {
+                        args = JFR_ARG_11_AFTER + jfrFile(test, rep).getAbsolutePath();
+                    }
                 }
                 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",

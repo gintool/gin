@@ -6,6 +6,10 @@ import gin.test.UnitTest;
 //import jdk.jfr.consumer.RecordedMethod;
 //import jdk.jfr.consumer.RecordedStackTrace;
 //import jdk.jfr.consumer.RecordingFile;
+import oracle.jrockit.jfr.parser.ChunkParser;
+import oracle.jrockit.jfr.parser.FLREvent;
+import oracle.jrockit.jfr.parser.FLRStruct;
+import oracle.jrockit.jfr.parser.Parser;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +21,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -210,18 +215,8 @@ public class MemoryTrace {
     
     private static Map<String, Integer> parseJFRMethodCounts(File jfrF, Project project) throws IOException {
 
-        Map<String, Integer> samples = new HashMap<>();
 
-        //use main classes to find methods in the main program
-        Set<String> mainClasses = project.allMainClasses();
-
-//        try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
-//
-//            //read all events from the JFR profiling file
-//            while (jfr.hasMoreEvents()) {
-//                RecordedEvent event = jfr.readEvent();
-//                String check = event.getEventType().getName();
-//
+        			// java 17...
 //                //there are two kinds of events we could be looking for
 //                // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
 //                // the latter is for temp objects, but importantly comes with
@@ -229,35 +224,104 @@ public class MemoryTrace {
 //                // ObjectCount doesn't seem to have this (it would also need
 //                // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
 //                if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
-//                    RecordedStackTrace s = event.getStackTrace();
-//
-//                    if (s != null) {
+
+
+        Map<String, Integer> samples = new HashMap<>();
+
+        //use main classes to find methods in the main program
+        Set<String> mainClasses = project.allMainClasses();
+
+        // https://stackoverflow.com/questions/66555850/how-to-parse-a-jfr-file-in-oracle-jdk7-or-jdk8-programatically
+        //try {
+    	File recordingFile = Paths.get(jfrF.getAbsolutePath()).toFile();
+    	Parser parser = new Parser(recordingFile);
+
+        //read all events from the JFR profiling file
+    	Iterator<ChunkParser> chunkIter = parser.iterator();
+        while (chunkIter.hasNext()) {
+        	ChunkParser chunkParser = chunkIter.next();
+        	for (FLREvent event : chunkParser) {
+//        		System.out.println(event);
+            	String check = event.getName();
+            	System.out.println("CHECK:" + check);
+                //if this event is an exectution sample, it will contain a call stack snapshot
+//                if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+//                    FLRStruct s = event.getStackTrace();
+//                	System.out.println(((FLRStruct)event).getResolvedValues());
+//                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
+////                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
+//                	for (FLRStruct trace : traces) {
+//                		StackEntry stackEntry = new StackEntry(trace);
+//                	
 //
 //                        //traverse the call stack, if a frame is part of the main program,
 //                        //return it
-//                        for (int i = 0; i < s.getFrames().size(); i++) {
-//
-//                            RecordedFrame topFrame = s.getFrames().get(i);
-//                            RecordedMethod method = topFrame.getMethod();
-//
-//                            String methodName = method.getType().getName();
-//                            String className = StringUtils.substringBeforeLast(methodName, ".");
-//
-//                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-//                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+////                            RecordedFrame topFrame = s.getFrames().get(i);
+////                            RecordedMethod method = topFrame.getMethod();
+////
+////                            String methodName = method.getType().getName();
+////                            String className = StringUtils.substringBeforeLast(methodName, ".");
+//                		String methodName = stackEntry.methodName;
+//                		String className = stackEntry.className;
+////
+//                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
+////                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+//                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
 //                                samples.merge(methodName, 1, Integer::sum);
 //                                break;
-//                            }
 //                        }
-//
-//
 //                    }
+
 //                }
-//            }
-            return samples;
-
-//        }
-
+            }
+            
+            parser.close();
+        }
+        return samples;
+    	
+    }
+    
+    private static class StackEntry {
+    	private String methodName; // bare name of method
+    	private String methodArgs; // FQ args, with brackets
+    	private String className; // FQ class name
+    	private int lineNumber;
+    	
+    	public StackEntry(FLRStruct struct) {
+    		// use e.g. ((FLRStruct)((List)firstTrace).get(0)).getValueInfos() to figure out IDs of fields
+    		
+    		FLRStruct methodStruct = (FLRStruct)(struct.getResolvedValue("method"));
+    		
+//    		Object firstTrace = struct.getResolvedValues();
+    		String name = methodStruct.getResolvedValue("name").toString();
+    		String signature = methodStruct.getResolvedValue("signature").toString();
+    		String clazz = ((FLRStruct)(methodStruct.getResolvedValue("class"))).getResolvedValue("name").toString();
+    		int lineNumber = (Integer)(struct.getResolvedValue("line"));
+    		
+//    		System.out.println("parsed " + name + " | " + signature + " | " + clazz + " | " + lineNumber);
+    		
+    		// class name is from bytecode e.g. java/lang/reflect/Method so convert (needs L and ;)
+    		className = org.objectweb.asm.Type.getType("L"+clazz+";").getClassName();
+    		
+    		// signature looks like this...
+    		// (Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    		// i.e. args, then return val. convert to this:
+    		// methodName(Object,Object)
+    		// get all between the brackets, each terminated by ; and convert...
+    		org.objectweb.asm.Type[] argTypes = org.objectweb.asm.Type.getType(signature).getArgumentTypes();
+    		String args = "(";
+    		boolean first = true;
+    		for (org.objectweb.asm.Type type : argTypes) {
+    			args += (first ? "" : ",") + type.getClassName().replaceAll("^.*\\.", "");
+    			first = false;
+    		}
+    		args += ")";
+    		methodName = name;
+    		methodArgs = args;
+    		
+//    		System.out.println("Class:" + className);
+//    		System.out.println("Method:" + name + "|" + signature + "--->" + methodName);
+    	}
     }
 
     // Run through method counts and cleanup

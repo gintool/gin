@@ -213,7 +213,7 @@ public class Trace implements Serializable {
                 //if this event is an exectution sample, it will contain a call stack snapshot
                 if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
                     FLRStruct s = event.getStackTrace();
-                	System.out.println(((FLRStruct)event).getResolvedValues());
+//                	System.out.println(((FLRStruct)event).getResolvedValues());
                 	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
 //                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
                 	for (FLRStruct trace : traces) {
@@ -264,7 +264,7 @@ public class Trace implements Serializable {
     		String name = methodStruct.getResolvedValue("name").toString();
     		String signature = methodStruct.getResolvedValue("signature").toString();
     		String clazz = ((FLRStruct)(methodStruct.getResolvedValue("class"))).getResolvedValue("name").toString();
-    		int lineNumber = (Integer)(struct.getResolvedValue("line"));
+    		lineNumber = (Integer)(struct.getResolvedValue("line"));
     		
 //    		System.out.println("parsed " + name + " | " + signature + " | " + clazz + " | " + lineNumber);
     		

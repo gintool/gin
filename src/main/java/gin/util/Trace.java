@@ -235,6 +235,8 @@ public class Trace implements Serializable {
                             	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
                                 samples.merge(methodName, 1, Integer::sum);
                                 break;
+                        } else {
+//                        	System.out.println("skipped "+className+" "+methodName);
                         }
                     }
 

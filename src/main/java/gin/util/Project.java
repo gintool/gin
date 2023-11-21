@@ -822,14 +822,19 @@ public class Project implements Serializable {
         if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
-
+        
         ProjectConnection connection = connector.connect();
 
         TestLauncher testLauncher = connection.newTestLauncher();
-
+//        testLauncher.setJavaHome(new File("/usr/java/jdk1.8.0_202-amd64"));
+//        testLauncher.addJvmArguments("-XX:+UnlockCommercialFeatures");
+        
+        
         Map<String, String> variables = new HashMap<>();
         variables.put("JAVA_TOOL_OPTIONS", args);
-
+//        variables.put("JAVA_HOME", "/usr/java/jdk1.8.0_202-amd64");
+        variables.put("JAVA_HOME", System.getenv("JAVA_HOME"));
+        
 //        System.out.println("AAA:" + variables);
         
         // Workaround for inner classes, see https://github.com/gradle/gradle/issues/5763
@@ -838,11 +843,16 @@ public class Project implements Serializable {
         } else {
             testLauncher = testLauncher.withJvmTestClasses(test.getTopClassName() + "*");
         }
-
+        
         testLauncher = testLauncher.withJvmTestMethods(test.getTopClassName(), test.getMethodName());
 
         testLauncher.setEnvironmentVariables(variables);
-
+//        testLauncher.addJvmArguments("-XX:+UnlockCommercialFeatures");
+        
+        
+        testLauncher.setStandardError(System.err);
+        testLauncher.setStandardOutput(System.out);
+        
         try {
             testLauncher.run();
         } catch (TestExecutionException | BuildException exception) {

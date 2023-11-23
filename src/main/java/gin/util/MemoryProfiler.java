@@ -29,7 +29,8 @@ public class MemoryProfiler {
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
     private static final String WORKING_DIR = "hprof";
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename=";
+//    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename=";
+    private static final String JFR_ARG_BEFORE_11 = "-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=name=Gin,dumponexit=true,settings=profile,filename="; // heap profiling on by default with "profile" setting before Java 16
     private static final String JFR_ARG_11_AFTER = "-XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename=";
    
     

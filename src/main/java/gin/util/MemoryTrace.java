@@ -1,20 +1,5 @@
 package gin.util;
 
-import gin.test.UnitTest;
-//import jdk.jfr.consumer.RecordedEvent;
-//import jdk.jfr.consumer.RecordedFrame;
-//import jdk.jfr.consumer.RecordedMethod;
-//import jdk.jfr.consumer.RecordedStackTrace;
-//import jdk.jfr.consumer.RecordingFile;
-import oracle.jrockit.jfr.parser.ChunkParser;
-import oracle.jrockit.jfr.parser.FLREvent;
-import oracle.jrockit.jfr.parser.FLRStruct;
-import oracle.jrockit.jfr.parser.Parser;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.pmw.tinylog.Logger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +13,21 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.pmw.tinylog.Logger;
+
+import gin.test.UnitTest;
+//import jdk.jfr.consumer.RecordedEvent;
+//import jdk.jfr.consumer.RecordedFrame;
+//import jdk.jfr.consumer.RecordedMethod;
+//import jdk.jfr.consumer.RecordedStackTrace;
+//import jdk.jfr.consumer.RecordingFile;
+import oracle.jrockit.jfr.parser.ChunkParser;
+import oracle.jrockit.jfr.parser.FLREvent;
+import oracle.jrockit.jfr.parser.FLRStruct;
+import oracle.jrockit.jfr.parser.Parser;
 
 /**
  * Used by gin.util.Profiler.
@@ -243,36 +243,38 @@ public class MemoryTrace {
         	for (FLREvent event : chunkParser) {
 //        		System.out.println(event);
             	String check = event.getName();
-            	System.out.println("CHECK:" + check);
+//            	System.out.println("CHECK:" + check);
                 //if this event is an exectution sample, it will contain a call stack snapshot
-//                if (check.contains("Method Profiling Sample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
-//                    FLRStruct s = event.getStackTrace();
+                if (check.contains("Allocation in new TLAB")) {
+                    FLRStruct s = event.getStackTrace();
 //                	System.out.println(((FLRStruct)event).getResolvedValues());
-//                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
-////                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
-//                	for (FLRStruct trace : traces) {
-//                		StackEntry stackEntry = new StackEntry(trace);
-//                	
-//
-//                        //traverse the call stack, if a frame is part of the main program,
-//                        //return it
-////                            RecordedFrame topFrame = s.getFrames().get(i);
-////                            RecordedMethod method = topFrame.getMethod();
-////
-////                            String methodName = method.getType().getName();
-////                            String className = StringUtils.substringBeforeLast(methodName, ".");
-//                		String methodName = stackEntry.methodName;
-//                		String className = stackEntry.className;
-////
-//                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
-////                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-//                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
-//                                samples.merge(methodName, 1, Integer::sum);
-//                                break;
-//                        }
-//                    }
+                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
+//                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
+                	for (FLRStruct trace : traces) {
+                		StackEntry stackEntry = new StackEntry(trace);
+                	
 
-//                }
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
+//                            RecordedFrame topFrame = s.getFrames().get(i);
+//                            RecordedMethod method = topFrame.getMethod();
+//
+//                            String methodName = method.getType().getName();
+//                            String className = StringUtils.substringBeforeLast(methodName, ".");
+                		String methodName = stackEntry.methodName;
+                		String className = stackEntry.className;
+//
+                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
+//                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
+                                samples.merge(methodName, 1, Integer::sum);
+                                break;
+                        } else {
+//                        	System.out.println("skipped "+className+" "+methodName);
+                        }
+                    }
+
+                }
             }
             
             parser.close();

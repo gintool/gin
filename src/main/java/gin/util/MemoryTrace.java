@@ -248,30 +248,32 @@ public class MemoryTrace {
                 if (check.contains("Allocation in new TLAB")) {
                     FLRStruct s = event.getStackTrace();
 //                	System.out.println(((FLRStruct)event).getResolvedValues());
-                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
-//                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
-                	for (FLRStruct trace : traces) {
-                		StackEntry stackEntry = new StackEntry(trace);
-                	
-
-                        //traverse the call stack, if a frame is part of the main program,
-                        //return it
-//                            RecordedFrame topFrame = s.getFrames().get(i);
-//                            RecordedMethod method = topFrame.getMethod();
-//
-//                            String methodName = method.getType().getName();
-//                            String className = StringUtils.substringBeforeLast(methodName, ".");
-                		String methodName = stackEntry.methodName;
-                		String className = stackEntry.className;
-//
-                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
-//                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
-                                samples.merge(methodName, 1, Integer::sum);
-                                break;
-                        } else {
-//                        	System.out.println("skipped "+className+" "+methodName);
-                        }
+                    if (s != null) {
+	                	FLRStruct[] traces = (FLRStruct[])((FLRStruct)event.getResolvedValues().get(1)).getResolvedValues().get(1);
+	//                	List traces = ((FLRStruct[])traceList)[0].getResolvedValues();
+	                	for (FLRStruct trace : traces) {
+	                		StackEntry stackEntry = new StackEntry(trace);
+	                	
+	
+	                        //traverse the call stack, if a frame is part of the main program,
+	                        //return it
+	//                            RecordedFrame topFrame = s.getFrames().get(i);
+	//                            RecordedMethod method = topFrame.getMethod();
+	//
+	//                            String methodName = method.getType().getName();
+	//                            String className = StringUtils.substringBeforeLast(methodName, ".");
+	                		String methodName = stackEntry.methodName;
+	                		String className = stackEntry.className;
+	//
+	                            if (mainClasses.contains(className+"."+methodName) || mainClasses.contains(className)) {
+	//                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+	                            	methodName = className + "." + methodName + ":" + stackEntry.lineNumber;
+	                                samples.merge(methodName, 1, Integer::sum);
+	                                break;
+	                        } else {
+	//                        	System.out.println("skipped "+className+" "+methodName);
+	                        }
+	                	}
                     }
 
                 }
@@ -298,7 +300,7 @@ public class MemoryTrace {
     		String name = methodStruct.getResolvedValue("name").toString();
     		String signature = methodStruct.getResolvedValue("signature").toString();
     		String clazz = ((FLRStruct)(methodStruct.getResolvedValue("class"))).getResolvedValue("name").toString();
-    		int lineNumber = (Integer)(struct.getResolvedValue("line"));
+    		lineNumber = (Integer)(struct.getResolvedValue("line"));
     		
 //    		System.out.println("parsed " + name + " | " + signature + " | " + clazz + " | " + lineNumber);
     		

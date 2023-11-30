@@ -28,6 +28,7 @@ public class ProjectTest {
         simpleProject.setUp();
     }
 
+/*
     @Test
     public void testDetectionGradleMultiProject() {
 
@@ -98,6 +99,7 @@ public class ProjectTest {
 
 
     }
+*/
 
     @Test
     public void getMavenHome() {

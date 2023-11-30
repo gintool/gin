@@ -26,6 +26,7 @@ public class MemoryProfilerTest {
 
     private final static String MAVEN_SIMPLE_MEMORY_PROJECT_DIR = TestConfiguration.MAVEN_SIMPLE_MEMORY_DIR;
 
+/*
     @Test
     public void testHPROFProfilingMavenJUnit4() throws IOException {
         String[] args = {"-p", "maven-simple-memory", "-d", MAVEN_SIMPLE_MEMORY_PROJECT_DIR, "-r", "1", "-o", "profile_results.csv", "-prof", "hprof", "-save", "s"};

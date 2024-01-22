@@ -4,6 +4,7 @@ import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
+import gin.util.enums.ProfilerChoice;
 import gin.util.regression.RTSFactory;
 import gin.util.regression.RTSStrategy;
 import org.apache.commons.io.FileUtils;
@@ -76,7 +77,7 @@ public class RTSProfiler implements Serializable {
     @Argument(alias = "pn", description = "Java profiler file name. If running in parallel, use a different name for each job.")
     protected String profFileName = "java.prof.jfr";
     @Argument(alias = "prof", description = "Profiler to use: jfr or hprof. Default is jfr")
-    protected String profilerChoice = "jfr";
+    protected String profilerChoice = String.valueOf(ProfilerChoice.JFR);
     protected Project project;
 
     public RTSProfiler(String[] args) {

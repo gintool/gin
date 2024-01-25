@@ -6,6 +6,7 @@ import com.opencsv.CSVWriter;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
+import gin.util.enums.ProfilerChoice;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -65,9 +66,9 @@ public class Profiler implements Serializable {
     @Argument(alias = "hi", description = "Interval for hprof's CPU sampling in milliseconds")
     protected Long hprofInterval = 10L;
     @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
-    protected String profilerChoice = "jfr";
+    protected String profilerChoice = String.valueOf(ProfilerChoice.JFR);
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
-    protected String saveChoice = "d";
+    protected boolean saveChoice = false;
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -275,7 +276,7 @@ public class Profiler implements Serializable {
                 }
 
                 //delete individual profiling files
-                if (saveChoice.equals("d")) {
+                if (!saveChoice) {
                     try {
                         Files.deleteIfExists(traceFile.toPath());
                     } catch (IOException e) {

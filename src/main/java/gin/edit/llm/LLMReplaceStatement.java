@@ -3,39 +3,46 @@ package gin.edit.llm;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.github.javaparser.ParseProblemException;
-import com.github.javaparser.ast.Node;
 import org.pmw.tinylog.Logger;
 
+import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.stmt.Statement;
 
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.service.AiServices;
+import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+
 import gin.SourceFile;
 import gin.SourceFileTree;
 import gin.edit.Edit;
+import gin.edit.llm.PromptTemplate.PromptTag;
 import gin.edit.statement.StatementEdit;
+
+import gin.edit.llm.LLMQuery;
+import gin.edit.llm.OpenAILLMQuery;
+import gin.edit.llm.Ollama4jLLMQuery;
 
 public class LLMReplaceStatement extends StatementEdit {
 
-    interface Chat {
-        String chat(String userMessage);
-    }
-	
-	private static final long serialVersionUID = 1112502387236768006L;
-	
-	public String destinationFilename;
+    private static final long serialVersionUID = 1112502387236768006L;
+    public String destinationFilename;
     public int destinationStatement;
-    
+
+    private PromptTemplate promptTemplate;
+    //private String modelType="OpenAI"; // Should be param from c'tor
+    //private String modelType = "magicoder";
+    // All strings are here: https://github.com/amithkoujalgi/ollama4j/blob/main/src/main/java/io/github/amithkoujalgi/ollama4j/core/types/OllamaModelType.java
+
     /**fairly rubbish approach to having something meaningful for the toString*/
     private String lastReplacement;
+    private String lastPrompt;
 
     /**
      * create a random llmreplacestatement for the given sourcefile, using the provided RNG
@@ -45,21 +52,28 @@ public class LLMReplaceStatement extends StatementEdit {
      * @param sourceFile to create an edit for
      * @param rng        random number generator, used to choose the target statements
      */
-    public LLMReplaceStatement(SourceFile sourceFile, Random rng) {
+    public LLMReplaceStatement(SourceFile sourceFile, Random rng, PromptTemplate promptTemplate) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
         destinationFilename = sourceFile.getRelativePathToWorkingDir();
 
         // target is in target method only
         destinationStatement = sf.getRandomBlockID(true, rng);
-        
+
+        this.promptTemplate = promptTemplate;
+
         lastReplacement = "NOT YET APPLIED";
+        lastPrompt = "NOT YET APPLIED";
+    }
+
+    public LLMReplaceStatement(SourceFile sourceFile, Random rng) {
+    	this(sourceFile, rng, LLMConfig.getDefaultPromptTemplate());
     }
 
     public LLMReplaceStatement(String destinationFilename, int destinationStatement) {
         this.destinationFilename = destinationFilename;
         this.destinationStatement = destinationStatement;
-        
+
         this.lastReplacement = "NOT YET APPLIED";
     }
 
@@ -73,19 +87,18 @@ public class LLMReplaceStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
-    	List<SourceFile> l = applyMultiple(sourceFile, 5);
-    	
+    public SourceFile apply(SourceFile sourceFile, Object tagReplacements) {
+    	List<SourceFile> l = applyMultiple(sourceFile, 5, (Map<PromptTemplate.PromptTag,String>)tagReplacements);
+
     	if (l.size() > 0) {
-    		return l.get(0); // TODO for now, just pick the first variant provided. Later, call applyMultiple from LocalSearch instead 
+    		return l.get(0); // TODO for now, just pick the first variant provided. Later, call applyMultiple from LocalSearch instead
     	} else {
     		return null;
     	}
     }
-    
-    
-    public List<SourceFile> applyMultiple(SourceFile sourceFile, int count) {
-        	
+
+    public List<SourceFile> applyMultiple(SourceFile sourceFile, int count, Map<PromptTemplate.PromptTag,String> tagReplacements) {
+
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
         Node destination = sf.getNode(destinationStatement);
@@ -95,83 +108,43 @@ public class LLMReplaceStatement extends StatementEdit {
         }
 
 
-        // here is where the magic happens...
-        OpenAiChatModel model = OpenAiChatModel.builder().apiKey(LLMConfig.openAIKey).timeout(Duration.ofSeconds(LLMConfig.timeoutInSeconds)).temperature(LLMConfig.temperature).build(); //OpenAiChatModel.withApiKey(ApiKeys.OPENAI_API_KEY);
-		
-		Chat chat = AiServices.builder(Chat.class)
-                .chatLanguageModel(model)
-                .chatMemory(MessageWindowChatMemory.withCapacity(10))
-                .build();
+	// here is where the magic happens...
+	LLMQuery llmQuery;
 
-		// TODO here, could call sourceFile.getSource() to provide whole class for context...
-		
-		Logger.info("Seeking replacements for:");
-		Logger.info(destination);
-		
-		String prompt;
-		
-		switch (LLMConfig.promptType) {
-			case SIMPLE:
-				prompt = "Give me " + count + " implementations of this:"
-		        		+ "```\n"
-		        		+ destination
-		        		+ "\n"
-		        		+ "```\n";
-		        
-			break;
-			case MEDIUM:
-			default:
-				prompt = "Give me " + count + " different Java implementations of this method body:"
-		        		+ "```\n"
-		        		+ destination
-		        		+ "\n"
-		        		+ "```\n"
-		        		+ "This code belongs to project " + LLMConfig.projectName + ". "
-		                + "Wrap all code in curly braces, if it is not already."
-		                + "Do not include any method or class declarations."
-		                + "label all code as java.";
-			break;
-			case DETAILED:
-				prompt = "Give me " + count + " different Java implementations of this method body:"
-		        		+ "```\n"
-		        		+ destination
-		        		+ "\n"
-		        		+ "```\n"
-		        		+ "This code belongs to project " + LLMConfig.projectName + ". "
-		        		+ "In the org.jcodec.scale.BaseResampler class, the following change was helpful. I changed this:"
-		        		+ "```\n"
-		        		+ "	if (temp == null) {"
-		        		+ "		temp = new int[toSize.getWidth() * (fromSize.getHeight() + nTaps())];"
-		        		+ "		tempBuffers.set(temp);"
-		        		+ "	}"
-		        		+ "```\n"
-		        		+ "into this:"
-		        		+ "```\n"
-		        		+ "	if (temp == null) {"
-		        		+ "		if (scaleFactorX >= 0)"
-		        		+ "			return;"
-		        		+ "		temp = new int[toSize.getWidth() * (fromSize.getHeight() + nTaps())];"
-		        		+ "		tempBuffers.set(temp);"
-		        		+ "	}"
-		        		+ "```\n"
-		                + "Wrap all code in curly braces, if it is not already."
-		                + "Do not include any method or class declarations."
-		                + "label all code as java.";	
-			break;
-		}
-		
-    	Logger.info("============");
+	// Check which model to use.
+	if ("OpenAI".equalsIgnoreCase(LLMConfig.modelType)) {
+            llmQuery = new OpenAILLMQuery();
+        } else {
+            llmQuery = new Ollama4jLLMQuery("http://localhost:11434", LLMConfig.modelType);
+        }
+
+	// TODO here, could call sourceFile.getSource() to provide whole class for context...
+
+	Logger.info("Seeking replacements for:");
+	Logger.info(destination);
+
+	if(tagReplacements == null) {
+		tagReplacements = new HashMap<>();
+	}
+	tagReplacements.put(PromptTag.COUNT, Integer.toString(count));
+	tagReplacements.put(PromptTag.DESTINATION, destination.toString());
+	tagReplacements.put(PromptTag.PROJECT, LLMConfig.projectName);
+
+	String prompt = promptTemplate.replaceTags(tagReplacements);
+
+        Logger.info("============");
     	Logger.info("prompt:");
     	Logger.info(prompt);
+    	lastPrompt = prompt;
     	Logger.info("============");
 
-		
-        String answer = chat.chat(prompt); 
-        
-        
+	// LLM for ChatGPT
+	String answer = llmQuery.chatLLM(prompt);
+	// END of LLM code
+
         // answer includes code enclosed in ```java   ....``` or ```....``` blocks
         // use regex to find all of these then parse into javaparser objects for return
-		Pattern pattern = Pattern.compile("```(?:java)(.*?)```", Pattern.DOTALL | Pattern.MULTILINE);
+	Pattern pattern = Pattern.compile("```(?:java)(.*?)```", Pattern.DOTALL | Pattern.MULTILINE);
         Matcher matcher = pattern.matcher(answer);
 
         // now parse the strings return by LLM into JavaParser Statements
@@ -191,9 +164,9 @@ public class LLMReplaceStatement extends StatementEdit {
             }
 
         }
-        
+
         List<SourceFile> variantSourceFiles = new ArrayList<>();
-        
+
         int i = 1;
         for (String s : replacementStrings) {
         	Logger.info("============");
@@ -201,7 +174,7 @@ public class LLMReplaceStatement extends StatementEdit {
         	Logger.info(s);
         	Logger.info("============");
         }
-        
+
         if (replacementStrings.isEmpty()) {
         	Logger.info("============");
         	Logger.info("No replacements found. Response was:");
@@ -211,7 +184,7 @@ public class LLMReplaceStatement extends StatementEdit {
         } else {
         	this.lastReplacement = replacementStrings.get(0);
         }
-        
+
         // replace the original statements with the suggested ones
         for (Statement s : replacementStatements) {
         	try {
@@ -220,13 +193,13 @@ public class LLMReplaceStatement extends StatementEdit {
 	        	// do nothing...
 	        }
         }
-        
+
         return variantSourceFiles;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName() + " \"" + destinationFilename + "\":" + destinationStatement + " !!!" + lastReplacement + "!!!";
+        return this.getClass().getCanonicalName() + " \"" + destinationFilename + "\":" + destinationStatement + "\nPrompt: !!!\n" + lastPrompt +  "\n!!! --> !!!\n" + lastReplacement + "\n!!!";
     }
 
 }

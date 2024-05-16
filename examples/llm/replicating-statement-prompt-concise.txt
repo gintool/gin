@@ -1,0 +1,74 @@
+Please give me $COUNT$ different Java implementations of this method body.
+
+This code belongs to project $PROJECT$.
+
+Wrap all code in curly braces, if it is not already. Do not include any method or class declarations. Label all code as java.
+
+Label all code as java.
+
+Given code:
+```java
+$DESTINATION$
+```
+
+I will give you four examples of small changes you could try. If you have this code:
+
+```java
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        NIOUtils.skip(buf, 8);
+        doWrite(buf);
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        header.write(dup);
+    }
+```
+
+Example 1: You could try copying a statement from one place to another like this:
+```java
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        NIOUtils.skip(buf, 8);
+        doWrite(buf);
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        header.write(dup);
+    }
+```
+
+Example 2: You could try deleting a statement chosen at random like this:
+```java
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        NIOUtils.skip(buf, 8);
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        header.write(dup);
+    }
+```
+
+Example 3: You could try replacing one statement with another like this:
+```java
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        NIOUtils.skip(buf, 8);
+        doWrite(buf);
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        NIOUtils.skip(buf, 8);
+    }
+```
+
+Example 4: You could try swapping two statements like this:
+```java
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        doWrite(buf);
+        NIOUtils.skip(buf, 8);
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        NIOUtils.skip(buf, 8);
+    }
+```
+In all of these examples, the statements to change are chosen at random. They do not have to be whole lines, just valid Java statements.

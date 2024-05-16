@@ -55,7 +55,7 @@ public class ReplaceStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
 
         if (sourceStatement == destinationStatement) {
             return sourceFile; // no-op

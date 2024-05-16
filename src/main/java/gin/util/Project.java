@@ -499,22 +499,22 @@ public class Project implements Serializable {
     }
 
     // Get the names of all unit tests in the project
-    public void runAllUnitTests(String task, String mavenProfile) {
+    public void runAllUnitTests(String task, String mavenProfile, String[] buildToolArgs) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, new Properties());
+            runAllUnitTestsMaven(task, mavenProfile, new Properties(), buildToolArgs);
         } else {
-            runAllUnitTestsGradle(new Properties());
+            runAllUnitTestsGradle(new Properties(), buildToolArgs);
         }
 
     }
 
-    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties) {
+    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties, String[] buildToolArgs) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, properties);
+            runAllUnitTestsMaven(task, mavenProfile, properties, buildToolArgs);
         } else {
-            runAllUnitTestsGradle(properties);
+            runAllUnitTestsGradle(properties, buildToolArgs);
         }
 
     }
@@ -528,7 +528,7 @@ public class Project implements Serializable {
     }
 
     // Maven
-    private void runAllUnitTestsMaven(String task, String profile, Properties properties) {
+    private void runAllUnitTestsMaven(String task, String profile, Properties properties, String[] mavenArgs) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -545,11 +545,15 @@ public class Project implements Serializable {
             request.setThreads(properties.getProperty("THREADS"));
             properties.remove("THREADS");
         }
-
+//Logger.debug("ARGLINE:" + request.getProperties().getProperty("argLine"));   
         request.setProperties(properties);
         Logger.info("Running MVN project with properties: ");
         for (String property : properties.stringPropertyNames()) {
             Logger.info(property + "=" + properties.getProperty(property));
+        }
+        
+        for (String mavenArg : mavenArgs) {
+        	request.addArg(mavenArg);
         }
 
         Invoker invoker = new DefaultInvoker();
@@ -580,7 +584,7 @@ public class Project implements Serializable {
     }
 
     // Gradle
-    private void runAllUnitTestsGradle(Properties properties) {
+    private void runAllUnitTestsGradle(Properties properties, String[] gradleArgs) {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
 
@@ -592,6 +596,8 @@ public class Project implements Serializable {
 
         TestLauncher launcher = connection.newTestLauncher();
 
+        launcher.addArguments(gradleArgs);        
+        
         launcher = launcher.withJvmTestClasses("*");
         if (properties.containsKey("argLine")) {
             Logger.info("Running Gradle profile with argument line: " + properties.getProperty("argLine"));
@@ -791,18 +797,18 @@ public class Project implements Serializable {
 
     }
 
-    public void runUnitTest(UnitTest test, String args, String task, String mavenProfile) throws
+    public void runUnitTest(UnitTest test, String args, String task, String mavenProfile, String[] buildToolArgs) throws
             FailedToExecuteTestException {
 
         if (isMavenProject()) {
-            runUnitTestMaven(test, args, task, mavenProfile);
+            runUnitTestMaven(test, args, task, mavenProfile, buildToolArgs);
         } else {
-            runUnitTestGradle(test, args);
+            runUnitTestGradle(test, args, buildToolArgs);
         }
 
     }
 
-    public void runUnitTestGradle(UnitTest test, String args) {
+    public void runUnitTestGradle(UnitTest test, String args, String[] gradleArgs) {
 
         File connectionDir = projectDir;
 
@@ -820,6 +826,8 @@ public class Project implements Serializable {
 
         TestLauncher testLauncher = connection.newTestLauncher();
 
+        testLauncher.addArguments(gradleArgs);
+        
         Map<String, String> variables = new HashMap<>();
         variables.put("JAVA_TOOL_OPTIONS", args);
 
@@ -849,7 +857,7 @@ public class Project implements Serializable {
     }
 
 
-    public void runUnitTestMaven(UnitTest test, String args, String taskName, String profile)
+    public void runUnitTestMaven(UnitTest test, String args, String taskName, String profile, String[] mavenArgs)
             throws FailedToExecuteTestException {
 
         // Maven requires a # separating class and method, with no parentheses
@@ -865,15 +873,21 @@ public class Project implements Serializable {
         if (!profile.isEmpty()) {
             request.setProfiles(Collections.singletonList(profile));
         }
+        
+        for (String mavenArg : mavenArgs) {
+        	request.addArg(mavenArg);
+        }
 
         request.setGoals(Collections.singletonList(taskName));
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
-
+                
         Properties properties = new Properties();
         request.setProperties(properties);
-        properties.setProperty("argLine", args);
+//Logger.debug("ARGLINE:" + request.getProperties().getProperty("argLine"));        
+//        properties.setProperty("argLine", "@{argLine} " + args);
+	properties.setProperty("argLine", args);
         properties.setProperty("test", testName);
 
         if (!test.getModuleName().isEmpty()) {

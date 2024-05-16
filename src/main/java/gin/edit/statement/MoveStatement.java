@@ -76,7 +76,7 @@ public class MoveStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
         if (sourceStatement == destinationChildInBlock) {
             return sourceFile; // no-op
         }

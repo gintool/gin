@@ -69,6 +69,9 @@ public class LocalSearch implements Serializable {
 
     @Argument(alias = "oaik", description = "OpenAI API key for LLM edits")
     protected String openAIKey = "demo";
+
+    @Argument(alias = "oain", description = "OpenAI API model name for LLM edits; e.g. gpt-3.5-turbo or gpt-4; full list at https://github.com/langchain4j/langchain4j/blob/main/langchain4j-open-ai/src/main/java/dev/langchain4j/model/openai/OpenAiModelName.java")
+    protected String openAIName = "gpt-3.5-turbo";
     
     @Argument(alias = "pt", description = "Prompt Type for LLM edits")
     protected PromptType llmPromptType = PromptType.MEDIUM;
@@ -107,7 +110,8 @@ public class LocalSearch implements Serializable {
         this.testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
         LLMConfig.openAIKey = openAIKey;
-        LLMConfig.promptType = llmPromptType;
+        LLMConfig.openAIModelName = openAIName;
+        LLMConfig.defaultPromptType = llmPromptType;
         // TODO other LLM args
     }
 
@@ -121,7 +125,7 @@ public class LocalSearch implements Serializable {
     private long timeOriginalCode() {
 
         Patch emptyPatch = new Patch(this.sourceFile);
-        UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, WARMUP_REPS);
+        UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, null, WARMUP_REPS);
 
         if (!resultSet.allTestsSuccessful()) {
 
@@ -163,7 +167,7 @@ public class LocalSearch implements Serializable {
         for (int step = 1; step <= numSteps; step++) {
 
             Patch neighbour = neighbour(bestPatch);
-            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, 1);
+            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, null, 1);
 
             String msg;
 
@@ -190,7 +194,7 @@ public class LocalSearch implements Serializable {
                 100.0f * ((origTime - bestTime) / (1.0f * origTime)),
                 bestPatch));
 
-        bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised");
+        bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised", null);
 
     }
 

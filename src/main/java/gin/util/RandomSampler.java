@@ -106,7 +106,7 @@ public class RandomSampler extends Sampler {
                 Logger.info("Testing random patch " + patch + " for method: " + method + " with ID " + methodID);
 
                 // Test the patched source file
-                UnitTestResultSet results = testPatch(method.getClassName(), method.getGinTests(), patch);
+                UnitTestResultSet results = testPatch(method.getClassName(), method.getGinTests(), patch, null);
                 writeResults(results, methodID);
             }
 

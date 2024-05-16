@@ -62,7 +62,7 @@ public class GPFix extends GPSimple {
         super.reps = 1;
         Logger.debug("Reset reps, each test to be run only once for fitness calculation.");
 
-        UnitTestResultSet results = testPatch(className, tests, origPatch);
+        UnitTestResultSet results = testPatch(className, tests, origPatch, null);
         setup(results);
         return results;
     }

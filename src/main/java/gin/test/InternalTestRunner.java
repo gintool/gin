@@ -88,13 +88,13 @@ public class InternalTestRunner extends TestRunner {
      * @param reps  Number of times to run each test.
      * @return the results of the tests
      */
-    public UnitTestResultSet runTests(Patch patch, int reps) {
+    public UnitTestResultSet runTests(Patch patch, Object metadata, int reps) {
         List<UnitTestResult> results;
         // Create a new class loader for every compilation, otherwise java will cache the modified class for us
         CacheClassLoader classLoader = new CacheClassLoader(this.getClassPath());
         try {
             // Apply the patch.
-            String patchedSource = patch.apply();
+            String patchedSource = patch.apply(metadata);
             boolean patchValid = patch.lastApplyWasValid();
             List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
             // Did the code change as a result of applying the patch?
@@ -105,9 +105,10 @@ public class InternalTestRunner extends TestRunner {
             // The patch might be invalid due to a couple of edits, which
             // drop to being no-ops; remaining edits might be ok so still
             // try compiling and then running in case of no-op
+            Compiler compiler = new Compiler();
             if (patchValid) {
                 // Compile
-                CompiledCode code = Compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
+                CompiledCode code = compiler.compile(this.getClassName(), patchedSource, this.getClassPath());
                 compiledOK = (code != null);
                 // Run tests
                 if (compiledOK) {
@@ -120,7 +121,7 @@ public class InternalTestRunner extends TestRunner {
                 results = emptyResults(reps);
             }
 
-            return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+            return new UnitTestResultSet(patch, patchedSource, patchValid, editsValid, compiledOK, compiler.getLastError(), noOp, results);
         } finally {
             try {
                 classLoader.close();

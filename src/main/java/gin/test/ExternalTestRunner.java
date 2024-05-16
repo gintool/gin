@@ -2,6 +2,7 @@ package gin.test;
 
 import gin.Patch;
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.shared.invoker.SystemOutHandler;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
@@ -104,12 +105,12 @@ public class ExternalTestRunner extends TestRunner {
      * @param reps  Number of times to run each test.
      * @return the results of the tests
      */
-    public UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException {
+    public UnitTestResultSet runTests(Patch patch, Object metadata, int reps) throws IOException, InterruptedException {
 
         createTempDirectory();
 
         // Apply the patch.
-        String patchedSource = patch.apply();
+        String patchedSource = patch.apply(metadata);
         boolean patchValid = patch.lastApplyWasValid();
         List<Boolean> editsValid = patch.getEditsInvalidOnLastApply();
 
@@ -122,9 +123,10 @@ public class ExternalTestRunner extends TestRunner {
         // The patch might be invalid due to a couple of edits, which
         // drop to being no-ops; remaining edits might be ok so still
         // try compiling and then running in case of no-op
+        Compiler compiler = new Compiler();
         if (patchValid) {
             // Compile
-            compiledOK = compileClassToTempDir(patchedSource);
+            compiledOK = compileClassToTempDir(patchedSource, compiler);
             // Run tests
             if (compiledOK) {
                 results = runTests(reps);
@@ -137,7 +139,7 @@ public class ExternalTestRunner extends TestRunner {
 
         deleteTempDirectory();
 
-        return new UnitTestResultSet(patch, patchValid, editsValid, compiledOK, noOp, results);
+        return new UnitTestResultSet(patch, patchedSource, patchValid, editsValid, compiledOK, compiler.getLastError(), noOp, results);
 
     }
 
@@ -160,7 +162,7 @@ public class ExternalTestRunner extends TestRunner {
 
     }
 
-    public boolean compileClassToTempDir(String patchedSource) throws FileNotFoundException {
+    public boolean compileClassToTempDir(String patchedSource, Compiler compiler) throws FileNotFoundException {
 
         File sourceFile = temporaryPackageDirectory.resolve(this.getClassNameWithoutPackage() + ".java").toFile();
 
@@ -169,7 +171,7 @@ public class ExternalTestRunner extends TestRunner {
             out.println(patchedSource);
         }
 
-        return Compiler.compileFile(sourceFile, this.getClassPath());
+        return compiler.compileFile(sourceFile, this.getClassPath());
 
     }
 

@@ -63,7 +63,7 @@ public abstract class LocalSearchSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(results, methodName, orig, 0);
+        super.writePatch(-1, 0, results, methodName, orig, 0);
 
         // Keep best 
         double best = orig;
@@ -75,9 +75,9 @@ public abstract class LocalSearchSimple extends GP {
             Patch patch = mutate(bestPatch);
 
             // Calculate fitness
-            results = testPatch(className, tests, patch);
+            results = testPatch(className, tests, patch, null);
             double newFitness = fitness(results);
-            super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+            super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
 
             // Check if better
             if (compareFitness(newFitness, best) > 0) {

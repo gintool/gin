@@ -115,10 +115,12 @@ public class Patch implements Serializable, Cloneable {
      * can be reported via lastApplyWasInvalid(); and we act as if the edit didn't happen at all
      * (move to next edit for 1 and 2; or return original unaltered source for 3)
      * <p>
+     * 
+     * @param metadata to use when applying the edits; could use, e.g., an error code or filter on how to apply it
      *
      * @return text of patched sourcecode; if there were problems, we just get the same sourcefile back
      */
-    public String apply() {
+    public String apply(Object metadata) {
 
         SourceFile patchedSourceFile = sourceFile.copyOf();
         lastApplyWasValid = true;
@@ -126,7 +128,7 @@ public class Patch implements Serializable, Cloneable {
 
         for (Edit edit : edits) {
             try {
-                SourceFile patchedByThisEdit = edit.apply(patchedSourceFile);
+                SourceFile patchedByThisEdit = edit.apply(patchedSourceFile, metadata);
                 if (patchedByThisEdit == null) {
                     lastApplyWasValid = false;
                     editsValidOnLastApply.add(false);
@@ -154,6 +156,11 @@ public class Patch implements Serializable, Cloneable {
             return sourceFile.getSource();
         }
 
+    }
+    
+    /**apply with no metadata*/
+    public String apply() {
+    	return this.apply(null);
     }
 
     /**
@@ -231,11 +238,15 @@ public class Patch implements Serializable, Cloneable {
         return edit;
 
     }
-
+    
     public void writePatchedSourceToFile(String filename) {
+    	writePatchedSourceToFile(filename, null);
+    }
+
+    public void writePatchedSourceToFile(String filename, Object metadata) {
 
         // Apply this patch
-        String patchedSourceFile = this.apply();
+        String patchedSourceFile = this.apply(metadata);
 
         try {
             FileUtils.writeStringToFile(new File(filename), patchedSourceFile, Charset.defaultCharset());

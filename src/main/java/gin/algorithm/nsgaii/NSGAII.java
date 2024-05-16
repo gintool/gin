@@ -131,7 +131,7 @@ public class NSGAII extends Sampler {
         Logger.info("Generating initial generation");
         for (int i = 0; i < indNumber; i++) {
             Patch patch = mutate(origPatch);
-            resultSet = testPatch(className, tests, patch);
+            resultSet = testPatch(className, tests, patch, null);
             writePatch(resultSet, methodName);
             ArrayList<Long> fitnesses = new ArrayList<>();
             if (resultSet.allTestsSuccessful()) {
@@ -153,7 +153,7 @@ public class NSGAII extends Sampler {
             P = new NSGAIIPop(2, dirs);
             for (Patch patch : patches) {
                 Logger.info("Testing patch: " + patch);
-                resultSet = testPatch(className, tests, patch);
+                resultSet = testPatch(className, tests, patch, null);
 
                 writePatch(resultSet, methodName);
                 ArrayList<Long> fitnesses = new ArrayList<>();
@@ -212,7 +212,7 @@ public class NSGAII extends Sampler {
         //fitness
         for (Patch patch : patches) {
             UnitTestResultSet resultSet;
-            resultSet = testPatch(className, tests, patch);
+            resultSet = testPatch(className, tests, patch, null);
 
             writePatch(resultSet, methodName);
             ArrayList<Long> fitnesses = new ArrayList<>();
@@ -231,7 +231,7 @@ public class NSGAII extends Sampler {
 
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
 
-        return testPatch(className, tests, origPatch);
+        return testPatch(className, tests, origPatch, null);
     }
 
     protected Patch mutate(Patch oldPatch) {

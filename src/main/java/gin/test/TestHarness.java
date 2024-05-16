@@ -1,6 +1,9 @@
 package gin.test;
 
 import com.sampullara.cli.Args;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
+
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.LauncherSession;
@@ -169,7 +172,7 @@ public class TestHarness implements Serializable {
         Class<?> clazz = loader.loadClass(testClassname);
 
         String methodName = test.getMethodName().replace("()", "");
-        Method method = clazz.getDeclaredMethod(methodName);
+        Method method = getMethod(clazz, methodName);
 
         return LauncherDiscoveryRequestBuilder.request()
                 .selectors(selectMethod(clazz, method.getName()))
@@ -177,4 +180,21 @@ public class TestHarness implements Serializable {
                 .build();
     }
 
+    
+    /*
+     * Class.getMethod returns only public methods; Class.getDeclaredMethod ignores superclasses
+     * This tries to get all methods including superclasses
+     */
+    public Method getMethod(Class<?> clazz, String methodName) throws NoSuchMethodException {
+    	try {
+    		return clazz.getDeclaredMethod(methodName);
+    	} catch (NoSuchMethodException e) {
+    		if (clazz.equals(Object.class)) {
+    			throw e;
+    		} else {
+    			return getMethod(clazz.getSuperclass(), methodName);
+    		}
+    	}
+    	
+    }
 }    

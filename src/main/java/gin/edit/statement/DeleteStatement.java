@@ -39,7 +39,7 @@ public class DeleteStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
         try {
             return sf.removeStatement(statementToDelete);

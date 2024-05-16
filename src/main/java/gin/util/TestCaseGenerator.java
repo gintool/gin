@@ -364,7 +364,7 @@ public class TestCaseGenerator implements Serializable {
     protected void runAllUnitTests() {
 
         if (project != null) {
-            project.runAllUnitTests("clean test", "");
+            project.runAllUnitTests("clean test", "", new String[0]);
         } else {
             Logger.error("Cannot run tests on a null project.");
         }

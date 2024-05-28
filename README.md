@@ -21,16 +21,19 @@ Please cite the following papers, if you use Gin for academic purposes: <br>
 - release 1: ["GI in No Time"](https://github.com/gintool/gin/blob/master/doc/gin.pdf), David R. White, 3rd
   International GI Workshop, GECCO Companion Material Proceedings, 2017.
 
-Extensions:
+Extensions and specific parts of Gin:
 
-Please cite the following paper, if using the edits from
-the [insert](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/insert) folder:
+ - "Standard" Statement/Line Edits from the [statement](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/statement) and [line](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/line) folders:
+["Program Transformation Landscapes for Automated Program Modification Using Gin"](https://link.springer.com/article/10.1007/s10664-023-10344-5), Petke, J., Alexander, B., Barr, E.T., Brownlee, A. E. I., Wagner, M. & White, D.R., vol 28. 2023.
+ - Edits from the [insert](https://github.com/gintool/gin/tree/master/src/main/java/gin/edit/insert) folder:
 ["Injecting Shortcuts for Faster Running Java Code"](https://ieeexplore.ieee.org/document/9185708), Alexander E. I.
 Brownlee, Justyna Petke, Anna F. Rasburn, CEC 2020.
-
-Please cite the following paper, if using Regression Test Selection (RTS) strategies:
+ - Edits from the [llm](https://github.com/gintool/gin/tree/llm/src/main/java/gin/edit/llm) branch:
+  ["Enhancing Genetic Improvement Mutations Using Large Language Models"](https://link.springer.com/chapter/10.1007/978-3-031-48796-5_13), Alexander E. I. Brownlee, James Callan, Karine Even-Mendoza, Alina Geiger, Carol Hanna, Justyna Petke, Federica Sarro and Dominik Sobania. International Symposium on Search Based Software Engineering 2023. LNCS 14415.
+ - Regression Test Selection (RTS) strategies:
 ["Enhancing Genetic Improvement of Software with Regression Test Selection"](https://doi.org/10.1109/ICSE43902.2021.00120), Giovani Guizzo, Justyna Petke, Federica
 Sarro, Mark Harman, ICSE 2021.
+ - Profiler and associated tools: ["Comparing Apples and Oranges? Investigating the Consistency of CPU and Memory Profiler Results Across Multiple Java Versions"](doi.org/10.1007/s10515-024-00423-2), Watkinson, M., Brownlee, A.E.I. Automated Software Engineering vol 31. 2024.
 
 ## The Gin Design Philosophy
 
@@ -205,6 +208,8 @@ unexpected hard-coded dependencies.
 
 A full example with an existing Maven project is given further below.
 
+As sampler profiling is a stochastic process, it is also worth performing repeat runs, ideally with a reboot between runs. We have provided a tool to merge multiple profiler CSVs into a single file: gin.util.analysis.MergeProfilerFiles. This will retain only hot methods appearing in more than a specific fraction of the repeats, and takes the union of all unit tests observed as calling a given hot method.
+
 ## Automated test case generation for Maven and Gradle projects
 
 Gin uses [EvoSuite](http://www.evosuite.org/) to generate test cases automatically. Make sure test class file are
@@ -270,6 +275,8 @@ Assuming EvoSuite tests were generated and original tests not removed:
 ```
 java -cp build/gin.jar:testgeneration/evosuite-1.0.6.jar gin.util.RandomSampler -d examples/maven-simple -p my-app -m examples/maven-simple/example_profiler_results.csv -h <path_to_mavenHome>
 ```
+The CSV written out by RandomSampler contains one line per unit test per patch. The utility gin.util.analysis.AggregateRandomSamplerOutput can be used to aggregate these results to one line per patch, with summary statistics indicating test pass rates and run times.
+
 
 Gin also offers an implementation of the multi-objective algorithm NSGA-II for improving the execution time and memory
 consumption of software.

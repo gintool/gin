@@ -39,6 +39,12 @@ public class DeleteEnumerator extends Sampler {
     @Argument(alias = "rs", description = "Random seed for method selection")
     protected Integer randomSeed = 123;
 
+    @Argument(alias = "br", description = "If more than 1, then repeat tests for (patch, emptyPatch) this many times. Interleaved runs designed to help with time measurements.")
+    protected Integer baselineRepeats = 1;   
+
+    @Argument(alias = "brs", description = "If running baseline repeats, skip the baseline (empty patch) runs if the tests failed for the patch")
+    protected Boolean baselineRepeatsFastSkip = false;
+    
     public DeleteEnumerator(String[] args) {
         super(args);
         Args.parseOrExit(this, args);
@@ -58,6 +64,8 @@ public class DeleteEnumerator extends Sampler {
     private void printAdditionalArguments() {
         Logger.info("Patch size: " + patchSize);
         Logger.info("Random seed for method selection: " + randomSeed);
+        Logger.info("Baseline repeats: " + baselineRepeats);
+        Logger.info("Baseline repeats fast skip: " + baselineRepeatsFastSkip);
     }
 
     protected void sampleMethodsHook() {
@@ -91,6 +99,7 @@ public class DeleteEnumerator extends Sampler {
 
             // For each combination of patchSize lines, create and test patch
             Iterator<int[]> iterator = CombinatoricsUtils.combinationsIterator(lines.size(), patchSize);
+            int i = 0;
             while (iterator.hasNext()) {
 
                 int[] combination = iterator.next();
@@ -98,9 +107,23 @@ public class DeleteEnumerator extends Sampler {
                 for (int line : combination) {
                     patch.add(new DeleteLine(fileName, lines.get(line)));
                 }
-                UnitTestResultSet results = testPatch(className, tests, patch);
-                writeResults(results, methodID);
-
+                
+                // Test the patched source file
+                // "baselineRepeats" will run the tests against the patch and the empty patch n times
+                // to allow for statistical testing of run times. these are interleaved to reduce run time biases.
+                for (int br = 0; br < baselineRepeats; br++) {
+	                UnitTestResultSet results = testPatch(className, tests, patch);
+	                writeResults(results, methodID, i, br, false);
+	                
+	                if ((baselineRepeats > 1) 
+	                		&& ((results.getValidPatch() && results.getCleanCompile() && results.allTestsSuccessful())
+	                		|| !baselineRepeatsFastSkip)) {
+	                	results = testEmptyPatch(className, tests, sourceFileLine);
+	                	writeResults(results, methodID, i, br, true);
+	                }
+                }
+                
+                i++;
             }
 
             Logger.info("Testing all delete statement edits of size " + patchSize + " for method: " + method + " with ID " + methodID);
@@ -119,9 +142,23 @@ public class DeleteEnumerator extends Sampler {
                 for (int stmt : combination) {
                     patch.add(new DeleteStatement(fileName, stmts.get(stmt)));
                 }
-                UnitTestResultSet results = testPatch(className, tests, patch);
-                writeResults(results, methodID);
 
+                // Test the patched source file
+                // "baselineRepeats" will run the tests against the patch and the empty patch n times
+                // to allow for statistical testing of run times. these are interleaved to reduce run time biases.
+                for (int br = 0; br < baselineRepeats; br++) {
+	                UnitTestResultSet results = testPatch(className, tests, patch);
+	                writeResults(results, methodID, i, br, false);
+	                
+	                if ((baselineRepeats > 1) 
+	                		&& (results.getValidPatch() && results.getCleanCompile() && results.allTestsSuccessful())
+	                		|| !baselineRepeatsFastSkip) {
+	                	results = testEmptyPatch(className, tests, sourceFileTree);
+	                	writeResults(results, methodID, i, br, true);
+	                }
+                }
+                
+                i++;
             }
 
             // Remove method from consideration for the next step

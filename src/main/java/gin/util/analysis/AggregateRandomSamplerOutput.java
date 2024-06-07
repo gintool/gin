@@ -55,7 +55,7 @@ public class AggregateRandomSamplerOutput {
             RFC4180Parser parser = new RFC4180ParserBuilder().build();
             CSVReaderHeaderAware reader = (CSVReaderHeaderAware)(new CSVReaderHeaderAwareBuilder(new FileReader(inputFile)).withCSVParser(parser).build());
             ICSVWriter writer = new CSVWriterBuilder(new FileWriter(outputFilename)).build();
-            writer.writeNext(new String[] {"PatchIndex","PatchSize","Patch","MethodIndex","PatchValid","PatchCompiled","TestPassedCount","AllTestsPassed","TestCount","TestExecutionTimeTotal(ns)","TestCPUTimeTotal(ns)","TestTimedOutCount","NoOp","EditsValid"});
+            writer.writeNext(new String[] {"PatchIndex","PatchSize","Patch","MethodIndex","PatchValid","PatchCompiled","TestPassedCount","AllTestsPassed","TestCount","TestExecutionTimeTotal(ns)","TestCPUTimeTotal(ns)","TestTimedOutCount","NoOp","EditsValid","Iteration","RepeatIndex","IsBaseline"});
             
             Map<String, String> data = reader.readMap();
             
@@ -84,7 +84,10 @@ public class AggregateRandomSamplerOutput {
 						Long.toString(testCPUTimeTotal),
 						Integer.toString(testTimedOutCount),
 						outputRow.get("NoOp"),
-						outputRow.get("EditsValid")
+						outputRow.get("EditsValid"),
+						outputRow.get("Iteration"),
+						outputRow.get("RepeatIndex"),
+						outputRow.get("IsBaseline")
             		});
             
             		outputRow.clear();
@@ -110,6 +113,9 @@ public class AggregateRandomSamplerOutput {
             	outputRow.put("PatchCompiled", data.get("PatchCompiled"));
             	outputRow.put("NoOp", data.get("NoOp"));
             	outputRow.put("EditsValid", data.get("EditsValid"));
+				outputRow.put("Iteration", data.get("Iteration"));
+				outputRow.put("RepeatIndex", data.get("RepeatIndex"));
+				outputRow.put("IsBaseline", data.get("IsBaseline"));
 
             	// add to aggregate values
             	testPassedCount += data.get("TestPassed").equals("true") ? 1 : 0;

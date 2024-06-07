@@ -42,10 +42,12 @@ public abstract class Sampler implements Serializable {
 
     /*============== Optional (required only for certain types of projects, ignored otherwise)  ==============*/
     // Used for writing data to outputFile
+    // explanation of these is in github wiki
     private static final String[] OUT_HEADER = {"PatchIndex", "PatchSize", "Patch", "MethodIndex", "TestIndex", "UnitTest", "RepNumber",
             "PatchValid", "PatchCompiled", "TestPassed", "TestExecutionTime(ns)", "TestCPUTime(ns)",
             "TestTimedOut", "TestExceptionType", "TestExceptionMessage", "AssertionExpectedValue",
-            "AssertionActualValue", "NoOp", "EditsValid"};
+            "AssertionActualValue", "NoOp", "EditsValid", "Iteration", "RepeatIndex", "IsBaseline"};
+    
     private static final Integer DEFAULT_ID = 0; // default id for MethodIndex
     @Argument(alias = "d", description = "Project directory, required", required = true)
     protected File projectDirectory;
@@ -404,24 +406,26 @@ public abstract class Sampler implements Serializable {
 
     /*============== the following write results to the output file ==============*/
 
+    /**
+     * write results for a set of test results for a single patch; assumes there were no repeat runs / timing comparisons with baseline (so Iteration/RepeatIndex/IsBaseline will be patchCount/0/false)
+     * this is in intended for situations where there are no patches as such, e.g., empty patch tester
+     */
     protected void writeResults(UnitTestResultSet resultSet) {
-
-        writeResults(resultSet, patchCount, DEFAULT_ID);
+        writeResults(resultSet, patchCount, DEFAULT_ID, patchCount, 0, false);
+    }
+    
+    protected void writeResults(UnitTestResultSet resultSet, Integer methodID, int iteration, int repeatIndex, boolean baseline) {
+        writeResults(resultSet, patchCount, methodID, iteration, repeatIndex, baseline);
     }
 
-    protected void writeResults(UnitTestResultSet resultSet, Integer methodID) {
-
-        writeResults(resultSet, patchCount, methodID);
-    }
-
-    protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID) {
+    protected void writeResults(UnitTestResultSet testResultSet, int patchCount, Integer methodID, int iteration, int repeatIndex, boolean baseline) {
         int testIdx = 1;
         for (UnitTestResult result : testResultSet.getResults()) {
-            writeResult(patchCount, testIdx++, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid());
+            writeResult(patchCount, testIdx++, testResultSet.getPatch(), testResultSet.getValidPatch(), testResultSet.getCleanCompile(), result, methodID, testResultSet.getNoOp(), testResultSet.getEditsValid(), iteration, repeatIndex, baseline);
         }
     }
 
-    private void writeResult(int patchCount, int testNameIdx, Patch patch, boolean patchValid, boolean compiledOK, UnitTestResult testResult, Integer methodID, boolean patchNoOp, List<Boolean> editsValid) {
+    private void writeResult(int patchCount, int testNameIdx, Patch patch, boolean patchValid, boolean compiledOK, UnitTestResult testResult, Integer methodID, boolean patchNoOp, List<Boolean> editsValid, int iteration, int repeatIndex, boolean baseline) {
 
         String patchIndex = Integer.toString(patchCount);
         String methodIndex = Integer.toString(methodID);
@@ -445,6 +449,9 @@ public abstract class Sampler implements Serializable {
         for (Boolean b : editsValid) {
             editsValidStr.append(b ? 1 : 0);
         }
+        String strIteration = Integer.toString(iteration);
+        String strRepeatIndex = Integer.toString(repeatIndex);
+        String strBaseline = Boolean.toString(baseline);
 
         String[] entry = {
                 patchIndex,
@@ -465,7 +472,10 @@ public abstract class Sampler implements Serializable {
                 testAssertionExpectedValue,
                 testAssertionActualValue,
                 noOp,
-                editsValidStr.toString()
+                editsValidStr.toString(),
+                strIteration,
+                strRepeatIndex,
+                strBaseline
         };
 
         outputFileWriter.writeNext(entry);

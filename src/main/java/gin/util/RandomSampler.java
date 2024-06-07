@@ -43,7 +43,13 @@ public class RandomSampler extends Sampler {
 
     @Argument(alias = "rp", description = "Random seed for edit type selection")
     protected Integer patchSeed = 123;
+    
+    @Argument(alias = "br", description = "If more than 1, then repeat tests for (patch, emptyPatch) this many times. Interleaved runs designed to help with time measurements.")
+    protected Integer baselineRepeats = 1;   
 
+    @Argument(alias = "brs", description = "If running baseline repeats, skip the baseline (empty patch) runs if the tests failed for the patch")
+    protected Boolean baselineRepeatsFastSkip = false;
+    
     /**
      * allowed edit types for sampling: parsed from editType
      */
@@ -73,6 +79,8 @@ public class RandomSampler extends Sampler {
         Logger.info("Number of patches: " + patchNumber);
         Logger.info("Random seed for method selection: " + methodSeed);
         Logger.info("Random seed for edit type selection: " + patchSeed);
+        Logger.info("Baseline repeats: " + baselineRepeats);
+        Logger.info("Baseline repeats fast skip: " + baselineRepeatsFastSkip);
     }
 
     protected void sampleMethodsHook() {
@@ -106,8 +114,19 @@ public class RandomSampler extends Sampler {
                 Logger.info("Testing random patch " + patch + " for method: " + method + " with ID " + methodID);
 
                 // Test the patched source file
-                UnitTestResultSet results = testPatch(method.getClassName(), method.getGinTests(), patch);
-                writeResults(results, methodID);
+                // "baselineRepeats" will run the tests against the patch and the empty patch n times
+                // to allow for statistical testing of run times. these are interleaved to reduce run time biases.
+                for (int br = 0; br < baselineRepeats; br++) {
+	                UnitTestResultSet results = testPatch(method.getClassName(), method.getGinTests(), patch);
+	                writeResults(results, methodID, i, br, false);
+	                
+	                if ((baselineRepeats > 1) 
+	                		&& ((results.getValidPatch() && results.getCleanCompile() && results.allTestsSuccessful())
+	                		|| !baselineRepeatsFastSkip)) {
+	                	results = testEmptyPatch(method.getClassName(), method.getGinTests(), sourceFile);
+	                	writeResults(results, methodID, i, br, true);
+	                }
+                }
             }
 
             Logger.info("Results saved to: " + outputFile);

@@ -178,7 +178,7 @@ public class RTSProfiler implements Serializable {
             properties.setProperty("THREADS", threads);
 
             // Run all test cases
-            project.runAllUnitTestsWithProperties(this.mavenTaskName, this.mavenProfile, properties);
+            project.runAllUnitTestsWithProperties(this.mavenTaskName, this.mavenProfile, properties, argLine.toString());
         }
         // Collect test results
         Set<UnitTest> allTestCases = project.parseTestReports();

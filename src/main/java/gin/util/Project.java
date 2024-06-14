@@ -502,17 +502,17 @@ public class Project implements Serializable {
     public void runAllUnitTests(String task, String mavenProfile) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, new Properties());
+            runAllUnitTestsMaven(task, mavenProfile, new Properties(), "");
         } else {
             runAllUnitTestsGradle(new Properties());
         }
 
     }
 
-    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties) {
+    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties, String argLine) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, properties);
+            runAllUnitTestsMaven(task, mavenProfile, properties, argLine);
         } else {
             runAllUnitTestsGradle(properties);
         }
@@ -528,13 +528,15 @@ public class Project implements Serializable {
     }
 
     // Maven
-    private void runAllUnitTestsMaven(String task, String profile, Properties properties) {
+    private void runAllUnitTestsMaven(String task, String profile, Properties properties, String argLine) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
         File pomFile = new File(projectDir, "pom.xml");
         request.setPomFile(pomFile);
-
+        
+        request.addArg("-DargLine='" + argLine + "'");
+        
         if (!profile.isEmpty()) {
             request.setProfiles(Collections.singletonList(profile));
         }
@@ -858,7 +860,7 @@ public class Project implements Serializable {
         String testName = testClassName + "#" + methodName;
 
         InvocationRequest request = new DefaultInvocationRequest();
-
+        
         File pomFile = new File(projectDir, "pom.xml");
         request.setPomFile(pomFile);
 
@@ -870,11 +872,19 @@ public class Project implements Serializable {
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
-
+        
         Properties properties = new Properties();
         request.setProperties(properties);
         properties.setProperty("argLine", args);
         properties.setProperty("test", testName);
+        
+//        for (String arg : args.split("\\s+")) {
+//        	request.addArg(arg);
+//    	}
+//        request.addArg("-D");
+       // request.addArg("argLine='" + args + "'");
+        //request.addShellEnvironment("argLine='" + args + "'");
+        //request.addArg("-sbtestarg");
 
         if (!test.getModuleName().isEmpty()) {
             List<String> moduleList = new LinkedList<>();

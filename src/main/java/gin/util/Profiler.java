@@ -14,6 +14,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,11 +68,12 @@ public class Profiler implements Serializable {
     protected Long hprofInterval = 10L;
     @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
     protected String profilerChoice = String.valueOf(ProfilerChoice.JFR);
-    @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
-    protected boolean saveChoice = false;
+    @Argument(alias = "k", description = "Keep individual profiling files in profiler_out/, default is to delete them, add -s option to save them")
+    protected boolean keepProfilingFiles = false;
 
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
+        printCommandlineArguments();
         this.workingDir = new File(projectDir, WORKING_DIR);
 
         project = new Project(projectDir, projectName);
@@ -95,15 +97,41 @@ public class Profiler implements Serializable {
             HPROF_ARG = HPROF_ARG.replace("$hprofInterval", Long.toString(hprofInterval));
         }
 
-        valiateArguments();
+        validateArguments();
     }
 
     public static void main(String[] args) {
         Profiler profiler = new Profiler(args);
         profiler.profile();
     }
+    
+    private void printCommandlineArguments() {
 
-    private void valiateArguments() {
+        try {
+            Field[] fields = Profiler.class.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Argument.class)) {
+                    Argument argument = field.getAnnotation(Argument.class);
+                    String name = argument.description();
+                    Object value = field.get(this);
+                    if (value instanceof File) {
+                        Logger.info(name + ": " + ((File) value).getPath());
+                    } else if (value == null) {
+                        Logger.info(name + ": ");
+                    } else {
+                        Logger.info(name + ": " + value);
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            Logger.error("Error printing commandline arguments.");
+            System.exit(-1);
+        }
+
+    }
+
+    private void validateArguments() {
         if (this.project.isGradleProject() && this.profilerChoice.trim().equalsIgnoreCase("JFR") && SystemUtils.IS_OS_WINDOWS) {
             throw new IllegalArgumentException("Gin will not work with Windows and Java Flight Recorder on Gradle projects.");
         }
@@ -258,7 +286,7 @@ public class Profiler implements Serializable {
                 File traceFile;
                 Trace trace;
 
-                if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
+                if (this.profilerChoice.equalsIgnoreCase(ProfilerChoice.HPROF.toString())) {
                     traceFile = hprofFile(test, rep);
                     trace = Trace.fromHPROFFile(this.project, test, traceFile);
                     testTraces.add(trace);
@@ -276,7 +304,7 @@ public class Profiler implements Serializable {
                 }
 
                 //delete individual profiling files
-                if (!saveChoice) {
+                if (!keepProfilingFiles) {
                     try {
                         Files.deleteIfExists(traceFile.toPath());
                     } catch (IOException e) {

@@ -1,19 +1,59 @@
 package gin.util;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.ClassPath;
-import gin.test.UnitTest;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.shared.invoker.*;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildException;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.TestExecutionException;
+import org.gradle.tooling.TestLauncher;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -24,17 +64,15 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.pmw.tinylog.Logger;
+import org.xml.sax.SAXException;
 
-import javax.annotation.Nullable;
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
+
+import gin.test.UnitTest;
 
 /**
  * Handy class for analysing Maven and Gradle projects.
@@ -988,6 +1026,64 @@ public class Project implements Serializable {
 
         return signature;
 
+    }
+    
+    // testing WIP
+    public static void main(String[] args) {
+    	new Project(new File("/home/oldchap/gin/tmp-projects/guava"), "guava").preprocessMavenPOMs();
+    }
+    
+    /**
+     * scan project directory for pom.xml
+     * preprocess each one:
+     *  - create pom.xml.original
+     *  - in any argLine elements, add ${argLine} to allow Gin to pass in arguments
+     *  - removes apache rat, which can block builds once Gin has added new files to a project
+     */
+    public void preprocessMavenPOMs() {
+    	// find all POMs 
+    	Collection<File> files = FileUtils.listFiles(this.projectDir, new NameFileFilter("pom.xml"), TrueFileFilter.INSTANCE);
+    	for (File inputFile : files) {
+    		try {
+    			File fCopy = new File(inputFile.toString().replace("pom.xml", "pom.xml.original"));
+        		    			
+    			if (fCopy.exists()) { // i.e., already done! restore original file and try again
+    				inputFile.delete();
+	    			FileUtils.moveFile(fCopy, inputFile);
+	    		}
+	    		
+	    		// make a backup of the original file
+    			FileUtils.copyFile(inputFile, fCopy);
+    			
+    	        // Load the XML file
+                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                org.w3c.dom.Document doc = dBuilder.parse(inputFile);
+                doc.getDocumentElement().normalize();
+
+                // Find the <username> element and update its value
+                org.w3c.dom.NodeList nodeList = doc.getElementsByTagName("argLine");
+                if (nodeList.getLength() > 0) {
+                	org.w3c.dom.Node usernameNode = nodeList.item(0);
+                    if (usernameNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                        usernameNode.setTextContent("${argLine} " + usernameNode.getTextContent());
+                    }
+                }
+
+                // Write the updated document back to the file
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                DOMSource source = new DOMSource(doc);
+                StreamResult result = new StreamResult(inputFile);
+                transformer.transform(source, result);
+
+    		} catch (IOException | ParserConfigurationException | SAXException | TransformerException e) {
+    			Logger.error("Problem amending " + inputFile + "... Gin may not be able to work with this project.");
+    			Logger.error(e);
+    		}
+    	}
+    	
     }
 
     public String toString() {

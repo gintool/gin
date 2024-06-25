@@ -1030,7 +1030,7 @@ public class Project implements Serializable {
     
     // testing WIP
     public static void main(String[] args) {
-    	new Project(new File("/home/oldchap/gin/tmp-projects/guava"), "guava").preprocessMavenPOMs();
+    	new Project(new File("/home/oldchap/gin/tmp-projects/commons-net"), "guava").preprocessMavenPOMs();
     }
     
     /**
@@ -1061,13 +1061,90 @@ public class Project implements Serializable {
                 org.w3c.dom.Document doc = dBuilder.parse(inputFile);
                 doc.getDocumentElement().normalize();
 
-                // Find the <username> element and update its value
+                // Find the <argLine> element and update its value
                 org.w3c.dom.NodeList nodeList = doc.getElementsByTagName("argLine");
                 if (nodeList.getLength() > 0) {
-                	org.w3c.dom.Node usernameNode = nodeList.item(0);
-                    if (usernameNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
-                        usernameNode.setTextContent("${argLine} " + usernameNode.getTextContent());
+                	org.w3c.dom.Node argLineNode = nodeList.item(0);
+                    if (argLineNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                    	argLineNode.setTextContent("${argLine} " + argLineNode.getTextContent());
                     }
+                }
+                
+                // if apache rat is mentioned anywhere in the pom...
+                if (doc.getDocumentElement().getTextContent().contains("apache-rat")) {
+	                // find the apache rat element, or add one
+	                // and add <plugin><groupId>org.apache.rat</groupId> <artifactId>apache-rat-plugin</artifactId>   <configuration>   <skip>true</skip> </configuration></plugin>
+	                // should go under project/build/pluginManagement/plugins/
+                	org.w3c.dom.Element buildElement = null;
+                	nodeList = doc.getElementsByTagName("build");
+	                if (nodeList.getLength() > 0) {
+	                	org.w3c.dom.Node n = nodeList.item(0);
+	                	buildElement = (org.w3c.dom.Element)n;
+	                } else {
+	                	buildElement = doc.createElement("build");
+	                	doc.getDocumentElement().appendChild(buildElement);
+	                }
+                	
+	                org.w3c.dom.Element pluginManagementElement = null;
+                	nodeList = buildElement.getElementsByTagName("pluginManagement");
+	                if (nodeList.getLength() > 0) {
+	                	org.w3c.dom.Node n = nodeList.item(0);
+	                	pluginManagementElement = (org.w3c.dom.Element)n;
+	                } else {
+	                	pluginManagementElement = doc.createElement("pluginManagement");
+	                	buildElement.appendChild(pluginManagementElement);
+	                }
+	                
+	                org.w3c.dom.Element pluginsElement = null;
+                	nodeList = pluginManagementElement.getElementsByTagName("plugins");
+                	if (nodeList.getLength() > 0) {
+	                	org.w3c.dom.Node n = nodeList.item(0);
+	                	pluginsElement = (org.w3c.dom.Element)n;
+	                } else {
+	                	pluginsElement = doc.createElement("plugins");
+	                	pluginManagementElement.appendChild(pluginManagementElement);
+	                }
+	                	 
+                	nodeList = pluginsElement.getElementsByTagName("plugin");
+                    boolean found = false;
+                	if (nodeList.getLength() > 0) {
+	                	for (int i = 0; i < nodeList.getLength(); i++) {
+	                		org.w3c.dom.Node n = nodeList.item(i);
+	                		
+	                		if (n.getTextContent().contains("org.apache.rat")) {
+	                			org.w3c.dom.Node skipNode = null;
+	                			nodeList = ((org.w3c.dom.Element)n).getElementsByTagName("skip");
+	                			if (nodeList.getLength() > 0) {
+	                				skipNode = nodeList.item(0);
+	                			} else {
+	                				skipNode = doc.createElement("plugins");
+	        	                	doc.getDocumentElement().appendChild(skipNode);
+	                			}
+	                			((org.w3c.dom.Element)skipNode).setTextContent("true");
+	                			
+	                			found = true;
+	                		}	
+	                	}
+                    }
+                	
+                	if (!found) {
+                		org.w3c.dom.Element pluginElement = doc.createElement("plugin");
+                		org.w3c.dom.Element groupIdElement = doc.createElement("groupId");
+                		groupIdElement.setTextContent("org.apache.rat");
+                		org.w3c.dom.Element artifactIdlement = doc.createElement("artifactId");
+                		artifactIdlement.setTextContent("apache-rat-plugin");
+                		org.w3c.dom.Element configurationElement = doc.createElement("configuration");
+                		org.w3c.dom.Element skipElement = doc.createElement("skip");
+                		skipElement.setTextContent("true");
+                		
+                		configurationElement.appendChild(skipElement);
+                		
+                		pluginElement.appendChild(groupIdElement);
+                		pluginElement.appendChild(artifactIdlement);
+                		pluginElement.appendChild(configurationElement);
+                		
+                		pluginsElement.appendChild(pluginElement);
+                	}
                 }
 
                 // Write the updated document back to the file

@@ -1162,6 +1162,28 @@ public class Project implements Serializable {
     	}
     	
     }
+    
+    /**
+     * remove any pom.xml files created above, and replace with the pom.xml.original
+     */
+    public void restoreMavenPOMs() {
+    	// find all POMs 
+    	Collection<File> files = FileUtils.listFiles(this.projectDir, new NameFileFilter("pom.xml"), TrueFileFilter.INSTANCE);
+    	for (File inputFile : files) {
+    		try {
+    			File fCopy = new File(inputFile.toString().replace("pom.xml", "pom.xml.original"));
+        		    			
+    			if (fCopy.exists()) { // i.e., already done! restore original file and try again
+    				inputFile.delete();
+	    			FileUtils.moveFile(fCopy, inputFile);
+	    		}
+    		} catch (IOException e) {
+    			Logger.error("Problem restoring " + inputFile + ".");
+    			Logger.error(e);
+    		}
+    	}
+    	
+    }
 
     public String toString() {
         return this.projectName;

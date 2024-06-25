@@ -70,7 +70,9 @@ public class Profiler implements Serializable {
     protected String profilerChoice = String.valueOf(ProfilerChoice.JFR);
     @Argument(alias = "k", description = "Keep individual profiling files in profiler_out/, default is to delete them, add -s option to save them")
     protected boolean keepProfilingFiles = false;
-
+    @Argument(alias = "nmp", description = "Gin will amend pom.xml in maven projects to fix compatibility issues. Add this option to NOT change any pom.xml, though this could break Gin's functionality for some projects. See issue #99")
+    protected boolean noMavenPreprocessing = false;
+    
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
         printCommandlineArguments();
@@ -98,6 +100,10 @@ public class Profiler implements Serializable {
         }
 
         validateArguments();
+        
+        if (!noMavenPreprocessing) {
+        	project.preprocessMavenPOMs();
+        }
     }
 
     public static void main(String[] args) {

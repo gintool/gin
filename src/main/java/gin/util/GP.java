@@ -40,7 +40,10 @@ public abstract class GP extends Sampler {
 
     @Argument(alias = "in", description = "Number of individuals")
     protected Integer indNumber = 10;
-
+    
+    @Argument(alias = "mn", description = "Only search over first n hot methods")
+    protected Integer methodNumber = Integer.MAX_VALUE;
+    
     @Argument(alias = "ms", description = "Random seed for mutation operator selection")
     protected Integer mutationSeed = 123;
 
@@ -89,7 +92,8 @@ public abstract class GP extends Sampler {
 
             writeNewHeader();
 
-            for (TargetMethod method : methodData) {
+            int numberToSearch = Math.min(methodData.size(), methodNumber);
+            for (TargetMethod method : methodData.subList(0, numberToSearch)) {
 
                 Logger.info("Running GP on method " + method);
 
@@ -132,7 +136,9 @@ public abstract class GP extends Sampler {
     /*============== Helper methods  ==============*/
 
     protected void writeNewHeader() {
-        String[] entry = {"MethodName"
+        String[] entry = { "MethodName"
+        		, "Iteration"
+        		, "EvaluationNumber"
                 , "Patch"
                 , "Compiled"
                 , "AllTestsPassed"
@@ -150,8 +156,10 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
-        String[] entry = {methodName
+    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, double fitness, double improvement) {
+        String[] entry = { methodName
+        		, Integer.toString(iteration)
+        		, Integer.toString(evaluationNumber)
                 , results.getPatch().toString()
                 , Boolean.toString(results.getCleanCompile())
                 , Boolean.toString(results.allTestsSuccessful())

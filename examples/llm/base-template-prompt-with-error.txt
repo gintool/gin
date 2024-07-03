@@ -1,0 +1,13 @@
+Give me $COUNT$ different Java implementations of this method body:```
+$DESTINATION$
+```
+This code belongs to project $PROJECT$.
+
+Last time you suggested:```
+$PREVIOUS$
+```
+but I got this error:```
+$ERROR$
+```
+
+Wrap all code in curly braces, if it is not already. Do not include any method or class declarations. Label all code as java.

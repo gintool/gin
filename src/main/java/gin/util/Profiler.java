@@ -13,6 +13,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,7 +69,9 @@ public class Profiler implements Serializable {
     protected String profilerChoice = "jfr";
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
-
+    @Argument(alias = "ba", description = "Comma separated list of arguments to pass to Maven or Gradle")
+    protected String[] buildToolArgs = new String[0];
+        
     public Profiler(String[] args) {
         Args.parseOrExit(this, args);
         this.workingDir = new File(projectDir, WORKING_DIR);
@@ -95,6 +98,7 @@ public class Profiler implements Serializable {
         }
 
         valiateArguments();
+        printCommandlineArguments();
     }
 
     public static void main(String[] args) {
@@ -115,7 +119,7 @@ public class Profiler implements Serializable {
         Logger.info("Profiling project: " + this.project);
 
         if (!this.skipInitialRun) {
-            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile);
+            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
         }
 
         Set<UnitTest> tests = project.parseTestReports();
@@ -216,7 +220,7 @@ public class Profiler implements Serializable {
                 ProfileResult profileResult;
 
                 try {
-                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile);
+                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
                     profileResult = new ProfileResult(test, true, null);
                 } catch (FailedToExecuteTestException e) {
                     Logger.warn("Failed to execute test: " + test + " due to Exception: " + e);
@@ -397,6 +401,34 @@ public class Profiler implements Serializable {
 
         if (!workingDir.exists()) {
             workingDir.mkdirs();
+        }
+
+    }
+    
+    private void printCommandlineArguments() {
+
+        try {
+            Field[] fields = Profiler.class.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Argument.class)) {
+                    Argument argument = field.getAnnotation(Argument.class);
+                    String name = argument.description();
+                    Object value = field.get(this);
+                    if (value instanceof File) {
+                        Logger.info(name + ": " + ((File) value).getPath());
+                    } else if (value instanceof String[]) {
+                        Logger.info(name + ": " + Arrays.toString((String[])value));
+                    } else if (value == null) {
+                        Logger.info(name + ": ");
+                    } else {
+                        Logger.info(name + ": " + value);
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            Logger.error("Error printing commandline arguments.");
+            System.exit(-1);
         }
 
     }

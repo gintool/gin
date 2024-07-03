@@ -228,7 +228,7 @@ public class PatchAnalyser implements Serializable {
         // Evaluate original class
         Logger.info("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFileTree);
-        long originalExecutionTime = testRunner.runTests(emptyPatch, REPS).totalExecutionTime();
+        long originalExecutionTime = testRunner.runTests(emptyPatch, null, REPS).totalExecutionTime();
         Logger.info("Original execution time: " + originalExecutionTime);
 
         // Write the original source to file, for easy diff with *.patched file
@@ -244,7 +244,7 @@ public class PatchAnalyser implements Serializable {
 
         // Evaluate patch
         Logger.info("Timing patched sourceFile execution...");
-        UnitTestResultSet resultSet = testRunner.runTests(patch, REPS);
+        UnitTestResultSet resultSet = testRunner.runTests(patch, null, REPS);
 
         // Output test results
         logTestResults(resultSet);

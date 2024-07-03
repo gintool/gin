@@ -7,6 +7,9 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import gin.Patch;
 import gin.SourceFile;
+import gin.edit.llm.LLMConfig;
+import gin.edit.llm.PromptTemplate;
+import gin.edit.llm.LLMConfig.PromptType;
 import gin.test.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -91,6 +94,24 @@ public abstract class Sampler implements Serializable {
     protected Project project = null;
     protected List<TargetMethod> methodData = new ArrayList<>();
 
+    @Argument(alias = "oaik", description = "OpenAI API key for LLM edits")
+    protected String openAIKey = "demo";
+
+    @Argument(alias = "oain", description = "OpenAI API model name for LLM edits; e.g. gpt-3.5-turbo or gpt-4; full list at https://github.com/langchain4j/langchain4j/blob/main/langchain4j-open-ai/src/main/java/dev/langchain4j/model/openai/OpenAiModelName.java")
+    protected String openAIName = "gpt-3.5-turbo";
+
+    @Argument(alias = "mt", description = "model type; OpenAI  or a name of an ollama model")
+    protected String modelType = "OpenAI";
+    
+    @Argument(alias = "mo", description = "model timeout in seconds")
+    protected Integer modelTimeout = 30;
+    
+    @Argument(alias = "pt", description = "Prompt Type for LLM edits")
+    protected PromptType llmPromptType = PromptType.MEDIUM;
+
+    @Argument(alias = "ptt", description = "Prompt Template for LLM edits")
+    protected String llmPromptTemplate = "";
+    
     /*============== Structures holding all project data  ==============*/
     protected Set<UnitTest> testData = new LinkedHashSet<>();
     private int patchCount = 0;
@@ -135,6 +156,15 @@ public abstract class Sampler implements Serializable {
         } else if (numberOfMethodsToSample > 0 && this.numberOfMethodsToSample < this.methodData.size()) {
             this.methodData = this.methodData.subList(0, this.numberOfMethodsToSample);
         }
+        
+        LLMConfig.openAIKey = openAIKey;
+        LLMConfig.openAIModelName = openAIName;
+        LLMConfig.modelType = modelType;
+        LLMConfig.timeoutInSeconds = modelTimeout;
+        LLMConfig.defaultPromptType = llmPromptType;
+        LLMConfig.projectName = projectName;
+        LLMConfig.defaultPromptTemplate = llmPromptTemplate.isEmpty() ? null : PromptTemplate.fromFile(llmPromptTemplate); // this will override the prompttype
+        // TODO other LLM args
     }
 
     /*============== the following is used to store method information  ==============*/
@@ -169,9 +199,9 @@ public abstract class Sampler implements Serializable {
         UnitTestResultSet resultSet;
 
         if (!inSubprocess && !eachRepetitionInNewSubprocess && !eachTestInNewSubprocess) {
-            resultSet = testPatchInternally(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
+            resultSet = testPatchInternally(targetClass, new ArrayList<>(tests), new Patch(sourceFile), null);
         } else {
-            resultSet = testPatchInSubprocess(targetClass, new ArrayList<>(tests), new Patch(sourceFile));
+            resultSet = testPatchInSubprocess(targetClass, new ArrayList<>(tests), new Patch(sourceFile), null);
         }
 
         if (!resultSet.allTestsSuccessful()) {
@@ -218,7 +248,7 @@ public abstract class Sampler implements Serializable {
 
     /*============== methods for running tests  ==============*/
 
-    protected UnitTestResultSet testPatch(String targetClass, List<UnitTest> tests, Patch patch) {
+    protected UnitTestResultSet testPatch(String targetClass, List<UnitTest> tests, Patch patch, Object metadata) {
 
         Logger.debug("Testing patch: " + patch);
 
@@ -227,29 +257,29 @@ public abstract class Sampler implements Serializable {
         UnitTestResultSet resultSet;
 
         if (!inSubprocess && !eachTestInNewSubprocess) {
-            resultSet = testPatchInternally(targetClass, tests, patch);
+            resultSet = testPatchInternally(targetClass, tests, patch, metadata);
         } else {
-            resultSet = testPatchInSubprocess(targetClass, tests, patch);
+            resultSet = testPatchInSubprocess(targetClass, tests, patch, metadata);
         }
 
         return resultSet;
 
     }
 
-    private UnitTestResultSet testPatchInternally(String targetClass, List<UnitTest> tests, Patch patch) {
+    private UnitTestResultSet testPatchInternally(String targetClass, List<UnitTest> tests, Patch patch, Object metadata) {
 
         InternalTestRunner testRunner = new InternalTestRunner(targetClass, classPath, tests, failFast);
-        return testRunner.runTests(patch, reps);
+        return testRunner.runTests(patch, metadata, reps);
     }
 
-    private UnitTestResultSet testPatchInSubprocess(String targetClass, List<UnitTest> tests, Patch patch) {
+    private UnitTestResultSet testPatchInSubprocess(String targetClass, List<UnitTest> tests, Patch patch, Object metadata) {
 
         ExternalTestRunner testRunner = new ExternalTestRunner(targetClass, classPath, tests, eachRepetitionInNewSubprocess, eachTestInNewSubprocess, failFast);
 
         UnitTestResultSet results = null;
 
         try {
-            results = testRunner.runTests(patch, reps);
+            results = testRunner.runTests(patch, metadata, reps);
         } catch (IOException | InterruptedException e) {
             Logger.error(e);
             System.exit(-1);

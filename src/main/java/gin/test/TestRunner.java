@@ -39,7 +39,7 @@ public abstract class TestRunner implements Serializable {
         }
     }
 
-    public abstract UnitTestResultSet runTests(Patch patch, int reps) throws IOException, InterruptedException;
+    public abstract UnitTestResultSet runTests(Patch patch, Object metadata, int reps) throws IOException, InterruptedException;
 
     public List<UnitTest> getTests() {
         return this.tests;

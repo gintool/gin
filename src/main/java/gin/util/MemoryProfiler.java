@@ -66,7 +66,9 @@ public class MemoryProfiler {
     protected String profilerChoice = "jfr";
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
     protected String saveChoice = "d";
-
+    @Argument(alias = "ba", description = "Comma separated list of arguments to pass to Maven or Gradle")
+    protected String[] buildToolArgs = new String[0];
+    
     public MemoryProfiler(String[] args) {
         Args.parseOrExit(this, args);
         
@@ -116,7 +118,7 @@ public class MemoryProfiler {
         Logger.info("Profiling project: " + this.project);
 
         if (!this.skipInitialRun) {
-            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile);
+            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
         }
 
         Set<UnitTest> tests = project.parseTestReports();
@@ -215,7 +217,7 @@ public class MemoryProfiler {
                 ProfileResult profileResult;
 
                 try {
-                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile);
+                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
                     profileResult = new ProfileResult(test, true, null);
                 } catch (FailedToExecuteTestException e) {
                     Logger.warn("Failed to execute test: " + test + " due to Exception: " + e);

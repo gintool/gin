@@ -88,7 +88,7 @@ public class UnaryOperatorReplacement extends ModifyNodeEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
         Node node = sf.getNode(targetNode);
 

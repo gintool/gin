@@ -9,6 +9,8 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class CompilerTest {
 
@@ -21,10 +23,11 @@ public class CompilerTest {
         String classPath = exampleDirName;
         String className = "SimpleExample";
 
-        CompiledCode code = Compiler.compile(className, "public class SimpleExample {} ", classPath);
+        Compiler compiler = new Compiler();
+        CompiledCode code = compiler.compile(className, "public class SimpleExample {} ", classPath);
 
         assertNotNull(code);
-
+        
         Class<?> compiledClass;
         try (CacheClassLoader loader = new CacheClassLoader(classPath)) {
             loader.setCustomCompiledCode(className, code.getByteCode());
@@ -33,6 +36,21 @@ public class CompilerTest {
 
         assertNotNull(compiledClass);
         assertEquals("SimpleExample", compiledClass.getSimpleName());
+    }
+    
+
+    @Test
+    public void testNoCompile() throws ClassNotFoundException, IOException {
+
+        String classPath = exampleDirName;
+        String className = "SimpleExample";
+
+        Compiler compiler = new Compiler();
+        CompiledCode code = compiler.compile(className, "public class SimpleExample { badStuff } ", classPath);
+
+        assertNull(code);
+        assertTrue(compiler.getLastError().contains("<identifier> expected"));
+        
     }
 
 }

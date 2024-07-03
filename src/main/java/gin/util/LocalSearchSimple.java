@@ -2,15 +2,22 @@ package gin.util;
 
 import gin.Patch;
 import gin.edit.Edit;
+import gin.edit.line.CopyLine;
+import gin.edit.line.DeleteLine;
+import gin.edit.line.LineEdit;
+import gin.edit.Edit;
+import gin.edit.llm.LLMMaskedStatement;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 
 /**
@@ -63,7 +70,7 @@ public abstract class LocalSearchSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(results, methodName, orig, 0);
+        super.writePatch(-1, 0, results, methodName, orig, 0);
 
         // Keep best 
         double best = orig;
@@ -75,9 +82,9 @@ public abstract class LocalSearchSimple extends GP {
             Patch patch = mutate(bestPatch);
 
             // Calculate fitness
-            results = testPatch(className, tests, patch);
+            results = testPatch(className, tests, patch, null);
             double newFitness = fitness(results);
-            super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+            super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
 
             // Check if better
             if (compareFitness(newFitness, best) > 0) {
@@ -89,10 +96,35 @@ public abstract class LocalSearchSimple extends GP {
 
     /*====== GP Operators ======*/
 
+    /**
+     * Generate a neighbouring patch, by either deleting an edit, or adding a new one.
+     *
+     * @param patch Generate a neighbour of this patch.
+     * @return A neighbouring patch.
+     */
+    Patch neighbour(Patch patch) {
+
+        Patch neighbour = patch.clone();
+
+        if (neighbour.size() > 0 && super.mutationRng.nextFloat() > 0.75) {
+            neighbour.remove(super.mutationRng.nextInt(neighbour.size()));
+        } else if (neighbour.size() > 0 && super.mutationRng.nextFloat() > 0.25) {
+            neighbour.addRandomEditOfClasses(super.mutationRng, Arrays.asList(LLMMaskedStatement.class));
+        } 
+        else {
+            neighbour.addRandomEditOfClasses(super.mutationRng, Edit.getEditClassesOfType(Edit.EditType.STATEMENT));
+        }
+
+        return neighbour;
+
+    }
+
+
     // Adds a random edit of the given type with equal probability among allowed types
     protected Patch mutate(Patch oldPatch) {
         Patch patch = oldPatch.clone();
         patch.addRandomEditOfClasses(super.mutationRng, super.editTypes);
+        // patch = neighbour(patch);
         return patch;
     }
 

@@ -6,6 +6,8 @@ import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.edit.llm.LLMConfig;
 import gin.edit.llm.LLMConfig.PromptType;
+import gin.edit.llm.LLMConfig;
+import gin.edit.llm.LLMConfig.PromptType;
 import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
@@ -60,6 +62,7 @@ public class LocalSearch implements Serializable {
 
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
+    
     
     /**
      * allowed edit types for sampling: parsed from editType
@@ -129,6 +132,7 @@ public class LocalSearch implements Serializable {
 
         Patch emptyPatch = new Patch(this.sourceFile);
         UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, null, WARMUP_REPS);
+        UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, null, WARMUP_REPS);
 
         if (!resultSet.allTestsSuccessful()) {
 
@@ -171,6 +175,7 @@ public class LocalSearch implements Serializable {
 
             Patch neighbour = neighbour(bestPatch);
             UnitTestResultSet testResultSet = testRunner.runTests(neighbour, null, 1);
+            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, null, 1);
 
             String msg;
 
@@ -197,6 +202,7 @@ public class LocalSearch implements Serializable {
                 100.0f * ((origTime - bestTime) / (1.0f * origTime)),
                 bestPatch));
 
+        bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised", null);
         bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised", null);
 
     }

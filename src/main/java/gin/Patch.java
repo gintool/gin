@@ -5,6 +5,8 @@ import gin.edit.Edit.EditType;
 import gin.edit.NoEdit;
 import gin.edit.line.LineEdit;
 import gin.edit.statement.StatementEdit;
+import gin.edit.llm.LLMMaskedStatement;
+import gin.edit.llm.LLMReplaceStatement;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
 
@@ -215,6 +217,7 @@ public class Patch implements Serializable, Cloneable {
         Edit edit = null;
 
         // decide what edit we're doing to make
+        Logger.info("Choosing an edit type from: " + allowableEditTypes);
         Class<? extends Edit> editType = allowableEditTypes.get(rng.nextInt(allowableEditTypes.size()));
 
         // make one

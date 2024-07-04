@@ -132,7 +132,6 @@ public class LocalSearch implements Serializable {
 
         Patch emptyPatch = new Patch(this.sourceFile);
         UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, null, WARMUP_REPS);
-        UnitTestResultSet resultSet = testRunner.runTests(emptyPatch, null, WARMUP_REPS);
 
         if (!resultSet.allTestsSuccessful()) {
 
@@ -175,7 +174,6 @@ public class LocalSearch implements Serializable {
 
             Patch neighbour = neighbour(bestPatch);
             UnitTestResultSet testResultSet = testRunner.runTests(neighbour, null, 1);
-            UnitTestResultSet testResultSet = testRunner.runTests(neighbour, null, 1);
 
             String msg;
 
@@ -202,7 +200,6 @@ public class LocalSearch implements Serializable {
                 100.0f * ((origTime - bestTime) / (1.0f * origTime)),
                 bestPatch));
 
-        bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised", null);
         bestPatch.writePatchedSourceToFile(sourceFile.getRelativePathToWorkingDir() + ".optimised", null);
 
     }

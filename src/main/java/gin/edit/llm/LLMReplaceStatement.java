@@ -15,6 +15,7 @@ import org.pmw.tinylog.Logger;
 import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.utils.Log;
 
@@ -102,19 +103,6 @@ public class LLMReplaceStatement extends StatementEdit {
 
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
-
-        // List<Statement> stmts = sf.getTargetMethodRootNode().get(0).findAll(Statement.class);
-
-        // Logger.info("===================================================");
-        // for (Statement s : stmts) {
-        //     Logger.info("===================================================");
-        //     Logger.info("this is a statement:");
-        //     Logger.info(s);
-        //     Logger.info("===================================================");
-
-        // }
-        // Logger.info("===================================================");
-
         Node destination = sf.getNode(destinationStatement);
 
         if (destination == null) {
@@ -154,11 +142,6 @@ public class LLMReplaceStatement extends StatementEdit {
 
 	// LLM for ChatGPT
 	String answer = llmQuery.chatLLM(prompt);
-
-        Logger.info("============");
-        Logger.info("response:");
-        Logger.info(answer);
-        Logger.info("============");
 	// END of LLM code
 
         // answer includes code enclosed in ```java   ....``` or ```....``` blocks
@@ -166,38 +149,21 @@ public class LLMReplaceStatement extends StatementEdit {
 	Pattern pattern = Pattern.compile("```(?:java)(.*?)```", Pattern.DOTALL | Pattern.MULTILINE);
         Matcher matcher = pattern.matcher(answer);
 
-        Logger.info("============");
-        Logger.info("matches:");
-        Logger.info(matcher.find());
-        Logger.info("============");
-
         // now parse the strings return by LLM into JavaParser Statements
         List<String> replacementStrings = new ArrayList<>();
         List<Statement> replacementStatements = new ArrayList<>();
         while (matcher.find()) {
         	String str = matcher.group(1);
 
-            Logger.info("============");
-            Logger.info("match:");
-            Logger.info(str);
-    
-
         	try {
                 Statement stmt;
                 stmt = StaticJavaParser.parseBlock(str);
                 replacementStrings.add(str);
                 replacementStatements.add(stmt);
-                
-
-                Logger.info("here is the parsed statement:");
             }
             catch (ParseProblemException e) {
-                Logger.info("PARSE PROBLEM EXCEPTION");
                 continue;
             }
-
-            Logger.info("============");
-
 
         }
 
@@ -219,10 +185,6 @@ public class LLMReplaceStatement extends StatementEdit {
         	this.lastReplacement = "LLM GAVE NO SUGGESTIONS";
         } else {
         	this.lastReplacement = replacementStrings.get(0);
-            Logger.info("============");
-            Logger.info("Applying first suggestion:");
-            Logger.info(this.lastReplacement);
-            Logger.info("============");
         }
 
         // replace the original statements with the suggested ones

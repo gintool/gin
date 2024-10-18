@@ -6,7 +6,10 @@ import gin.Patch;
 import gin.SourceFile;
 import gin.edit.Edit;
 import gin.edit.Edit.EditType;
+import gin.edit.llm.LLMMaskedStatement;
+import gin.edit.llm.LLMReplaceStatement;
 import gin.test.UnitTestResultSet;
+
 import org.apache.commons.rng.simple.JDKRandomBridge;
 import org.apache.commons.rng.simple.RandomSource;
 import org.pmw.tinylog.Logger;
@@ -16,6 +19,9 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 
 
 /**
@@ -44,6 +50,19 @@ public class RandomSampler extends Sampler {
     @Argument(alias = "rp", description = "Random seed for edit type selection")
     protected Integer patchSeed = 123;
 
+    @Argument(alias = "pb", description = "Probablity of combiend")
+    protected Double combinedProbablity = 0.5;
+
+
+    // Whether to use LLM edits
+    private boolean ifLLM = false;
+
+    private Class <? extends Edit> LLMedit = null;
+
+    private List<Class <? extends Edit>> NoneLLMedit = new ArrayList<>();
+
+    private Random mutationRng;
+
     /**
      * allowed edit types for sampling: parsed from editType
      */
@@ -53,13 +72,44 @@ public class RandomSampler extends Sampler {
         super(args);
         Args.parseOrExit(this, args);
         editTypes = Edit.parseEditClassesFromString(editType);
+        Setup();
         printAdditionalArguments();
     }
+
+
+
+    private void Setup () {
+
+        mutationRng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(patchSeed));
+
+        if (editTypes.contains(LLMMaskedStatement.class) || editTypes.contains(LLMReplaceStatement.class)) {
+            ifLLM = true;
+            if (editTypes.contains(LLMMaskedStatement.class)) {
+                LLMedit = LLMMaskedStatement.class;
+            } else if (editTypes.contains(LLMReplaceStatement.class)) {
+                LLMedit = LLMReplaceStatement.class;
+            }
+
+            for (Class <? extends Edit> edit : editTypes) {
+                if (edit != LLMedit) {
+                    NoneLLMedit.add(edit);
+                }
+            }
+        }
+
+        Logger.info("=== LocalSearchSimple ===");
+        Logger.info("LLM edits: " + ifLLM);
+        Logger.info("None LLM edits: " + NoneLLMedit.toString());
+        Logger.info("LLM edit: " + LLMedit);
+        Logger.info("=====================================");
+    }
+
 
     // Constructor used for testing
     public RandomSampler(File projectDir, File methodFile) {
         super(projectDir, methodFile);
         editTypes = Edit.parseEditClassesFromString(editType);
+        Setup();
     }
 
     public static void main(String[] args) {
@@ -75,6 +125,33 @@ public class RandomSampler extends Sampler {
         Logger.info("Random seed for edit type selection: " + patchSeed);
     }
 
+     /**
+     * Generate a neighbouring patch, by either deleting an edit, or adding a new one.
+     *
+     * @param patch Generate a neighbour of this patch.
+     * @return A neighbouring patch.
+     */
+    Patch neighbour(Patch patch) {
+
+        Patch neighbour = patch.clone();
+
+
+        if(ifLLM && NoneLLMedit.size() > 0){
+            if (mutationRng.nextFloat() > combinedProbablity) {
+
+                neighbour.addRandomEditOfClasses(mutationRng, Arrays.asList(LLMedit));
+            } 
+            else {
+                neighbour.addRandomEditOfClasses(mutationRng, NoneLLMedit);
+            }
+        } else {
+            neighbour.addRandomEditOfClasses(mutationRng, editTypes);
+        }
+
+        return neighbour;
+    }
+
+
     protected void sampleMethodsHook() {
 
         Random mrng = new JDKRandomBridge(RandomSource.MT, Long.valueOf(methodSeed));
@@ -86,6 +163,8 @@ public class RandomSampler extends Sampler {
             int size = methodData.size();
 
             Logger.info("Start applying and testing random patches..");
+            
+            Logger.info("Number of patch: " + patchNumber);
 
             for (int i = 0; i < patchNumber; i++) {
                 Random prng = new JDKRandomBridge(RandomSource.MT, patchSeed + (100000L * i));
@@ -100,7 +179,8 @@ public class RandomSampler extends Sampler {
 
                 Patch patch = new Patch(sourceFile);
                 for (int j = 0; j < patchSize; j++) {
-                    patch.addRandomEditOfClasses(prng, editTypes);
+                    // patch.addRandomEditOfClasses(prng, editTypes, combinedProbablity);
+                    patch = neighbour(patch);
                 }
 
                 Logger.info("Testing random patch " + patch + " for method: " + method + " with ID " + methodID);
@@ -109,14 +189,11 @@ public class RandomSampler extends Sampler {
                 UnitTestResultSet results = testPatch(method.getClassName(), method.getGinTests(), patch, null);
                 writeResults(results, methodID);
             }
-
             Logger.info("Results saved to: " + outputFile);
 
         } else {
             Logger.info("Number of edits  must be greater than 0.");
         }
-
     }
-
 
 }

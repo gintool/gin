@@ -43,6 +43,7 @@ examples/unittests/ExampleTest.class
 examples/unittests/ExampleWithInnerClass$MyInner.class
 examples/unittests/ExampleWithInnerClass.class
 examples/unittests/ExampleWithInnerClassTest.class
+examples/
 nbproject/
 nb-configuration.xml
 .classpath

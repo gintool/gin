@@ -6,6 +6,8 @@ import gin.edit.Edit;
 import gin.edit.Edit.EditType;
 import gin.edit.llm.LLMConfig;
 import gin.edit.llm.LLMConfig.PromptType;
+import gin.edit.llm.LLMConfig;
+import gin.edit.llm.LLMConfig.PromptType;
 import gin.test.InternalTestRunner;
 import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
@@ -61,6 +63,7 @@ public class LocalSearch implements Serializable {
     @Argument(alias = "et", description = "Edit type: this can be a member of the EditType enum (LINE,STATEMENT,MATCHED_STATEMENT,MODIFY_STATEMENT); the fully qualified name of a class that extends gin.edit.Edit, or a comma separated list of both")
     protected String editType = EditType.LINE.toString();
     
+    
     /**
      * allowed edit types for sampling: parsed from editType
      */
@@ -76,6 +79,8 @@ public class LocalSearch implements Serializable {
     @Argument(alias = "pt", description = "Prompt Type for LLM edits")
     protected PromptType llmPromptType = PromptType.MEDIUM;
     
+    @Argument(alias = "mt", description = "model type; OpenAI  or a name of an ollama model")
+    protected String modelType = "OpenAI";
     
     @Argument(alias = "ff", description = "Fail fast. "
             + "If set to true, the tests will stop at the first failure and the next patch will be executed. "
@@ -112,6 +117,7 @@ public class LocalSearch implements Serializable {
         LLMConfig.openAIKey = openAIKey;
         LLMConfig.openAIModelName = openAIName;
         LLMConfig.defaultPromptType = llmPromptType;
+        LLMConfig.modelType = modelType;
         // TODO other LLM args
     }
 

@@ -1,5 +1,7 @@
 package gin.edit.llm;
 
+import org.checkerframework.checker.units.qual.s;
+
 import dev.langchain4j.model.openai.OpenAiModelName;
 import gin.edit.llm.PromptTemplate.PromptTag;
 
@@ -47,7 +49,18 @@ public class LLMConfig {
         		+ "```\n"
                 + "Wrap all code in curly braces, if it is not already."
                 + "Do not include any method or class declarations."
-                + "label all code as java."));
+                + "label all code as java.")), 
+
+
+		MASKED(new PromptTemplate("Please replace <<PLACEHOLDER>> sign in the function below with meaningfull implementation. \n"
+				+ "```\n"
+				+ PromptTag.DESTINATION.withEscape()
+				+ "\n"
+				+ "```\n"
+				+ "This code belongs to project " + PromptTag.PROJECT.withEscape() + ". "
+				+ "Wrap all code in curly braces, if it is not already. "
+				+ "Do not include any class declarations. "
+				+ "Label all code as java.")),;
 		
 		
 		

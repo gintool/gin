@@ -15,7 +15,9 @@ import org.pmw.tinylog.Logger;
 import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.utils.Log;
 
 import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
 

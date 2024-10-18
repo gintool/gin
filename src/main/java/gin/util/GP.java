@@ -50,6 +50,9 @@ public abstract class GP extends Sampler {
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
 
+    @Argument(alias = "pb", description = "Probability of combined")
+    protected Double combinedProbablity = 0.5;
+
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;
 

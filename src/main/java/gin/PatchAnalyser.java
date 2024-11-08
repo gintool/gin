@@ -54,6 +54,9 @@ public class PatchAnalyser implements Serializable {
             + "You probably don't want to set this to true for Automatic Program Repair.")
     protected Boolean failFast = false;
 
+    @Argument(alias = "nr", description = "No run. Patches will be applied, but not executed.")
+    protected Boolean noRun = false;
+
     PatchAnalyser(String[] args) {
 
         Args.parseOrExit(this, args);
@@ -228,8 +231,11 @@ public class PatchAnalyser implements Serializable {
         // Evaluate original class
         Logger.info("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFileTree);
-        long originalExecutionTime = testRunner.runTests(emptyPatch, null, REPS).totalExecutionTime();
-        Logger.info("Original execution time: " + originalExecutionTime);
+        long originalExecutionTime = 0;
+        if (!noRun) {
+            originalExecutionTime = testRunner.runTests(emptyPatch, null, REPS).totalExecutionTime();
+            Logger.info("Original execution time: " + originalExecutionTime);
+        }
 
         // Write the original source to file, for easy diff with *.patched file
         patchedFilename = source + ".original";
@@ -242,21 +248,24 @@ public class PatchAnalyser implements Serializable {
         }
         Logger.info("Parsed patch written to: " + patchedFilename);
 
-        // Evaluate patch
-        Logger.info("Timing patched sourceFile execution...");
-        UnitTestResultSet resultSet = testRunner.runTests(patch, null, REPS);
+        if (!noRun) {
+            // Evaluate patch
+            Logger.info("Timing patched sourceFile execution...");
+            UnitTestResultSet resultSet = testRunner.runTests(patch, null, REPS);
 
-        // Output test results
-        logTestResults(resultSet);
+            // Output test results
+            logTestResults(resultSet);
 
-        Logger.info("Execution time of patched sourceFile: " + resultSet.totalExecutionTime());
-        float speedup = 100.0f * ((originalExecutionTime - resultSet.totalExecutionTime()) /
-                (1.0f * originalExecutionTime));
-        if (resultSet.getValidPatch() && resultSet.getCleanCompile()) {
-            Logger.info("Speedup (%): " + speedup);
-        } else {
-            Logger.info("Speedup (%): not applicable");
+            Logger.info("Execution time of patched sourceFile: " + resultSet.totalExecutionTime());
+            float speedup = 100.0f * ((originalExecutionTime - resultSet.totalExecutionTime()) /
+                    (1.0f * originalExecutionTime));
+            if (resultSet.getValidPatch() && resultSet.getCleanCompile()) {
+                Logger.info("Speedup (%): " + speedup);
+            } else {
+                Logger.info("Speedup (%): not applicable");
+            }
         }
+        Logger.info("Finished analysing. Patched files produced if successfully parsed.");
 
     }
 

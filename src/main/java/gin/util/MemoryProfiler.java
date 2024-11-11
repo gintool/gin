@@ -70,8 +70,6 @@ public class MemoryProfiler {
     @Argument(alias = "ba", description = "Comma separated list of arguments to pass to Maven or Gradle")
     protected String[] buildToolArgs = new String[0];
 
-
->>>>>>> master
     public MemoryProfiler(String[] args) {
         Args.parseOrExit(this, args);
         

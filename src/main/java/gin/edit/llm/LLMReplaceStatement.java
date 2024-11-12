@@ -45,6 +45,12 @@ public class LLMReplaceStatement extends StatementEdit {
     /**fairly rubbish approach to having something meaningful for the toString*/
     private String lastReplacement;
     private String lastPrompt;
+    
+    /**
+     * true if this instance was constructed by a call to fromString()
+     * In this case, we won't run the LLM when calling apply, but will use the value of lastReplacement instead
+     */
+    private boolean recreatedFromString;
 
     /**
      * create a random llmreplacestatement for the given sourcefile, using the provided RNG
@@ -66,6 +72,7 @@ public class LLMReplaceStatement extends StatementEdit {
 
         lastReplacement = "NOT YET APPLIED";
         lastPrompt = "NOT YET APPLIED";
+        recreatedFromString = false;
     }
 
     public LLMReplaceStatement(SourceFile sourceFile, Random rng) {
@@ -77,15 +84,30 @@ public class LLMReplaceStatement extends StatementEdit {
         this.destinationStatement = destinationStatement;
 
         this.lastReplacement = "NOT YET APPLIED";
+        this.recreatedFromString = false;
     }
 
     public static Edit fromString(String description) {
-    	// TODO - update with lastReplacement
-        String[] tokens = description.split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-        String[] destTokens = tokens[1].split(":");
+    	
+    	// the following will give us 5 tokens:
+    	// gin.edit.llm.LLMReplaceStatement src/main/java/org/apache/commons/net/smtp/SimpleSMTPHeader.java:331\nPrompt:
+    	// (prompt)
+    	// --->
+    	// (replacement)
+    	// ""
+    	String[] tokens1 = description.split("!!!", -1); 
+    	
+    	// split the first of these to get the filename and statement ID
+    	String[] tokens2 = tokens1[0].split("\\s+(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    	String[] destTokens = tokens2[1].split(":");
         String destFilename = destTokens[0].replace("\"", "");
         int destination = Integer.parseInt(destTokens[1]);
-        return new LLMReplaceStatement(destFilename, destination);
+        
+        LLMReplaceStatement rval = new LLMReplaceStatement(destFilename, destination);
+        rval.lastReplacement = tokens1[3];
+        rval.lastPrompt = tokens1[1];
+        rval.recreatedFromString = true;
+        return rval;
     }
 
     @Override
@@ -101,102 +123,114 @@ public class LLMReplaceStatement extends StatementEdit {
 
     public List<SourceFile> applyMultiple(SourceFile sourceFile, int count, Map<PromptTemplate.PromptTag,String> tagReplacements) {
 
-        SourceFileTree sf = (SourceFileTree) sourceFile;
+    	SourceFileTree sf = (SourceFileTree) sourceFile;
 
-        Node destination = sf.getNode(destinationStatement);
+    	Node destination = sf.getNode(destinationStatement);
 
-        if (destination == null) {
-            return Collections.singletonList(sf); // targeting a deleted location just does nothing.
-        }
+    	if (destination == null) {
+    		return Collections.singletonList(sf); // targeting a deleted location just does nothing.
+    	}
 
+    	List<String> replacementStrings = new ArrayList<>();
+    	List<Statement> replacementStatements = new ArrayList<>();
+    	
+    	if (!recreatedFromString) {
+	    	// here is where the magic happens...
+	    	LLMQuery llmQuery;
+	
+	    	// Check which model to use.
+	    	if ("OpenAI".equalsIgnoreCase(LLMConfig.modelType)) {
+	    		llmQuery = new OpenAILLMQuery();
+	    	} else {
+	    		llmQuery = new Ollama4jLLMQuery("http://localhost:11434", LLMConfig.modelType);
+	    	}
+	
+	    	// TODO here, could call sourceFile.getSource() to provide whole class for context...
+	
+	    	Logger.info("Seeking replacements for:");
+	    	Logger.info(destination);
+	
+	    	if(tagReplacements == null) {
+	    		tagReplacements = new HashMap<>();
+	    	}
+	    	tagReplacements.put(PromptTag.COUNT, Integer.toString(count));
+	    	tagReplacements.put(PromptTag.DESTINATION, destination.toString());
+	    	tagReplacements.put(PromptTag.PROJECT, LLMConfig.projectName);
+	
+	    	String prompt = promptTemplate.replaceTags(tagReplacements);
+	
+	    	Logger.info("============");
+	    	Logger.info("prompt:");
+	    	Logger.info(prompt);
+	    	lastPrompt = prompt;
+	    	Logger.info("============");
+	
+	    	// LLM for ChatGPT
+	    	String answer = llmQuery.chatLLM(prompt);
+	    	// END of LLM code
+	
+	    	// answer includes code enclosed in ```java   ....``` or ```....``` blocks
+	    	// use regex to find all of these then parse into javaparser objects for return
+	    	Pattern pattern = Pattern.compile("```(?:java)(.*?)```", Pattern.DOTALL | Pattern.MULTILINE);
+	    	Matcher matcher = pattern.matcher(answer);
+	
+	    	// now parse the strings return by LLM into JavaParser Statements
+	    	while (matcher.find()) {
+	    		String str = matcher.group(1);
+	
+	    		try {
+	    			Statement stmt;
+	    			stmt = StaticJavaParser.parseBlock(str);
+	    			replacementStrings.add(str);
+	    			replacementStatements.add(stmt);
+	    		}
+	    		catch (ParseProblemException e) {
+	    			continue;
+	    		}
+	
+	    	}
+	
+	    	int i = 1;
+	    	for (String s : replacementStrings) {
+	    		Logger.info("============");
+	    		Logger.info("suggestion " + i++);
+	    		Logger.info(s);
+	    		Logger.info("============");
+	    	}
+	
+	    	if (replacementStrings.isEmpty()) {
+	    		Logger.info("============");
+	    		Logger.info("No replacements found. Response was:");
+	    		Logger.info(answer);
+	    		Logger.info("============");
+	    		this.lastReplacement = "LLM GAVE NO SUGGESTIONS";
+	    	} else {
+	    		this.lastReplacement = replacementStrings.get(0);
+	    	}
+	    } else {
+	    	try {
+    			Statement stmt;
+    			stmt = StaticJavaParser.parseBlock(lastReplacement);
+    			replacementStrings.add(lastReplacement);
+    			replacementStatements.add(stmt);
+    		}
+    		catch (ParseProblemException e) {
+    			Logger.error("Problem parsing cached edit: " + lastReplacement);
+    		}
+	    }
 
-	// here is where the magic happens...
-	LLMQuery llmQuery;
+    	List<SourceFile> variantSourceFiles = new ArrayList<>();
+    	
+    	// replace the original statements with the suggested ones
+    	for (Statement s : replacementStatements) {
+    		try {
+    			variantSourceFiles.add(sf.replaceNode(destinationStatement, s));
+    		} catch (ClassCastException e) { // JavaParser sometimes throws this if the statements don't match
+    			// do nothing...
+    		}
+    	}
 
-	// Check which model to use.
-	if ("OpenAI".equalsIgnoreCase(LLMConfig.modelType)) {
-            llmQuery = new OpenAILLMQuery();
-        } else {
-            llmQuery = new Ollama4jLLMQuery("http://localhost:11434", LLMConfig.modelType);
-        }
-
-	// TODO here, could call sourceFile.getSource() to provide whole class for context...
-
-	Logger.info("Seeking replacements for:");
-	Logger.info(destination);
-
-	if(tagReplacements == null) {
-		tagReplacements = new HashMap<>();
-	}
-	tagReplacements.put(PromptTag.COUNT, Integer.toString(count));
-	tagReplacements.put(PromptTag.DESTINATION, destination.toString());
-	tagReplacements.put(PromptTag.PROJECT, LLMConfig.projectName);
-
-	String prompt = promptTemplate.replaceTags(tagReplacements);
-
-        Logger.info("============");
-    	Logger.info("prompt:");
-    	Logger.info(prompt);
-    	lastPrompt = prompt;
-    	Logger.info("============");
-
-	// LLM for ChatGPT
-	String answer = llmQuery.chatLLM(prompt);
-	// END of LLM code
-
-        // answer includes code enclosed in ```java   ....``` or ```....``` blocks
-        // use regex to find all of these then parse into javaparser objects for return
-	Pattern pattern = Pattern.compile("```(?:java)(.*?)```", Pattern.DOTALL | Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(answer);
-
-        // now parse the strings return by LLM into JavaParser Statements
-        List<String> replacementStrings = new ArrayList<>();
-        List<Statement> replacementStatements = new ArrayList<>();
-        while (matcher.find()) {
-        	String str = matcher.group(1);
-
-        	try {
-                Statement stmt;
-                stmt = StaticJavaParser.parseBlock(str);
-                replacementStrings.add(str);
-                replacementStatements.add(stmt);
-            }
-            catch (ParseProblemException e) {
-                continue;
-            }
-
-        }
-
-        List<SourceFile> variantSourceFiles = new ArrayList<>();
-
-        int i = 1;
-        for (String s : replacementStrings) {
-        	Logger.info("============");
-        	Logger.info("suggestion " + i++);
-        	Logger.info(s);
-        	Logger.info("============");
-        }
-
-        if (replacementStrings.isEmpty()) {
-        	Logger.info("============");
-        	Logger.info("No replacements found. Response was:");
-        	Logger.info(answer);
-        	Logger.info("============");
-        	this.lastReplacement = "LLM GAVE NO SUGGESTIONS";
-        } else {
-        	this.lastReplacement = replacementStrings.get(0);
-        }
-
-        // replace the original statements with the suggested ones
-        for (Statement s : replacementStatements) {
-        	try {
-	            variantSourceFiles.add(sf.replaceNode(destinationStatement, s));
-	        } catch (ClassCastException e) { // JavaParser sometimes throws this if the statements don't match
-	        	// do nothing...
-	        }
-        }
-
-        return variantSourceFiles;
+    	return variantSourceFiles;
     }
 
     @Override

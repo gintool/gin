@@ -186,7 +186,7 @@ public class PatchAnalyser implements Serializable {
         InternalTestRunner testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
         // Dump statement numbering to a file
-        String statementNumbering = sourceFileTree.statementList();
+        String statementNumbering = sourceFileTree.statementListWithIDs();
         String statementFilename = source + ".statements";
         try {
             FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
@@ -199,7 +199,7 @@ public class PatchAnalyser implements Serializable {
         Logger.info("Statement numbering written to: " + statementFilename);
 
         // Dump block numbering to a file
-        String blockNumbering = sourceFileTree.blockList();
+        String blockNumbering = sourceFileTree.blockListWithIDs();
         String blockFilename = source + ".blocks";
         try {
             FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());

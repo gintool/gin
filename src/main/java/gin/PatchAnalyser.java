@@ -57,6 +57,9 @@ public class PatchAnalyser implements Serializable {
     @Argument(alias = "nr", description = "No run. Patches will be applied, but not executed.")
     protected Boolean noRun = false;
 
+    @Argument(alias = "od", description = "Save to the given output directory, of provided.")
+    protected String outputDir = null;
+
     PatchAnalyser(String[] args) {
 
         Args.parseOrExit(this, args);
@@ -177,7 +180,7 @@ public class PatchAnalyser implements Serializable {
 
     }
 
-    private void analyse() {
+    protected void analyse() {
 
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
@@ -188,6 +191,9 @@ public class PatchAnalyser implements Serializable {
         // Dump statement numbering to a file
         String statementNumbering = sourceFileTree.statementListWithIDs();
         String statementFilename = source + ".statements";
+        if (outputDir != null) {
+            statementFilename = outputDir +  File.separator + className + ".statements";
+        }
         try {
             FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
         } catch (IOException e) {
@@ -201,6 +207,9 @@ public class PatchAnalyser implements Serializable {
         // Dump block numbering to a file
         String blockNumbering = sourceFileTree.blockListWithIDs();
         String blockFilename = source + ".blocks";
+        if (outputDir != null) {
+            blockFilename = outputDir +  File.separator + className + ".blocks";
+        }
         try {
             FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());
         } catch (IOException e) {
@@ -219,6 +228,9 @@ public class PatchAnalyser implements Serializable {
 
         // Write the patched source to file, for reference
         String patchedFilename = source + ".patched";
+        if (outputDir != null) {
+            patchedFilename = outputDir +  File.separator + className + ".patched";
+        }
         try {
             FileUtils.writeStringToFile(new File(patchedFilename), patchedSource, Charset.defaultCharset());
         } catch (IOException e) {
@@ -239,6 +251,9 @@ public class PatchAnalyser implements Serializable {
 
         // Write the original source to file, for easy diff with *.patched file
         patchedFilename = source + ".original";
+        if (outputDir != null) {
+            patchedFilename = outputDir +  File.separator + className + ".original";
+        }
         try {
             FileUtils.writeStringToFile(new File(patchedFilename), emptyPatch.apply(), Charset.defaultCharset());
         } catch (IOException e) {

@@ -12,6 +12,9 @@ import java.util.Map;
 import org.pmw.tinylog.Logger;
 
 import com.opencsv.CSVReaderHeaderAware;
+import com.opencsv.CSVReaderHeaderAwareBuilder;
+import com.opencsv.RFC4180Parser;
+import com.opencsv.RFC4180ParserBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
@@ -42,10 +45,14 @@ public class PatchExtractor {
 	private void processSamplerResults() {
 
 		try {
-			CSVReaderHeaderAware reader = new CSVReaderHeaderAware(new FileReader(patchFile));
+			//CSVReaderHeaderAware reader = new CSVReaderHeaderAware(new FileReader(patchFile));
+			RFC4180Parser parser = new RFC4180ParserBuilder().build();
+			CSVReaderHeaderAware reader = (CSVReaderHeaderAware)(new CSVReaderHeaderAwareBuilder(new FileReader(patchFile)).withCSVParser(parser).build());
+            
 			Map<String, String> data = reader.readMap();
-			if ((!data.containsKey("Patch")) || (!data.containsKey("UnitTest"))) {
-				throw new ParseException("Both \"Patch\" and \"UnitTest\" fields are required in the input file.", 0);
+			if ((!data.containsKey("Patch"))) { // || (!data.containsKey("UnitTest"))) {
+				//throw new ParseException("Both \"Patch\" and \"UnitTest\" fields are required in the input file.", 0); // UnitTest only present in the RandomSampler rather than local search file. Not needed here anyway.
+				throw new ParseException("\"Patch\" field is required in the input file.", 0);
 			}
 
 			patches = new HashMap<>();
@@ -56,7 +63,7 @@ public class PatchExtractor {
 			while (data != null) {
 
 				String patch = data.get("Patch");
-				String test = data.get("UnitTest");
+				String test = data.getOrDefault("UnitTest", "NO_TEST");
 				String id = data.getOrDefault("PatchIndex", Integer.toString(idx));
 				List<String> tests = patches.get(patch);
 				if (tests == null) {
@@ -79,24 +86,31 @@ public class PatchExtractor {
 		} 
 	}
 	private void analysePatches() {
-		for (String patch : patches.keySet()){
-			String[] findpath = patch.split("\"");
-			String filepath = "";
-			for (String txt : findpath){
-				if (txt.contains(".java")) {
-					filepath = txt;
-					break;
+		for (String patch : patches.keySet()){ // NB these won't be processed in patch index order, but that doesn't matter
+			Logger.info("Processing patch #" + ids.get(patch) + "...");
+			Logger.info(patch);
+			
+			try {
+				String[] findpath = patch.split("\"");
+				String filepath = "";
+				for (String txt : findpath){
+					if (txt.contains(".java")) {
+						filepath = txt;
+						break;
+					}
 				}
+				String outputDir = patchFile.getName() + "_patch_" + ids.get(patch);
+				Logger.info(outputDir);
+				String[] args = new String[]{"-nr", "-f", filepath , "-od", outputDir, "-p", patch};
+				//for (String arg : args){Logger.info(arg);}
+				PatchAnalyser pa = new PatchAnalyser(args);
+				pa.analyse();
+				//for (String test : patches.get(patch)) {
+				//Logger.info(test);
+				//}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			String outputDir = patchFile.getName() + "_patch_" + ids.get(patch);
-			Logger.info(outputDir);
-			String[] args = new String[]{"-nr", "-f", filepath , "-od", outputDir, "-p", patch};
-			//for (String arg : args){Logger.info(arg);}
-			PatchAnalyser pa = new PatchAnalyser(args);
-			pa.analyse();
-			//for (String test : patches.get(patch)) {
-			//Logger.info(test);
-			//}
 		}
 	}
 

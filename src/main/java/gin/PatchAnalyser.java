@@ -137,11 +137,13 @@ public class PatchAnalyser implements Serializable {
             } catch (IllegalAccessException e) {
                 Logger.error("Cannot parse patch: access error invoking edit class.");
                 Logger.trace(e);
-                System.exit(-1);
+                //System.exit(-1);
+                return null;
             } catch (InvocationTargetException e) {
                 Logger.error("Cannot parse patch: invocation error invoking edit class.");
                 Logger.trace(e);
-                System.exit(-1);
+                //System.exit(-1);
+                return null;
             }
 
             allLineEdits &= editInstance.getEditType() == EditType.LINE;
@@ -186,7 +188,7 @@ public class PatchAnalyser implements Serializable {
         SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
         SourceFileTree sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
 
-        InternalTestRunner testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
+        InternalTestRunner testRunner = (!noRun ? new InternalTestRunner(className, classPath, testClassName, failFast) : null);
 
         // Dump statement numbering to a file
         String statementNumbering = sourceFileTree.statementListWithIDs();

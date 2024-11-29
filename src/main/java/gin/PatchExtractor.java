@@ -90,7 +90,7 @@ public class PatchExtractor {
 			}
 			String outputDir = patchFile.getName() + "_patch_" + ids.get(patch);
 			Logger.info(outputDir);
-			String[] args = new String[]{"-p", patch, "-nr", "-f", filepath , "-od", outputDir};
+			String[] args = new String[]{"-nr", "-f", filepath , "-od", outputDir, "-p", patch};
 			//for (String arg : args){Logger.info(arg);}
 			PatchAnalyser pa = new PatchAnalyser(args);
 			pa.analyse();

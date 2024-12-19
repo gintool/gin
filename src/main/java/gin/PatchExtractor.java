@@ -67,9 +67,14 @@ public class PatchExtractor {
 				String id = data.getOrDefault("PatchIndex", Integer.toString(idx));
 				List<String> tests = patches.get(patch);
 				if (tests == null) {
-					tests = new ArrayList<>();
-					idx++;
-				}
+				    tests = new ArrayList<>();
+				    idx++;
+				} else {
+	                            if (!data.containsKey("UnitTest")) { // we are here because we've seen the patch before, and we don't have UnitTests (so it's an aggr>
+                                        Logger.info("Patch " + id + " was a duplicate of a previous: " + ids.get(patch));
+        	                    }
+                                }
+
 				tests.add(test);
 				patches.put(patch,tests);
 				ids.put(patch, id);
@@ -100,7 +105,7 @@ public class PatchExtractor {
 					}
 				}
 				String outputDir = patchFile.getName() + "_patch_" + ids.get(patch);
-				Logger.info(outputDir);
+				Logger.info("Writing to dir " + outputDir);
 				String[] args = new String[]{"-nr", "-f", filepath , "-od", outputDir, "-p", patch};
 				//for (String arg : args){Logger.info(arg);}
 				PatchAnalyser pa = new PatchAnalyser(args);

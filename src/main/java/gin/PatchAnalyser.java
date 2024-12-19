@@ -101,7 +101,7 @@ public class PatchAnalyser implements Serializable {
             cleanPatch = patchText.replaceFirst("\\|", "").trim();
         }
 
-        String[] editStrings = cleanPatch.trim().split("\\|");
+        String[] editStrings = cleanPatch.trim().split("\\| (?=gin).+"); // only count separators with "gin" following then (i.e. the start of a new edit)
 
         boolean allLineEdits = true;
         boolean allStatementEdits = true;

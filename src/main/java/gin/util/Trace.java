@@ -194,34 +194,42 @@ public class Trace implements Serializable {
 
             //read all events from the JFR profiling file
             while (jfr.hasMoreEvents()) {
-                RecordedEvent event = jfr.readEvent();
-                String check = event.getEventType().getName();
-//System.out.println("******" + check);
-                //if this event is an exectution sample, it will contain a call stack snapshot
-                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
-                    RecordedStackTrace s = event.getStackTrace();
+                try {
+                    RecordedEvent event = jfr.readEvent();
+                    String check = event.getEventType().getName();
 
-                    if (s != null) {
+                    //if this event is an execution sample, it will contain a call stack snapshot
+                    if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+                        RecordedStackTrace s = event.getStackTrace();
 
-                        //traverse the call stack, if a frame is part of the main program,
-                        //return it
-                        for (int i = 0; i < s.getFrames().size(); i++) {
+                        if (s != null) {
 
-                            RecordedFrame topFrame = s.getFrames().get(i);
-                            RecordedMethod method = topFrame.getMethod();
+                            //traverse the call stack, if a frame is part of the main program,
+                            //return it
+                            for (int i = 0; i < s.getFrames().size(); i++) {
 
-                            String methodName = method.getType().getName();
-                            String className = StringUtils.substringBeforeLast(methodName, ".");
+                                RecordedFrame topFrame = s.getFrames().get(i);
+                                RecordedMethod method = topFrame.getMethod();
 
-                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                                samples.merge(methodName, 1, Integer::sum);
-                                break;
+                                String methodName = method.getType().getName();
+                                String className = StringUtils.substringBeforeLast(methodName, ".");
+
+                                if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                                    methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                    samples.merge(methodName, 1, Integer::sum);
+                                    break;
+                                }
                             }
+
+
                         }
-
-
                     }
+                } catch (IOException e) {
+                    Logger.warn("IOException reading JFR. " +
+                            "Probably this is because of something causing multiple writes to the JFR log files." +
+                            "If you get lots of these it will likely impact on the reliability of the profiling results.");
+                    Logger.warn(e);
+                    return samples;
                 }
             }
             return samples;
@@ -241,64 +249,69 @@ public class Trace implements Serializable {
 
         for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
 
-            String method = entry.getKey();
-            String className = StringUtils.substringBeforeLast(method, ".");
+            try {
+                String method = entry.getKey();
+                String className = StringUtils.substringBeforeLast(method, ".");
 
-            boolean includeMethod = shouldIncludeMethod(method);
+                boolean includeMethod = shouldIncludeMethod(method);
 
-            // Check if belongs to this project
-            boolean classInMain = mainClasses.contains(className);
-            boolean classInTest = testClasses.contains(className);
+                // Check if belongs to this project
+                boolean classInMain = mainClasses.contains(className);
+                boolean classInTest = testClasses.contains(className);
 
-            boolean hasLineNumber = entry.getKey().contains(":");
+                boolean hasLineNumber = entry.getKey().contains(":");
 
-            if (classInMain && includeMethod && hasLineNumber) {
+                if (classInMain && includeMethod && hasLineNumber) {
 
-                String lineRegex = "^(.*):(\\d*)";
-                Pattern linePattern = Pattern.compile(lineRegex);
-                Matcher lineMatcher = linePattern.matcher(entry.getKey());
-                lineMatcher.find();
+                    String lineRegex = "^(.*):(\\d*)";
+                    Pattern linePattern = Pattern.compile(lineRegex);
+                    Matcher lineMatcher = linePattern.matcher(entry.getKey());
+                    lineMatcher.find();
 
-                String methodName = lineMatcher.group(1);
-                int lineNumber = Integer.parseInt(lineMatcher.group(2));
+                    String methodName = lineMatcher.group(1);
+                    int lineNumber = Integer.parseInt(lineMatcher.group(2));
 
-                String fullMethodName = project.getMethodSignature(methodName, lineNumber);
+                    String fullMethodName = project.getMethodSignature(methodName, lineNumber);
 
-                // If we can find the original method (we may not, e.g. interface overridden)
-                if (fullMethodName == null) {
-                    Logger.warn("Excluding method as class in main tree but method not found: " + method);
-                    if (method.contains(".values")) {
-                        Logger.warn("This is likely because the method relates to an enum type.");
+                    // If we can find the original method (we may not, e.g. interface overridden)
+                    if (fullMethodName == null) {
+                        Logger.warn("Excluding method as class in main tree but method not found: " + method);
+                        if (method.contains(".values")) {
+                            Logger.warn("This is likely because the method relates to an enum type.");
+                        }
+                    } else {
+                        cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
                     }
-                } else {
-                    cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
-                }
-
-            } else {
-
-                if (!includeMethod) {
-
-                    Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
-
-                } else if (classInTest) {
-
-                    Logger.info("Excluding method because class is a test class: " + method);
-
-                } else if (!hasLineNumber) {
-
-                    Logger.info("Excluding method because hprof gave no line number: " + method);
-
-                } else if (method.contains(project.getProjectName())) {
-
-                    Logger.warn("Excluding method because not in main project tree: " + method);
-                    Logger.warn(" ...but the method contains the project name! Possibly a bug.");
 
                 } else {
 
-                    Logger.info("Excluding method because not in main project tree: " + method);
+                    if (!includeMethod) {
+
+                        Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
+
+                    } else if (classInTest) {
+
+                        Logger.info("Excluding method because class is a test class: " + method);
+
+                    } else if (!hasLineNumber) {
+
+                        Logger.info("Excluding method because hprof gave no line number: " + method);
+
+                    } else if (method.contains(project.getProjectName())) {
+
+                        Logger.warn("Excluding method because not in main project tree: " + method);
+                        Logger.warn(" ...but the method contains the project name! Possibly a bug.");
+
+                    } else {
+
+                        Logger.info("Excluding method because not in main project tree: " + method);
+
+                    }
 
                 }
-
+            } catch (Exception e) {
+                Logger.warn("Exception cleaning method counts: ");
+                Logger.warn(e);
             }
 
         }

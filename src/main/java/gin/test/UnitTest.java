@@ -64,12 +64,12 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
                 }
 
             } else {
-                throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
+                throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>] but found: " + test, 0);
 
             }
 
         } else {
-            throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
+            throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>] but found: " + test, 0);
         }
 
         return ginTest;

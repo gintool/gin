@@ -545,7 +545,7 @@ public class Project implements Serializable {
             request.setThreads(properties.getProperty("THREADS"));
             properties.remove("THREADS");
         }
-//Logger.debug("ARGLINE:" + request.getProperties().getProperty("argLine"));   
+
         request.setProperties(properties);
         Logger.info("Running MVN project with properties: ");
         for (String property : properties.stringPropertyNames()) {
@@ -765,10 +765,19 @@ public class Project implements Serializable {
                 }
 
                 Elements testCases = doc.getElementsByTag("testcase");
+                testCaseLoop:
                 for (Element testCase : testCases) {
 
                     String className = testCase.attr("classname");
                     String methodName = testCase.attr("name");
+
+                    // Special case: sometimes we have parameters included in the name
+                    // (e.g. checkstyle com.puppycrawl.tools.checkstyle.MainTest.testPrintXpathFullOption(Capturable, Capturable) )   )
+                    // We can't run these so throw away!
+                    if (methodName.contains("(")) {
+                        //methodName = methodName.substring(0, methodName.indexOf('('));
+                        continue testCaseLoop;
+                    }
 
                     // Special case: sometimes parameter notes (e.g. seeds) added by Spring etc.
                     if (methodName.contains(" ")) {
@@ -873,27 +882,39 @@ public class Project implements Serializable {
         if (!profile.isEmpty()) {
             request.setProfiles(Collections.singletonList(profile));
         }
-        
+
         for (String mavenArg : mavenArgs) {
         	request.addArg(mavenArg);
         }
 
         request.setGoals(Collections.singletonList(taskName));
 
+        request.setUpdateSnapshots(true);
+        request.setAlsoMake(false);
+        request.setUserSettingsFile(new File(mavenHome + "/conf/settings.xml"));
+        request.setLocalRepositoryDirectory(new File(System.getProperty("user.home") + "/.m2/repository"));
+        request.addArg("-X"); // extra debugging
+        request.setBatchMode(true); // silence the “interactive mode” warning with
+
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
-                
+
         Properties properties = new Properties();
         request.setProperties(properties);
-//Logger.debug("ARGLINE:" + request.getProperties().getProperty("argLine"));        
-//        properties.setProperty("argLine", "@{argLine} " + args);
-	properties.setProperty("argLine", args);
         properties.setProperty("test", testName);
+        properties.setProperty("surefire.failIfNoSpecifiedTests", "false");
+
+        // Inject into Maven's environment so the **fork** inherits it
+        request.getProperties().remove("argLine");
+        request.setShellEnvironmentInherited(true); // usually true by default
+        request.addShellEnvironment("JDK_JAVA_OPTIONS", args);
+        request.addArg("-DforkCount=1");
+        request.addArg("-DreuseForks=false");
+
 
         if (!test.getModuleName().isEmpty()) {
-            List<String> moduleList = new LinkedList<>();
-            moduleList.add(test.getModuleName());
-            request.setProjects(moduleList);
+            request.setProjects(java.util.List.of(test.getModuleName())); // -pl :module
+            // Do not add -am here; prime deps in a separate install step if needed
         }
 
         InvocationResult result = null;

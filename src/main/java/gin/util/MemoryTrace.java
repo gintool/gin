@@ -219,39 +219,49 @@ public class MemoryTrace {
 
             //read all events from the JFR profiling file
             while (jfr.hasMoreEvents()) {
-                RecordedEvent event = jfr.readEvent();
-                String check = event.getEventType().getName();
+                try {
+                    RecordedEvent event = jfr.readEvent();
+                    String check = event.getEventType().getName();
 
-                //there are two kinds of events we could be looking for
-                // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
-                // the latter is for temp objects, but importantly comes with
-                // stack trace info which we can use to identify location
-                // ObjectCount doesn't seem to have this (it would also need
-                // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
-                if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
-                    RecordedStackTrace s = event.getStackTrace();
+                    //there are two kinds of events we could be looking for
+                    // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
+                    // the latter is for temp objects, but importantly comes with
+                    // stack trace info which we can use to identify location
+                    // ObjectCount doesn't seem to have this (it would also need
+                    // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
+                    if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
+                        RecordedStackTrace s = event.getStackTrace();
 
-                    if (s != null) {
+                        if (s != null) {
 
-                        //traverse the call stack, if a frame is part of the main program,
-                        //return it
-                        for (int i = 0; i < s.getFrames().size(); i++) {
+                            //traverse the call stack, if a frame is part of the main program,
+                            //return it
+                            for (int i = 0; i < s.getFrames().size(); i++) {
 
-                            RecordedFrame topFrame = s.getFrames().get(i);
-                            RecordedMethod method = topFrame.getMethod();
+                                RecordedFrame topFrame = s.getFrames().get(i);
+                                RecordedMethod method = topFrame.getMethod();
 
-                            String methodName = method.getType().getName();
-                            String className = StringUtils.substringBeforeLast(methodName, ".");
+                                String methodName = method.getType().getName();
+                                String className = StringUtils.substringBeforeLast(methodName, ".");
 
-                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                                samples.merge(methodName, 1, Integer::sum);
-                                break;
+                                if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                                    methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                    samples.merge(methodName, 1, Integer::sum);
+                                    break;
+                                }
                             }
+
+
                         }
-
-
                     }
+                } catch (IOException e) {
+                    // don't use the word exception here, as it's somewhat expected
+                    // "exception" triggers a fail in the Gin unit tests
+                    Logger.warn("IOEx. reading JFR. " +
+                            "Probably this is because of something causing multiple writes to the JFR log files." +
+                            "If you get lots of these it will likely impact on the reliability of the profiling results.");
+                    //Logger.warn(e);
+                    return samples;
                 }
             }
             return samples;

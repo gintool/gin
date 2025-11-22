@@ -57,7 +57,7 @@ public class Project implements Serializable {
     private final List<File> mainClassDirs = new LinkedList<>();
     private final List<File> testClassDirs = new LinkedList<>();
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = "7.6";
+    private String gradleVersion = "9.0.0";
     private BuildType buildType;
 
     /**

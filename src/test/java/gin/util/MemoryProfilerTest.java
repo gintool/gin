@@ -2,12 +2,14 @@ package gin.util;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.function.Executable;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Level;
 import org.pmw.tinylog.writers.FileWriter;
@@ -50,7 +53,7 @@ public class MemoryProfilerTest {
         tests.add(new UnitTest("com.mycompany.app.AppTest", "test100KIntArray"));
         tests.add(new UnitTest("com.mycompany.app.AppTest", "test1000KIntArray"));
         
-        Map<UnitTest, MemoryProfiler.ProfileResult> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
+        Map<UnitTest, List<MemoryProfiler.ProfileResult>> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
 
         File scratchFile = new File("scratchhprof" + File.separator + "testMemProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
@@ -59,7 +62,7 @@ public class MemoryProfilerTest {
                 .level(Level.WARNING)
                 .activate();
 
-        profiler.parseMemoryTraces(tests);
+        profiler.parseMemoryTraces(unitTestProfileResult.values());
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
@@ -73,7 +76,12 @@ public class MemoryProfilerTest {
 
         // Ensures the results of all test cases when executed by the profiler is a success
         assertFalse(unitTestProfileResult.isEmpty());
-        Assertions.assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+        //Assertions.assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+        assertAll(
+                unitTestProfileResult.values().stream()
+                        .flatMap(List::stream)
+                        .map(pr -> (Executable) () -> Assertions.assertTrue(pr.success, "Failed: " + pr))
+        );
 
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up

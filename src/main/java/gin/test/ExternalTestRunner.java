@@ -2,23 +2,15 @@ package gin.test;
 
 import gin.Patch;
 import org.apache.commons.io.FileUtils;
-import org.apache.maven.shared.invoker.SystemOutHandler;
 import org.pmw.tinylog.Logger;
 
 import java.io.*;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * Runs tests externally, by creating a new JVM.
@@ -175,73 +167,88 @@ public class ExternalTestRunner extends TestRunner {
 
     }
 
-    /**
-     * Run each of the tests against the modified class held in the class load, rep times.
-     *
-     * @param reps Number of times to run each test
-     * @return List of Test Results
-     */
     private List<UnitTestResult> runTests(int reps) throws IOException, InterruptedException {
 
         List<UnitTestResult> results = new LinkedList<>();
 
         File javaHome = new File(System.getProperty("java.home"));
-        File javaBin = new File(javaHome, "bin");
-        File jvm = new File(javaBin, "java");
+        File javaBin  = new File(javaHome, "bin");
+        File jvm      = new File(javaBin, "java");
 
-        String classpath = this.getTemporaryDirectory() + File.pathSeparator +
-                this.getClassPath() + File.pathSeparator +
+        // Build child classpath: temp dir + project CP (without extra JUnit) + parent CP
+        String childCp     = cleanChildClasspath(this.getClassPath());
+        String rawClasspath = this.getTemporaryDirectory() + File.pathSeparator +
+                childCp + File.pathSeparator +
                 System.getProperty("java.class.path");
 
-        classpath = Arrays.stream(classpath.split(File.pathSeparator))
-                .map(s -> Paths.get(s).normalize().toFile().getAbsolutePath())
-                .collect(Collectors.joining(File.pathSeparator));
+        // IMPORTANT: make entries absolute so changing working dir doesn't break resolution
+        String classpath = gin.util.JavaUtils.normalizeAndDedupeClasspath(rawClasspath);
 
-        int index = 0;
+        // Group tests by module, preserving original order
+        Map<String, List<UnitTest>> testsByModule = this.getTests().stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        UnitTest::getModuleName,
+                        LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()
+                ));
 
-        int maxIndex = reps * this.getTests().size();
+        // Project root = current working dir of the parent process (biojava top-level)
+        Path projectRoot = java.nio.file.Paths.get("").toAbsolutePath();
 
-        while (index < maxIndex) {
+        for (Map.Entry<String, List<UnitTest>> e : testsByModule.entrySet()) {
+            final String moduleName = e.getKey();
+            final List<UnitTest> moduleTests = e.getValue();
 
-            // in the following we use sockets to communicate with the
-            // TestHarness in a sub process.
-            // we don't just capture stdout from the process, because if
-            // you're running multiple tests in subprocess you have to
-            // communicate somehow to know that a test finished (or not)
-            // this doesn't work if the hanging test blocks stdout
-            // so: we fire up a subprocess, get it to tell us what port
-            // number it wants to use via stdout, then communicate via
-            // that port. stdout is redirected to the real System.out
-            // so that we can debug the running tests if needed.
+            File moduleDir = (moduleName == null || moduleName.isEmpty())
+                    ? projectRoot.toFile()
+                    : projectRoot.resolve(moduleName).toFile();
 
-            ProcessBuilder builder;
-            builder = new ProcessBuilder(jvm.getAbsolutePath(),
-                    "-Dtinylog.level=" + Logger.getLevel(),
-                    "-cp", classpath,
-                    HARNESS_CLASS
-            );
-
-            // redirect everything except STDOUT for now as we need it to get the port
-            final Process process = builder.redirectError(Redirect.INHERIT).redirectInput(Redirect.INHERIT).start();
-            int port = 0;
-            final Scanner scanner = new Scanner(process.getInputStream());
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.startsWith(TestHarness.PORT_PREFIX)) {
-                    port = Integer.parseInt(line.substring(line.indexOf("=") + 1));
-                    break;
-                }
+            if (!moduleDir.isDirectory()) {
+                org.pmw.tinylog.Logger.warn("Module dir not found: " + moduleDir +
+                        ", falling back to project root " + projectRoot);
+                moduleDir = projectRoot.toFile();
             }
 
-            // having set off the process and grabbed the port number from its stdout, we now
-            // redirect its output to the real stdout
-            // (no need to kill this thread, it'll exit when the process dies)
-            new Thread(() -> {
+            org.pmw.tinylog.Logger.debug("Starting TestHarness for module '" + moduleName +
+                    "' in " + moduleDir.getAbsolutePath());
+
+            int index = 0;
+            int maxIndex = reps * moduleTests.size();
+
+            // == Start one harness JVM for THIS MODULE ==
+            while (index < maxIndex) {
+
+                ProcessBuilder builder = new ProcessBuilder(
+                        jvm.getAbsolutePath(),
+                        "-Dtinylog.level=" + Logger.getLevel(),
+                        "-cp", classpath,
+                        HARNESS_CLASS
+                );
+                // This alone is enough to make '.' the module directory for file I/O:
+                builder.directory(moduleDir);
+
+                final Process process = builder
+                        .redirectError(Redirect.INHERIT)
+                        .redirectInput(Redirect.INHERIT)
+                        .start();
+
+                int port = 0;
+                final Scanner scanner = new Scanner(process.getInputStream());
                 while (scanner.hasNextLine()) {
-                    System.out.println(scanner.nextLine());
+                    String line = scanner.nextLine();
+                    if (line.startsWith(TestHarness.PORT_PREFIX)) {
+                        port = Integer.parseInt(line.substring(line.indexOf('=') + 1));
+                        break;
+                    }
                 }
-                scanner.close();
-            }).start();
+
+                // Stream the rest of the child stdout (debug / test output)
+                new Thread(() -> {
+                    while (scanner.hasNextLine()) {
+                        System.out.println(scanner.nextLine());
+                    }
+                    scanner.close();
+                }).start();
 
             // we're spawning a separate process, and if our JVM
             // dies we'll want to kill the other process too,
@@ -258,89 +265,112 @@ public class ExternalTestRunner extends TestRunner {
 
             Thread.sleep(1000); // allowing for server startup time
 
-            TestClient client = new TestClient();
-            client.startConnection("localhost", port);
+                TestClient client = new TestClient();
+                client.startConnection("localhost", port);
 
-            while (index < maxIndex) {
+                while (index < maxIndex) {
+                    int testIndex = index % moduleTests.size();
+                    int rep       = index / moduleTests.size();
+                    UnitTest test = moduleTests.get(testIndex);
 
-                int testIndex = index % this.getTests().size();
-                int rep = index / this.getTests().size();
-                UnitTest test = this.getTests().get(testIndex);
-                Logger.debug("Running test " + index + "/" + maxIndex + ": " + "rep=" + rep + 1 + "/" + reps + ", " + "testIndex=" + testIndex + "/" + this.getTests().size() + ": " + test);
+                    org.pmw.tinylog.Logger.debug("Running test " + index + "/" + maxIndex +
+                            " in module '" + moduleName + "': rep=" + (rep + 1) + "/" + reps +
+                            ", testIndex=" + testIndex + "/" + moduleTests.size() +
+                            ": " + test);
 
-                long timeoutMS = test.getTimeoutMS();
-                String testName = test.toString();
-                index++;
 
-                client.setTimeoutMS(timeoutMS + 500); // extra time for connection overhead
+                    long timeoutMS = test.getTimeoutMS();
+                    String testName = test.toString();
+                    index++;
 
-                String message = testName + "," + rep + 1 + "," + timeoutMS;
-                String resp;
-                try {
-                    resp = client.sendMessage(message);
-                } catch (SocketTimeoutException e) {
-                    resp = null;
-                }
-                try {
-                    if (resp != null) {
-                        UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
-                        results.add(result);
-                        // closes the connection and creates a new sub-
-                        // process if:
-                        // 1) new subprocess for each test
-                        if (eachTestInNewSubProcess
-                                // 2) it is the last test of the
-                                // repetition. This is needed to avoid
-                                // test poisoning from one repetition to
-                                // another
-                                || (eachRepetitionInNewSubProcess && testIndex == this.getTests().size() - 1)
-                                // 3) it is fail fast and the test failed
-                                || (failFast && !result.getPassed())) {
+                    client.setTimeoutMS(timeoutMS + 500);
+
+                    String message = testName + "," + (rep + 1) + "," + timeoutMS + "," + moduleDir.getAbsolutePath();
+
+                    String resp = null;
+                    boolean timedOut = false;
+
+                    try {
+                        resp = client.sendMessage(message);   // returns a line, or null if peer closed
+                    } catch (java.net.SocketTimeoutException ste) {
+                        timedOut = true;                      // socket timeout
+                        resp = null;
+                    }
+
+                    try {
+                        if (resp != null) {
+                            if (!resp.contains("crash")) {
+
+                                UnitTestResult result = UnitTestResult.fromString(resp, timeoutMS);
+                                results.add(result);
+
+                                // closes the connection and creates a new sub-
+                                // process if:
+                                // 1) new subprocess for each test
+                                if (eachTestInNewSubProcess
+                                        // 2) it is the last test of the
+                                        // repetition. This is needed to avoid
+                                        // test poisoning from one repetition to
+                                        // another
+                                        || (eachRepetitionInNewSubProcess && testIndex == moduleTests.size() - 1)
+                                        // 3) it is fail fast and the test failed
+                                        || (failFast && !result.getPassed())) {
+                                    break;
+                                }
+                            } else {
+                                Logger.error("TestHarness crashed... " + resp);
+                            }
+
+                        } else if (timedOut) {
+                            // The harness didn't respond within the socket SO_TIMEOUT
+                            UnitTestResult result = timeoutResult(test, rep + 1);
+                            results.add(result);
+                            break;
+
+                        } else {
+                            // The harness closed the connection without sending a result line
+                            UnitTestResult result = new UnitTestResult(test, rep + 1);
+                            result.setPassed(false);
+                            result.setTimedOut(false); // distinguish from real timeout
+                            result.setExceptionType("gin.test.ExternalTestRunner$ChildTerminated");
+                            result.setExceptionMessage("Harness closed connection without sending a result");
+                            // optionally: record some minimal timing info
+                            results.add(result);
                             break;
                         }
-                    } else {
-                        // connection timed out
-                        UnitTestResult result = timeoutResult(test, rep + 1);
+
+                    } catch (java.text.ParseException pe) {
+                        // smth else went wrong, test or test result likely in the wrong format
+                        UnitTestResult result = new UnitTestResult(test, rep + 1);
+                        result.setPassed(false);
+                        result.setExceptionType(pe.getClass().getName());
+                        result.setExceptionMessage(pe.getMessage());
                         results.add(result);
                         break;
                     }
-                } catch (ParseException e) {
-                    // smth else went wrong, test or test result likely in the wrong format
-                    UnitTestResult result = new UnitTestResult(test, rep + 1);
-                    result.setExceptionType(e.getClass().getName());
-                    result.setExceptionMessage(e.getMessage());
-                    results.add(result);
-                    break;
+
                 }
 
-            } // end of inner
+                try {
+                    client.sendMessage("stop");
+                } catch (java.net.SocketTimeoutException ignored) { }
+                client.stopConnection();
 
-            try {
-                client.sendMessage("stop");
-            } catch (SocketTimeoutException ignored) {
-            }
+                Thread.sleep(500); // cleanup time
 
-            client.stopConnection();
+                if (process.isAlive()) process.destroyForcibly();
+                Thread.sleep(500); // cleanup time
 
-            Thread.sleep(500); // cleanup time
-
-            if (process.isAlive()) {
-                process.destroyForcibly();
-            }
-
-            Thread.sleep(500); // cleanup time
-
-            // In case the tests failed, and it is fail fast, then stop the loop
-            if (failFast && results.stream()
-                    .anyMatch(result -> !result.getPassed())) {
-                break;
-            }
-
-        } // end of outer
+                // In case the tests failed, and it is fail fast, then stop the loop
+                if (failFast && results.stream().anyMatch(r -> !r.getPassed())) {
+                    index = maxIndex; // break module loop
+                }
+            } // while index<maxIndex (per module)
+        } // for each module
 
         return results;
-
     }
+
 
     private UnitTestResult timeoutResult(UnitTest test, int rep) {
 
@@ -408,6 +438,65 @@ public class ExternalTestRunner extends TestRunner {
             clientSocket.setSoTimeout(timeout);
         }
 
+    }
+
+    // Remove any JUnit libs from a *child* classpath string (File.pathSeparator-joined)
+    // Projects using other JUnit versions caused clashes (NoSuchMethodError)
+    // so we strip those and use the JUnit libs that ship with Gin itself
+    private static String cleanChildClasspath(String childClasspath) {
+        if (childClasspath == null || childClasspath.isBlank()) return childClasspath;
+
+        // keep order, drop dups
+        java.util.LinkedHashSet<String> kept = new java.util.LinkedHashSet<>();
+        for (String raw : childClasspath.split(java.io.File.pathSeparator)) {
+            if (raw == null || raw.isBlank()) continue;
+            String norm = java.nio.file.Paths.get(raw.trim()).normalize().toString();
+            // If it doesn't exist, keep it anyway (could be a directory created later)
+            //if (!isJUnitLibPath(norm)) {
+            if (!isJUnit4OrVintageLibPath(norm)) {
+                kept.add(norm);
+            }
+        }
+        return String.join(java.io.File.pathSeparator, kept);
+    }
+
+    /** True if path looks like a JUnit Platform/Jupiter/Vintage/OpenTest4J/API Guardian/JUnit4 jar. */
+    private static boolean isJUnitLibPath(String path) {
+        String name = new java.io.File(path).getName().toLowerCase(java.util.Locale.ROOT);
+        // jars (common cases)
+        if (name.startsWith("junit-platform-")) return true;       // launcher, engine, commons, reporting
+        if (name.startsWith("junit-jupiter-")) return true;        // api, engine, params
+        if (name.startsWith("junit-vintage-")) return true;
+        if (name.startsWith("opentest4j-")) return true;
+        if (name.startsWith("apiguardian-api-")) return true;
+        if (name.matches("^junit-\\d+.*\\.jar$")) return true;     // junit-4.x.jar, junit-5 aggregator jars
+
+        // directories on classpath that clearly point to those groupIds (rare but safe)
+        String p = path.replace('\\', '/'); // OS-agnostic
+        if (p.contains("/org/junit/platform/")) return true;
+        if (p.contains("/org/junit/jupiter/")) return true;
+        if (p.contains("/org/junit/vintage/")) return true;
+        if (p.contains("/org/opentest4j/")) return true;
+        if (p.contains("/org/apiguardian/")) return true;
+
+        return false;
+    }
+
+    /** True if path looks like a JUnit *4* or Vintage jar that we want to exclude.
+     *  We KEEP Jupiter + Platform + opentest4j + apiguardian.
+     */
+    private static boolean isJUnit4OrVintageLibPath(String path) {
+        String name = new java.io.File(path).getName().toLowerCase(java.util.Locale.ROOT);
+        // Exclude JUnit 4 and the Vintage engine
+        if (name.startsWith("junit-vintage-")) return true;          // Vintage engine
+        if (name.matches("^junit-\\d+.*\\.jar$")) return true;       // junit-4.x.jar
+
+        // Also exclude obvious Vintage directories on classpath
+        String p = path.replace('\\', '/');
+        if (p.contains("/org/junit/vintage/")) return true;
+
+        // DO NOT exclude Jupiter or Platform or their friends.
+        return false;
     }
 
 }

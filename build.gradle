@@ -1,14 +1,19 @@
 // To create fat (uber) jar
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.2.2' // ← new plugin id
     id 'java'
     id 'application'
 }
 
-sourceCompatibility = 21
-targetCompatibility = 21
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
-mainClassName = "gin.LocalSearch"
+application {
+    mainClass = "gin.LocalSearch"
+}
 
 repositories {
     mavenCentral()
@@ -19,15 +24,17 @@ dependencies {
 
     implementation group: 'commons-io', name: 'commons-io', version: '2.8.0'
     implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
-    implementation platform('org.junit:junit-bom:5.9.2')
-    implementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'org.junit.jupiter:junit-jupiter-engine'
+    implementation platform('org.junit:junit-bom:5.11.0')
+    //implementation 'org.junit.jupiter:junit-jupiter'
+    runtimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     implementation 'org.junit.platform:junit-platform-launcher'
     implementation 'org.junit.platform:junit-platform-engine'
-    implementation 'org.junit.vintage:junit-vintage-engine:5.9.2'
-    implementation 'org.apiguardian:apiguardian-api:1.1.2'
-    implementation group: 'junit', name: 'junit', version: '4.13.1'
-    implementation group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
+    implementation 'org.junit.vintage:junit-vintage-engine'
+    compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
+    //implementation group: 'junit', name: 'junit', version: '4.13.1'
+    //implementation group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
+    implementation 'junit:junit:4.13.2'
+    implementation 'org.hamcrest:hamcrest:2.2'
     implementation group: 'com.github.javaparser', name: 'javaparser-core', version: '3.24.0'
     implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     implementation group: 'org.apache.commons', name: 'commons-rng-simple', version: '1.3'
@@ -35,6 +42,13 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-rng-client-api', version: '1.3'
     implementation group: 'org.apache.commons', name: 'commons-rng-sampling', version: '1.3'
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.3'
+
+    // ---- JUnit for tests of Gin ----
+    testImplementation platform('org.junit:junit-bom:5.11.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'          // API + parameterized, etc.
+    testRuntimeOnly  'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly  'org.junit.platform:junit-platform-launcher'
+    testCompileOnly 'org.apiguardian:apiguardian-api:1.1.2'
 
     // for LLM integrations
     implementation 'dev.langchain4j:langchain4j:0.18.0'
@@ -76,7 +90,7 @@ dependencies {
     implementation group: 'org.apache.maven', name: 'maven-core', version: '3.9.0'
 
     // Used to profile gradle projects
-    implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '8.0.2'
+    implementation 'org.gradle:gradle-tooling-api:9.0.0'
     runtimeOnly 'org.slf4j:slf4j-simple:2.0.6'
 
     // Create jars for call graph generation using zta-zip
@@ -89,6 +103,14 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.13.1'
 
     testImplementation "org.mockito:mockito-core:3.+"
+
+    constraints {
+        implementation('org.junit.platform:junit-platform-commons:1.11.0')
+        implementation('org.junit.platform:junit-platform-launcher:1.11.0')
+        implementation('org.junit.platform:junit-platform-engine:1.11.0')
+        implementation('org.junit.jupiter:junit-jupiter-engine:5.11.0')
+        implementation('org.junit.vintage:junit-vintage-engine:5.11.0')
+    }
 }
 
 jar {
@@ -121,14 +143,19 @@ shadowJar {
 }
 
 test {
-    //we want display the following test events
+    useJUnitPlatform()  // ✅ run on JUnit 5 Platform
     testLogging {
-        events "PASSED", "STARTED", "FAILED", "SKIPPED"
-        //showStandardStreams = true
+        events "PASSED", "FAILED", "SKIPPED" //, "STANDARD_ERROR"
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
     }
-    useJUnit {
-        if (project.hasProperty("excludeCategory"))
-            excludeCategories "$excludeCategory"
+    // If you previously used excludeCategory, switch to tags:
+    if (project.hasProperty("excludeCategory")) {
+        useJUnitPlatform {
+            excludeTags project.property("excludeCategory")
+        }
     }
 }
 

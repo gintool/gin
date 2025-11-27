@@ -57,7 +57,7 @@ public class Project implements Serializable {
     private final List<File> mainClassDirs = new LinkedList<>();
     private final List<File> testClassDirs = new LinkedList<>();
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = "7.6";
+    private String gradleVersion = "9.0.0";
     private BuildType buildType;
 
     /**
@@ -286,8 +286,13 @@ public class Project implements Serializable {
     private void detectDirsGradle() {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
-        if (gradleVersion != null) {
-            connector = connector.useGradleVersion(gradleVersion);
+
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
+            connector.useGradleVersion(gradleVersion);
         }
 
         // Source Directories
@@ -588,7 +593,11 @@ public class Project implements Serializable {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
 
-        if (gradleVersion != null) {
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
 
@@ -827,7 +836,11 @@ public class Project implements Serializable {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
 
-        if (gradleVersion != null) {
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
 

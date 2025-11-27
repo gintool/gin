@@ -68,7 +68,7 @@ public abstract class Sampler implements Serializable {
     protected CSVWriter outputFileWriter;
     @Argument(alias = "to", description = "Output file for storing the execution time")
     protected File timingOutputFile = new File("sampler_timing.csv");
-    @Argument(alias = "x", description = "Timeout in milliseconds")
+    @Argument(alias = "x", description = "Timeout in milliseconds. Note: this won't work for JUnit4 tests, and includes startup for Maven etc so may need to be several seconds longer than you might expect.")
     protected Long timeoutMS = 10000L;
     @Argument(alias = "r", description = "Repeat each test r times")
     protected Integer reps = 1;

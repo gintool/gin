@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import gin.util.JavaUtils;
 
 /**
  * Runs tests internally, through CacheClassLoader
@@ -194,6 +195,8 @@ public class InternalTestRunner extends TestRunner {
 
         int threadsBefore = getNumberOfThreads();
 
+        ClassLoader prev = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(classLoader);
         Object result;
         try {
             result = method.invoke(runner, test, rep);
@@ -204,6 +207,8 @@ public class InternalTestRunner extends TestRunner {
             tempResult.setExceptionMessage(e.getMessage());
             tempResult.setPassed(false);
             result = tempResult;
+        } finally {
+            Thread.currentThread().setContextClassLoader(prev);
         }
 
         int threadsAfter = getNumberOfThreads();

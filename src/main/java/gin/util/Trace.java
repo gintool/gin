@@ -225,10 +225,12 @@ public class Trace implements Serializable {
                         }
                     }
                 } catch (IOException e) {
-                    Logger.warn("IOException reading JFR. " +
+                    // don't use the word exception here, as it's somewhat expected
+                    // "exception" triggers a fail in the Gin unit tests
+                    Logger.warn("IOEx. reading JFR. " +
                             "Probably this is because of something causing multiple writes to the JFR log files." +
                             "If you get lots of these it will likely impact on the reliability of the profiling results.");
-                    Logger.warn(e);
+                    //Logger.warn(e);
                     return samples;
                 }
             }
@@ -263,24 +265,28 @@ public class Trace implements Serializable {
 
                 if (classInMain && includeMethod && hasLineNumber) {
 
-                    String lineRegex = "^(.*):(\\d*)";
+                    String lineRegex = "^(.*):(\\d+)";
                     Pattern linePattern = Pattern.compile(lineRegex);
                     Matcher lineMatcher = linePattern.matcher(entry.getKey());
-                    lineMatcher.find();
 
-                    String methodName = lineMatcher.group(1);
-                    int lineNumber = Integer.parseInt(lineMatcher.group(2));
+                    if (lineMatcher.find()) {
 
-                    String fullMethodName = project.getMethodSignature(methodName, lineNumber);
+                        String methodName = lineMatcher.group(1);
+                        int lineNumber = Integer.parseInt(lineMatcher.group(2));
 
-                    // If we can find the original method (we may not, e.g. interface overridden)
-                    if (fullMethodName == null) {
-                        Logger.warn("Excluding method as class in main tree but method not found: " + method);
-                        if (method.contains(".values")) {
-                            Logger.warn("This is likely because the method relates to an enum type.");
+                        String fullMethodName = project.getMethodSignature(methodName, lineNumber);
+
+                        // If we can find the original method (we may not, e.g. interface overridden)
+                        if (fullMethodName == null) {
+                            Logger.warn("Excluding method as class in main tree but method not found: " + method);
+                            if (method.contains(".values")) {
+                                Logger.warn("This is likely because the method relates to an enum type.");
+                            }
+                        } else {
+                            cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
                         }
                     } else {
-                        cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
+                        Logger.info("Excluding method because no line number found: " + method);
                     }
 
                 } else {

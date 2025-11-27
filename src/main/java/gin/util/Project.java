@@ -904,10 +904,27 @@ public class Project implements Serializable {
 
         request.setUpdateSnapshots(true);
         request.setAlsoMake(false);
-        request.setUserSettingsFile(new File(mavenHome + "/conf/settings.xml"));
+
+        File userSettings = new File(mavenHome, "conf/settings.xml");
+        if (userSettings.isFile()) {
+            request.setUserSettingsFile(userSettings);
+        }
+
         request.setLocalRepositoryDirectory(new File(System.getProperty("user.home") + "/.m2/repository"));
         request.addArg("-X"); // extra debugging
         request.setBatchMode(true); // silence the “interactive mode” warning with
+
+
+        // --- CAPTURE OUTPUT so failures are readable ---
+        final StringBuilder outBuf = new StringBuilder(8192);
+        final StringBuilder errBuf = new StringBuilder(8192);
+
+        request.setOutputHandler(line -> {
+            if (line != null) outBuf.append(line).append('\n');
+        });
+        request.setErrorHandler(line -> {
+            if (line != null) errBuf.append(line).append('\n');
+        });
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
@@ -941,6 +958,19 @@ public class Project implements Serializable {
         }
 
         if (result.getExitCode() != 0) {
+            try {
+                // Persist logs to a temp file for quick inspection from the calling test
+                File tmp = File.createTempFile("gin-mvn-", ".log");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(tmp, java.nio.charset.StandardCharsets.UTF_8)) {
+                    pw.println("=== MAVEN STDOUT ===");
+                    pw.print(outBuf);
+                    pw.println("\n=== MAVEN STDERR ===");
+                    pw.print(errBuf);
+                }
+                Logger.error("Invocation of Maven returned non-zero exit code: " + result.getExitCode());
+                Logger.error("Full Maven output saved to: " + tmp.getAbsolutePath());
+            } catch(IOException e) {e.printStackTrace();}
+
             Logger.error("Error running tests: " + test);
             throw new FailedToExecuteTestException(BuildType.MAVEN, "Non-zero return code:" + result.getExitCode(), test);
         }

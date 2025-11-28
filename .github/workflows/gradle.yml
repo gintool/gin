@@ -41,14 +41,16 @@ jobs:
         run: ./gradlew build -x test --info --stacktrace | tee build.log
 
       # Run tests with verbose logging
-      - name: Test
-        env:
-          JDK_JAVA_OPTIONS: >-
-            -Dtinylog.writer=console
-            -Dtinylog.level=trace
-            -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
-          MAVEN_OPTS: "-Xms256m -Xmx2g"
-        run: ./gradlew test -PexcludeCategory="gin.category.LocalTest" --info --stacktrace | tee test.log
+      - name: Test (verbose logging)
+        run: |
+          ./gradlew test \
+            -PexcludeCategory="gin.category.LocalTest" \
+            --info --stacktrace \
+            -Dtinylog.writer=console \
+            -Dtinylog.level=trace \
+            "-Dtinylog.format={date} {level} [{thread}] {class}.{method}(): {message}" \
+            -Dorg.slf4j.simpleLogger.defaultLogLevel=debug \
+            | tee test.log
 
 
       # Always upload logs and reports so we can inspect surefire/gradle outputs when something fails.

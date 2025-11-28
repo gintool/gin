@@ -43,14 +43,14 @@ jobs:
       # Run tests with verbose logging
       - name: Test
         env:
-          # Sent to every JVM launched by this step (Gradle Daemon + any forks)
           JDK_JAVA_OPTIONS: >-
             -Dtinylog.writer=console
             -Dtinylog.level=trace
-            -Dtinylog.format={date} {level} [{thread}] {class}.{method}(): {message}
+            -Dtinylog.format=\{date\}\ \{level\}\ \[\{thread\}\]\ \{class\}.\{method\}\(\):\ \{message\}
             -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
           MAVEN_OPTS: "-Xms256m -Xmx2g"
         run: ./gradlew test -PexcludeCategory="gin.category.LocalTest" --info --stacktrace | tee test.log
+
 
       # Always upload logs and reports so we can inspect surefire/gradle outputs when something fails.
       - name: Upload logs & reports

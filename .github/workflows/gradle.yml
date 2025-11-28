@@ -19,18 +19,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    # These env vars are inherited by all steps and child JVMs (Gradle, Maven Invoker forks, your TestHarness).
-    env:
-      # Make tinylog and any System.out/err visible in the Actions log
-      JAVA_TOOL_OPTIONS: >-
-        -Dtinylog.writer=console
-        -Dtinylog.level=trace
-        -Dtinylog.format={date} {level} [{thread}] {class}.{method}(): {message}
-        -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
-      # Optional: keep Maven a bit more predictable
-      MAVEN_OPTS: "-Xms256m -Xmx2g"
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -39,7 +27,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'oracle'   # fine; Temurin also works if you prefer
+          distribution: 'oracle'
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
@@ -54,6 +42,14 @@ jobs:
 
       # Run tests with verbose logging
       - name: Test
+        env:
+          # Sent to every JVM launched by this step (Gradle Daemon + any forks)
+          JDK_JAVA_OPTIONS: >-
+            -Dtinylog.writer=console
+            -Dtinylog.level=trace
+            -Dtinylog.format={date} {level} [{thread}] {class}.{method}(): {message}
+            -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
+          MAVEN_OPTS: "-Xms256m -Xmx2g"
         run: ./gradlew test -PexcludeCategory="gin.category.LocalTest" --info --stacktrace | tee test.log
 
       # Always upload logs and reports so we can inspect surefire/gradle outputs when something fails.

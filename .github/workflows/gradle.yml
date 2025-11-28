@@ -46,7 +46,6 @@ jobs:
           JDK_JAVA_OPTIONS: >-
             -Dtinylog.writer=console
             -Dtinylog.level=trace
-            -Dtinylog.format=\{date\}\ \{level\}\ \[\{thread\}\]\ \{class\}.\{method\}\(\):\ \{message\}
             -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
           MAVEN_OPTS: "-Xms256m -Xmx2g"
         run: ./gradlew test -PexcludeCategory="gin.category.LocalTest" --info --stacktrace | tee test.log

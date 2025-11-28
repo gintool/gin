@@ -932,6 +932,8 @@ public class Project implements Serializable {
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
+        invoker.setOutputHandler(line -> System.out.println("[MVN] " + line));
+        invoker.setErrorHandler(line -> System.err.println("[MVN-ERR] " + line));
 
         Properties properties = new Properties();
         request.setProperties(properties);

@@ -914,8 +914,10 @@ public class Project implements Serializable {
         request.addArg("-X"); // extra debugging
         request.setBatchMode(true); // silence the “interactive mode” warning with
 
-        Logger.info("Maven home: " + (resolvedHome == null ? "(PATH)" : resolvedHome));
-        Logger.info("User settings: " + (userSettings != null && userSettings.isFile() ? userSettings : "(default)"));
+//        Logger.info("Maven home: " + (resolvedHome == null ? "(PATH)" : resolvedHome));
+//        Logger.info("User settings: " + (userSettings != null && userSettings.isFile() ? userSettings : "(default)"));
+
+
 
         // --- CAPTURE OUTPUT so failures are readable ---
         final StringBuilder outBuf = new StringBuilder(8192);
@@ -927,6 +929,9 @@ public class Project implements Serializable {
         request.setErrorHandler(line -> {
             if (line != null) errBuf.append(line).append('\n');
         });
+
+        Invoker invoker = new DefaultInvoker();
+        invoker.setMavenHome(mavenHome);
 
         Properties properties = new Properties();
         request.setProperties(properties);

@@ -928,9 +928,6 @@ public class Project implements Serializable {
             if (line != null) errBuf.append(line).append('\n');
         });
 
-        Invoker invoker = new DefaultInvoker();
-        invoker.setMavenHome(mavenHome);
-
         Properties properties = new Properties();
         request.setProperties(properties);
         properties.setProperty("test", testName);
@@ -971,6 +968,9 @@ public class Project implements Serializable {
                 }
                 Logger.error("Invocation of Maven returned non-zero exit code: " + result.getExitCode());
                 Logger.error("Full Maven output saved to: " + tmp.getAbsolutePath());
+
+                Logger.error(outBuf);
+                Logger.error(errBuf);
             } catch(IOException e) {e.printStackTrace();}
 
             Logger.error("Error running tests: " + test);

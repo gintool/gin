@@ -8,6 +8,7 @@ import gin.edit.line.LineEdit;
 import gin.edit.llm.LLMMaskedStatement;
 import gin.edit.llm.LLMReplaceStatement;
 import gin.test.UnitTest;
+import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
@@ -21,7 +22,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Method-based LocalSearchSimple search.
@@ -90,6 +95,63 @@ public abstract class LocalSearchSimple extends GP {
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
 
+    public String clusterAction(int cluster) throws IOException{
+        switch (cluster) {
+            case 4:
+            case 10:
+            case 15:
+            case 17:
+                return "A";
+            case 0:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 9:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 16:
+                return "B";
+            case 1:
+            case 2:
+            case 6:
+                return "C";
+        }
+        throw new IOException("Clustering Failed");
+    }
+
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, Patch bestPatch, Double orig, Double best) {
+        // ACTION C - Throw away patch
+        if (action == "C") {
+            return;
+        }
+
+        // ACTION B - Proceed as normal
+        if (action == "B") {
+
+            //Calculate fitness
+            UnitTestResultSet results = testPatch(className, tests, patch);
+            double newFitness = fitness(results);
+            super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+
+            // Check if better
+            if (compareFitness(newFitness, best) > 0) {
+                best = newFitness;
+                bestPatch = patch;
+            }
+            return;
+        }
+        
+        // ACTION A- Skip testing and keep patch- we need to figure out how to do this
+        else {
+            //Add dummy fitness entry as we don't want to test the patch
+            UnitTestResultSet results = new UnitTestResultSet(patch, true, new ArrayList<Boolean>(), true, true, new ArrayList<UnitTestResult>());
+            super.writePatch(results, methodName, 0, 0);
+        }
+    }
+
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/
@@ -119,15 +181,53 @@ public abstract class LocalSearchSimple extends GP {
             // Add a mutation
             Patch patch = neighbour(bestPatch);
 
-            // Calculate fitness
-            results = testPatch(className, tests, patch, null);
-            double newFitness = fitness(results);
-            super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
+            // Support for PatchCat Integration
 
-            // Check if better
-            if (compareFitness(newFitness, best) > 0) {
-                best = newFitness;
-                bestPatch = patch;
+            try {
+                System.out.println("Patch is: " + patch.toString());
+                System.out.println("Original Patch is: " + origPatch.toString());
+
+                ProcessBuilder builder = new ProcessBuilder(
+                    "python3",
+                    "../gin-llm/clustering/PatchCat/PatchCat.py",
+                    patch.toString(),  origPatch.toString()
+                );                
+                
+                builder.environment().put("PYTHONUNBUFFERED", "1");
+
+                // Merge stderr -> stdout and append to the same file
+                // builder.redirectErrorStream(true);
+                // builder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+
+                Process process = builder.start();
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream())
+                );
+                String line = reader.readLine();
+                int cluster = -1;
+
+                System.out.println("Line is: " + line);
+                if (line != null && !line.isEmpty()) {
+                    // Regex to capture digits inside [..], e.g. [13]
+                    Pattern pattern = Pattern.compile("\\[(\\d+)]");
+                    Matcher matcher = pattern.matcher(line);
+
+                    if (matcher.find()) {
+                        String numStr = matcher.group(1); // "13"
+                        cluster = Integer.parseInt(numStr);
+                        System.out.println("Cluster is: " + cluster);
+                    }
+                }
+
+                String action = clusterAction(cluster);
+
+                int exit = process.waitFor();
+
+                implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best);
+
+            } catch (IOException | InterruptedException e) {
+                 Logger.info("Running PatchCat Failed");
+                e.printStackTrace();
             }
         }
     }

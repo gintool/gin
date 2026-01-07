@@ -122,7 +122,7 @@ public abstract class LocalSearchSimple extends GP {
         throw new IOException("Clustering Failed");
     }
 
-    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, Patch bestPatch, Double orig, Double best) {
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, Patch bestPatch, Double orig, Double best, int iteration) {
         // ACTION C - Throw away patch
         if (action == "C") {
             return;
@@ -132,9 +132,9 @@ public abstract class LocalSearchSimple extends GP {
         if (action == "B") {
 
             //Calculate fitness
-            UnitTestResultSet results = testPatch(className, tests, patch);
+            UnitTestResultSet results = testPatch(className, tests, patch, null);
             double newFitness = fitness(results);
-            super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+            super.writePatch(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, orig));
 
             // Check if better
             if (compareFitness(newFitness, best) > 0) {
@@ -143,12 +143,12 @@ public abstract class LocalSearchSimple extends GP {
             }
             return;
         }
-        
+
         // ACTION A- Skip testing and keep patch- we need to figure out how to do this
         else {
             //Add dummy fitness entry as we don't want to test the patch
-            UnitTestResultSet results = new UnitTestResultSet(patch, true, new ArrayList<Boolean>(), true, true, new ArrayList<UnitTestResult>());
-            super.writePatch(results, methodName, 0, 0);
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", true, new ArrayList<Boolean>(), true, "", true, new ArrayList<UnitTestResult>());
+            super.writePatch(iteration, iteration, results, methodName, 0, 0); //CH: is iteration for evaluationNumber here correct?
         }
     }
 
@@ -223,7 +223,7 @@ public abstract class LocalSearchSimple extends GP {
 
                 int exit = process.waitFor();
 
-                implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best);
+                implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best, i);
 
             } catch (IOException | InterruptedException e) {
                  Logger.info("Running PatchCat Failed");

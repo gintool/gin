@@ -34,7 +34,7 @@ public class MergeProfilerFiles {
 	@Argument(alias = "if", description = "Comma separated list of filename patterns, e.g. spark.Profiler_output_*.csv or spark.Profiler_output_1.csv,spark.Profiler_output_2.csv,spark.Profiler_output_3.csv", required = true)
     protected String inputFiles;
 
-	@Argument(alias = "of", description = "Output: comma separated list of filename patterns, e.g. spark.Profiler_output_*.csv or spark.Profiler_output_1.csv,spark.Profiler_output_2.csv,spark.Profiler_output_3.csv", required = true)
+	@Argument(alias = "of", description = "Output: e.g. spark.Profiler_output.csv", required = true)
     protected File outputFile;
 	
 	@Argument(alias = "n", description = "Only methods in at least n repeats will be included; defaults to the number of files (so keep only the intersection of hot methods)", required = false)

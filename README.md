@@ -208,7 +208,22 @@ unexpected hard-coded dependencies.
 
 A full example with an existing Maven project is given further below.
 
-As sampler profiling is a stochastic process, it is also worth performing repeat runs, ideally with a reboot between runs. We have provided a tool to merge multiple profiler CSVs into a single file: gin.util.analysis.MergeProfilerFiles. This will retain only hot methods appearing in more than a specific fraction of the repeats, and takes the union of all unit tests observed as calling a given hot method.
+### Multiple profiling runs
+
+As sampler profiling is a stochastic process, it is also worth performing repeat runs, ideally with a reboot between runs. We have provided a tool to merge multiple profiler CSVs into a single file: gin.util.analysis.MergeProfilerFiles. This will retain only hot methods appearing in more than a specific fraction of the repeats, and takes the union of all unit tests observed as calling a given hot method. If, for example, you were to run the following bash script:
+```
+#!/bin/bash
+projectnameforgin='spatial4j'
+
+for i in {1..20}; do
+   java -cp ../gin/build/gin.jar gin.util.Profiler -r 1 -p $projectnamforgin -d ./ -h ~/.sdkman/candidates/maven/current/ -o $projectnameforgin.Profiler_output_$i.csv &> $projectnameforgin.Profiler_stdoutstderr_$i.txt
+done
+```
+you will get a series of profiler files like spatial4j.Profiler_output_1.csv, spatial4j.Profiler_output_2.csv, etc. To aggregate them, do this:
+```
+java -cp ../gin/build/gin.jar gin.util.analysis.MergeProfilerFiles -if "spatial4j.Profiler_output_*.csv" -of spatial4j.Profiler_aggregated_output.csv
+```
+and you'll get a single file spatial4j.Profiler_aggregated_output.csv. By default this will contain the intersection of hot methods found across all profile runs, with each method having the union of calling unit tests discovered for it.
 
 ## Automated test case generation for Maven and Gradle projects
 

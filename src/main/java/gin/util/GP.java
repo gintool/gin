@@ -53,6 +53,9 @@ public abstract class GP extends Sampler {
     @Argument(alias = "pb", description = "Probability of combined")
     protected Double combinedProbablity = 0.5;
 
+    @Argument(alias = "pc", description = "Enable patchCat")
+    protected Boolean patchCat = false;
+
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;
 
@@ -159,7 +162,7 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, double fitness, double improvement) {
+    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement) {
         String[] entry = { methodName
         		, Integer.toString(iteration)
         		, Integer.toString(evaluationNumber)

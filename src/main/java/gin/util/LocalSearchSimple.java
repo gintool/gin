@@ -147,8 +147,9 @@ public abstract class LocalSearchSimple extends GP {
         // ACTION A- Skip testing and keep patch- we need to figure out how to do this
         else {
             //Add dummy fitness entry as we don't want to test the patch
-            UnitTestResultSet results = new UnitTestResultSet(patch, "", true, new ArrayList<Boolean>(), true, "", true, new ArrayList<UnitTestResult>());
-            super.writePatch(iteration, iteration, results, methodName, 0, 0); //CH: is iteration for evaluationNumber here correct?
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", true, new ArrayList<Boolean>(), true, "", true, new ArrayList<UnitTestResult>()); //CH: two empty strings here OK?
+            super.writePatch(iteration, iteration, results, methodName, null, 0); //CH: is iteration for evaluationNumber here correct?
+            bestPatch = patch;
         }
     }
 
@@ -180,51 +181,59 @@ public abstract class LocalSearchSimple extends GP {
 
             // Add a mutation
             Patch patch = neighbour(bestPatch);
-
-            // Support for PatchCat Integration
+            Logger.info("Patch is: " + patch.toString());
+            Logger.info("Original Patch is: " + origPatch.toString());
 
             try {
-                System.out.println("Patch is: " + patch.toString());
-                System.out.println("Original Patch is: " + origPatch.toString());
-
-                ProcessBuilder builder = new ProcessBuilder(
-                    "python3",
-                    "../gin-llm/clustering/PatchCat/PatchCat.py",
-                    patch.toString(),  origPatch.toString()
-                );                
+                // Support for PatchCat Integration
+                if (Boolean.TRUE.equals(patchCat)) {
+                    Logger.info("Running PatchCat");
                 
-                builder.environment().put("PYTHONUNBUFFERED", "1");
+                    ProcessBuilder builder = new ProcessBuilder(
+                        "python3",
+                        "../gin-llm/clustering/PatchCat/PatchCat.py",
+                        patch.toString(),  origPatch.toString()
+                    );                
+                    
+                    builder.environment().put("PYTHONUNBUFFERED", "1");
 
-                // Merge stderr -> stdout and append to the same file
-                // builder.redirectErrorStream(true);
-                // builder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+                    Process process = builder.start();
+                    BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream())
+                    );
+                    String line = reader.readLine();
+                    int cluster = -1;
 
-                Process process = builder.start();
-                BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream())
-                );
-                String line = reader.readLine();
-                int cluster = -1;
+                    Logger.info("Line is: " + line);
+                    if (line != null && !line.isEmpty()) {
+                        // Regex to capture digits inside [..], e.g. [13]
+                        Pattern pattern = Pattern.compile("\\[(\\d+)]");
+                        Matcher matcher = pattern.matcher(line);
 
-                System.out.println("Line is: " + line);
-                if (line != null && !line.isEmpty()) {
-                    // Regex to capture digits inside [..], e.g. [13]
-                    Pattern pattern = Pattern.compile("\\[(\\d+)]");
-                    Matcher matcher = pattern.matcher(line);
+                        if (matcher.find()) {
+                            String numStr = matcher.group(1); // "13"
+                            cluster = Integer.parseInt(numStr);
+                            Logger.info("Cluster is: " + cluster);
+                        }
+                    }
 
-                    if (matcher.find()) {
-                        String numStr = matcher.group(1); // "13"
-                        cluster = Integer.parseInt(numStr);
-                        System.out.println("Cluster is: " + cluster);
+                    String action = clusterAction(cluster);
+
+                    int exit = process.waitFor();
+
+                    implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best, i);
+                } else { // Regular Local Search without PatchCat
+                    // Calculate fitness
+                    results = testPatch(className, tests, patch, null);
+                    double newFitness = fitness(results);
+                    super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
+
+                    // Check if better
+                    if (compareFitness(newFitness, best) > 0) {
+                        best = newFitness;
+                        bestPatch = patch;
                     }
                 }
-
-                String action = clusterAction(cluster);
-
-                int exit = process.waitFor();
-
-                implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best, i);
-
             } catch (IOException | InterruptedException e) {
                  Logger.info("Running PatchCat Failed");
                 e.printStackTrace();

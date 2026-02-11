@@ -122,34 +122,23 @@ public abstract class LocalSearchSimple extends GP {
         throw new IOException("Clustering Failed");
     }
 
-    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, Patch bestPatch, Double orig, Double best, int iteration) {
+    public boolean implementClusterAction(String action, String methodName, Patch patch, int iteration) {
         // ACTION C - Throw away patch
         if (action == "C") {
-            return;
+            return false;
         }
 
         // ACTION B - Proceed as normal
         if (action == "B") {
-
-            //Calculate fitness
-            UnitTestResultSet results = testPatch(className, tests, patch, null);
-            double newFitness = fitness(results);
-            super.writePatch(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, orig));
-
-            // Check if better
-            if (compareFitness(newFitness, best) > 0) {
-                best = newFitness;
-                bestPatch = patch;
-            }
-            return;
+            return true;
         }
 
         // ACTION A- Skip testing and keep patch- we need to figure out how to do this
         else {
             //Add dummy fitness entry as we don't want to test the patch
-            UnitTestResultSet results = new UnitTestResultSet(patch, "", true, new ArrayList<Boolean>(), true, "", true, new ArrayList<UnitTestResult>()); //CH: two empty strings here OK?
-            super.writePatch(iteration, iteration, results, methodName, null, 0); //CH: is iteration for evaluationNumber here correct?
-            bestPatch = patch;
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatch(iteration, iteration, results, methodName, null, 0);
+            return false;
         }
     }
 
@@ -181,6 +170,7 @@ public abstract class LocalSearchSimple extends GP {
 
             // Add a mutation
             Patch patch = neighbour(bestPatch);
+            boolean toTest = false;
             Logger.info("Patch is: " + patch.toString());
             Logger.info("Original Patch is: " + origPatch.toString());
 
@@ -191,7 +181,7 @@ public abstract class LocalSearchSimple extends GP {
                 
                     ProcessBuilder builder = new ProcessBuilder(
                         "python3",
-                        "../gin-llm/clustering/PatchCat/PatchCat.py",
+                        "../gin/PatchCat/src/PatchCat.py",
                         patch.toString(),  origPatch.toString()
                     );                
                     
@@ -221,8 +211,10 @@ public abstract class LocalSearchSimple extends GP {
 
                     int exit = process.waitFor();
 
-                    implementClusterAction(action, className, methodName, tests, patch, bestPatch, orig, best, i);
-                } else { // Regular Local Search without PatchCat
+                    toTest = implementClusterAction(action, methodName, patch, i);
+                }
+
+                if (Boolean.FALSE.equals(patchCat) || toTest) { // Regular Local Search without PatchCat
                     // Calculate fitness
                     results = testPatch(className, tests, patch, null);
                     double newFitness = fitness(results);
@@ -232,6 +224,7 @@ public abstract class LocalSearchSimple extends GP {
                     if (compareFitness(newFitness, best) > 0) {
                         best = newFitness;
                         bestPatch = patch;
+                        Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
                     }
                 }
             } catch (IOException | InterruptedException e) {

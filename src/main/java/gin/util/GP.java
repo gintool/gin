@@ -167,10 +167,10 @@ public abstract class GP extends Sampler {
         		, Integer.toString(iteration)
         		, Integer.toString(evaluationNumber)
                 , results.getPatch().toString()
-                , Boolean.toString(results.getCleanCompile())
-                , Boolean.toString(results.allTestsSuccessful())
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
                 , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                , Double.toString(fitness)
+                , fitness == null ? "null" : Double.toString(fitness)
                 , Double.toString(improvement)
         };
         outputFileWriter.writeNext(entry);

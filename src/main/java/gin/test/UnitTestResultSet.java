@@ -20,8 +20,8 @@ public class UnitTestResultSet implements Serializable {
     private final List<UnitTestResult> results;
 
     private final Patch patch;
-    private final boolean patchValid;
-    private final boolean compiledOK;
+    private final Boolean patchValid;
+    private final Boolean compiledOK;
     private String compileError = "N/A";
     private final List<Boolean> editsValid;
     private final String patchedCode;
@@ -30,9 +30,9 @@ public class UnitTestResultSet implements Serializable {
      * was the patch effectively a no-op? i.e. was there some difference between
      * input and output source?
      */
-    private final boolean noOp;
+    private final Boolean noOp;
 
-    public UnitTestResultSet(Patch patch, String patchedCode, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, String compileError, boolean noOp, List<UnitTestResult> results) {
+    public UnitTestResultSet(Patch patch, String patchedCode, Boolean patchValid, List<Boolean> editsValid, Boolean compiledOK, String compileError, Boolean noOp, List<UnitTestResult> results) {
         this.patch = patch;
         this.patchValid = patchValid;
         this.editsValid = new ArrayList<>(editsValid);
@@ -51,7 +51,7 @@ public class UnitTestResultSet implements Serializable {
 		return patchedCode;
 	}
 
-    public boolean getValidPatch() {
+    public Boolean getValidPatch() {
         return patchValid;
     }
 
@@ -59,7 +59,7 @@ public class UnitTestResultSet implements Serializable {
         return editsValid;
     }
 
-    public boolean getCleanCompile() {
+    public Boolean getCleanCompile() {
         return compiledOK;
     }
     
@@ -67,7 +67,7 @@ public class UnitTestResultSet implements Serializable {
 		return compileError;
 	}
 
-    public boolean getNoOp() {
+    public Boolean getNoOp() {
         return noOp;
     }
 
@@ -75,7 +75,10 @@ public class UnitTestResultSet implements Serializable {
         return results;
     }
 
-    public boolean allTestsSuccessful() {
+    public Boolean allTestsSuccessful() {
+        if (results.isEmpty()) {
+            return null;
+        }
         for (UnitTestResult testResult : results) {
             if (!testResult.getPassed()) {
                 return false;

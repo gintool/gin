@@ -142,16 +142,33 @@ public abstract class GP extends Sampler {
     /*============== Helper methods  ==============*/
 
     protected void writeNewHeader() {
-        String[] entry = { "MethodName"
-        		, "Iteration"
+        String[] entry;
+
+        if (Boolean.TRUE.equals(patchCat)) {
+            entry = new String[] { "MethodName"
+                , "Iteration"
         		, "EvaluationNumber"
                 , "Patch"
+                , "Cluster"
+                , "Action"
                 , "Compiled"
                 , "AllTestsPassed"
                 , "TotalExecutionTime(ms)"
                 , "Fitness"
                 , "FitnessImprovement"
-        };
+            };
+        } else {
+            entry = new String[] { "MethodName"
+                    , "Iteration"
+                    , "EvaluationNumber"
+                    , "Patch"
+                    , "Compiled"
+                    , "AllTestsPassed"
+                    , "TotalExecutionTime(ms)"
+                    , "Fitness"
+                    , "FitnessImprovement"
+            };
+        }
         try {
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
@@ -167,6 +184,22 @@ public abstract class GP extends Sampler {
         		, Integer.toString(iteration)
         		, Integer.toString(evaluationNumber)
                 , results.getPatch().toString()
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
+                , Float.toString(results.totalExecutionTime() / 1000000.0f)
+                , fitness == null ? "null" : Double.toString(fitness)
+                , Double.toString(improvement)
+        };
+        outputFileWriter.writeNext(entry);
+    }
+
+        protected void writePatchWithPatchCatInfo(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement, int cluster, String action) {
+        String[] entry = { methodName
+        		, Integer.toString(iteration)
+        		, Integer.toString(evaluationNumber)
+                , results.getPatch().toString()
+                , Integer.toString(cluster)
+                , action
                 , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
                 , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
                 , Float.toString(results.totalExecutionTime() / 1000000.0f)

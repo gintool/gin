@@ -46,6 +46,9 @@ public abstract class LocalSearchSimple extends GP {
 
     private List<Class <? extends Edit>> NoneLLMedit = new ArrayList<>();
 
+    private Double best = null;
+    private Patch bestPatch = null;
+
     public LocalSearchSimple(String[] args) {
         super(args);
         SetLLMedits();
@@ -122,23 +125,34 @@ public abstract class LocalSearchSimple extends GP {
         throw new IOException("Clustering Failed");
     }
 
-    public boolean implementClusterAction(String action, String methodName, Patch patch, int iteration) {
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, int iteration, int cluster) {
         // ACTION C - Throw away patch
         if (action == "C") {
-            return false;
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "C");
         }
 
         // ACTION B - Proceed as normal
         if (action == "B") {
-            return true;
+            // Calculate fitness
+            UnitTestResultSet results = testPatch(className, tests, patch, null);
+            double newFitness = fitness(results);
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B");
+    
+            // Check if better
+            if (compareFitness(newFitness, best) > 0) {
+                best = newFitness;
+                bestPatch = patch;
+                Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
+            }
         }
 
         // ACTION A- Skip testing and keep patch- we need to figure out how to do this
         else {
             //Add dummy fitness entry as we don't want to test the patch
             UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
-            super.writePatch(iteration, iteration, results, methodName, null, 0);
-            return false;
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A");
+            bestPatch = patch;
         }
     }
 
@@ -160,11 +174,13 @@ public abstract class LocalSearchSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(-1, 0, results, methodName, orig, 0);
-
-        // Keep best 
-        double best = orig;
-        Patch bestPatch = origPatch;
+         if (Boolean.TRUE.equals(patchCat)){
+            super.writePatchWithPatchCatInfo(-1, 0, results, methodName, orig, 0, -1, "Original");
+        } else { super.writePatch(-1, 0, results, methodName, orig, 0); }
+        
+        // Set original as best for now
+        best = orig;
+        bestPatch = origPatch;
 
         for (int i = 1; i < indNumber; i++) {
 
@@ -211,10 +227,9 @@ public abstract class LocalSearchSimple extends GP {
 
                     int exit = process.waitFor();
 
-                    toTest = implementClusterAction(action, methodName, patch, i);
-                }
-
-                if (Boolean.FALSE.equals(patchCat) || toTest) { // Regular Local Search without PatchCat
+                    implementClusterAction(action, className, methodName, tests, patch, i, cluster);
+                    
+                } else { // Regular Local Search without PatchCat
                     // Calculate fitness
                     results = testPatch(className, tests, patch, null);
                     double newFitness = fitness(results);

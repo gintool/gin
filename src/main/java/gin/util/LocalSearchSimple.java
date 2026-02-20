@@ -8,6 +8,7 @@ import gin.edit.line.LineEdit;
 import gin.edit.llm.LLMMaskedStatement;
 import gin.edit.llm.LLMReplaceStatement;
 import gin.test.UnitTest;
+import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
@@ -21,7 +22,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Method-based LocalSearchSimple search.
@@ -40,6 +45,9 @@ public abstract class LocalSearchSimple extends GP {
     private Class <? extends Edit> LLMedit = null;
 
     private List<Class <? extends Edit>> NoneLLMedit = new ArrayList<>();
+
+    private Double best = null;
+    private Patch bestPatch = null;
 
     public LocalSearchSimple(String[] args) {
         super(args);
@@ -90,6 +98,64 @@ public abstract class LocalSearchSimple extends GP {
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
 
+    public String clusterAction(int cluster) throws IOException{
+        switch (cluster) {
+            case 4:
+            case 10:
+            case 15:
+            case 17:
+                return "A";
+            case 0:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 9:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 16:
+                return "B";
+            case 1:
+            case 2:
+            case 6:
+                return "C";
+        }
+        throw new IOException("Clustering Failed");
+    }
+
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, int iteration, int cluster) {
+        // ACTION C - Throw away patch
+        if (action == "C") {
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "C");
+        }
+
+        // ACTION B - Proceed as normal
+        if (action == "B") {
+            // Calculate fitness
+            UnitTestResultSet results = testPatch(className, tests, patch, null);
+            double newFitness = fitness(results);
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B");
+    
+            // Check if better
+            if (compareFitness(newFitness, best) > 0) {
+                best = newFitness;
+                bestPatch = patch;
+                Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
+            }
+        }
+
+        // ACTION A- Skip testing and keep patch- we need to figure out how to do this
+        else {
+            //Add dummy fitness entry as we don't want to test the patch
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A");
+            bestPatch = patch;
+        }
+    }
+
     /*============== Implementation of abstract methods  ==============*/
 
     /*====== Search ======*/
@@ -108,26 +174,77 @@ public abstract class LocalSearchSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(-1, 0, results, methodName, orig, 0);
-
-        // Keep best 
-        double best = orig;
-        Patch bestPatch = origPatch;
+         if (Boolean.TRUE.equals(patchCat)){
+            super.writePatchWithPatchCatInfo(-1, 0, results, methodName, orig, 0, -1, "Original");
+        } else { super.writePatch(-1, 0, results, methodName, orig, 0); }
+        
+        // Set original as best for now
+        best = orig;
+        bestPatch = origPatch;
 
         for (int i = 1; i < indNumber; i++) {
 
             // Add a mutation
             Patch patch = neighbour(bestPatch);
+            boolean toTest = false;
+            Logger.info("Patch is: " + patch.toString());
+            Logger.info("Original Patch is: " + origPatch.toString());
 
-            // Calculate fitness
-            results = testPatch(className, tests, patch, null);
-            double newFitness = fitness(results);
-            super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
+            try {
+                // Support for PatchCat Integration
+                if (Boolean.TRUE.equals(patchCat)) {
+                    Logger.info("Running PatchCat");
+                
+                    ProcessBuilder builder = new ProcessBuilder(
+                        "python3",
+                        "../gin/PatchCat/src/PatchCat.py",
+                        patch.toString(),  origPatch.toString()
+                    );                
+                    
+                    builder.environment().put("PYTHONUNBUFFERED", "1");
 
-            // Check if better
-            if (compareFitness(newFitness, best) > 0) {
-                best = newFitness;
-                bestPatch = patch;
+                    Process process = builder.start();
+                    BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream())
+                    );
+                    String line = reader.readLine();
+                    int cluster = -1;
+
+                    Logger.info("Line is: " + line);
+                    if (line != null && !line.isEmpty()) {
+                        // Regex to capture digits inside [..], e.g. [13]
+                        Pattern pattern = Pattern.compile("\\[(\\d+)]");
+                        Matcher matcher = pattern.matcher(line);
+
+                        if (matcher.find()) {
+                            String numStr = matcher.group(1); // "13"
+                            cluster = Integer.parseInt(numStr);
+                            Logger.info("Cluster is: " + cluster);
+                        }
+                    }
+
+                    String action = clusterAction(cluster);
+
+                    int exit = process.waitFor();
+
+                    implementClusterAction(action, className, methodName, tests, patch, i, cluster);
+                    
+                } else { // Regular Local Search without PatchCat
+                    // Calculate fitness
+                    results = testPatch(className, tests, patch, null);
+                    double newFitness = fitness(results);
+                    super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
+
+                    // Check if better
+                    if (compareFitness(newFitness, best) > 0) {
+                        best = newFitness;
+                        bestPatch = patch;
+                        Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
+                    }
+                }
+            } catch (IOException | InterruptedException e) {
+                 Logger.info("Running PatchCat Failed");
+                e.printStackTrace();
             }
         }
     }

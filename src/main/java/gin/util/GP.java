@@ -53,6 +53,9 @@ public abstract class GP extends Sampler {
     @Argument(alias = "pb", description = "Probability of combined")
     protected Double combinedProbablity = 0.5;
 
+    @Argument(alias = "pc", description = "Enable patchCat")
+    protected Boolean patchCat = false;
+
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;
 
@@ -139,16 +142,33 @@ public abstract class GP extends Sampler {
     /*============== Helper methods  ==============*/
 
     protected void writeNewHeader() {
-        String[] entry = { "MethodName"
-        		, "Iteration"
+        String[] entry;
+
+        if (Boolean.TRUE.equals(patchCat)) {
+            entry = new String[] { "MethodName"
+                , "Iteration"
         		, "EvaluationNumber"
                 , "Patch"
+                , "Cluster"
+                , "Action"
                 , "Compiled"
                 , "AllTestsPassed"
                 , "TotalExecutionTime(ms)"
                 , "Fitness"
                 , "FitnessImprovement"
-        };
+            };
+        } else {
+            entry = new String[] { "MethodName"
+                    , "Iteration"
+                    , "EvaluationNumber"
+                    , "Patch"
+                    , "Compiled"
+                    , "AllTestsPassed"
+                    , "TotalExecutionTime(ms)"
+                    , "Fitness"
+                    , "FitnessImprovement"
+            };
+        }
         try {
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
@@ -159,15 +179,31 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, double fitness, double improvement) {
+    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement) {
         String[] entry = { methodName
         		, Integer.toString(iteration)
         		, Integer.toString(evaluationNumber)
                 , results.getPatch().toString()
-                , Boolean.toString(results.getCleanCompile())
-                , Boolean.toString(results.allTestsSuccessful())
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
                 , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                , Double.toString(fitness)
+                , fitness == null ? "null" : Double.toString(fitness)
+                , Double.toString(improvement)
+        };
+        outputFileWriter.writeNext(entry);
+    }
+
+        protected void writePatchWithPatchCatInfo(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement, int cluster, String action) {
+        String[] entry = { methodName
+        		, Integer.toString(iteration)
+        		, Integer.toString(evaluationNumber)
+                , results.getPatch().toString()
+                , Integer.toString(cluster)
+                , action
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
+                , Float.toString(results.totalExecutionTime() / 1000000.0f)
+                , fitness == null ? "null" : Double.toString(fitness)
                 , Double.toString(improvement)
         };
         outputFileWriter.writeNext(entry);

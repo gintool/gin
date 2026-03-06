@@ -140,7 +140,7 @@ public abstract class LocalSearchSimple extends GP {
             UnitTestResultSet results = testPatch(className, tests, patch, null);
             double newFitness = fitness(results);
             super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B", diff);
-    
+  
             // Check if better
             if (compareFitness(newFitness, best) > 0) {
                 best = newFitness;
@@ -154,6 +154,7 @@ public abstract class LocalSearchSimple extends GP {
             //Add dummy fitness entry as we don't want to test the patch
             UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
             super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A", diff);
+
             bestPatch = patch;
         }
     }

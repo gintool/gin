@@ -1,13 +1,13 @@
 package gin.test;
 
 import com.sampullara.cli.Args;
+import java.util.Locale;
+
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.LauncherSession;
-import org.junit.platform.launcher.TestPlan;
+import gin.util.JavaUtils;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.pmw.tinylog.Logger;
@@ -20,11 +20,12 @@ import java.text.ParseException;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.*;
-import org.junit.platform.launcher.EngineFilter;
+
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.Request;
 import org.junit.runner.notification.Failure;
+import org.slf4j.LoggerFactory;
 
 /**
  * Runs a given test request. Uses sockets to communicate with ExternalTestRunner.
@@ -34,6 +35,7 @@ public class TestHarness implements Serializable {
     public static final String PORT_PREFIX = "PORT";
     @Serial
     private static final long serialVersionUID = -6547478455821943382L;
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TestHarness.class);
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
@@ -49,6 +51,8 @@ public class TestHarness implements Serializable {
     }
 
     public void start() {
+        logDebug("TH.start", System.getProperty("java.class.path") + "\n\nuser.dir=" + System.getProperty("user.dir"));
+
         try {
             serverSocket = new ServerSocket(0);
             int port = serverSocket.getLocalPort();
@@ -105,6 +109,7 @@ public class TestHarness implements Serializable {
     /* this method is for debugging purposes; the testharness's output doesn't
      * end up in the main log so we write directly to a local file instead */
     public static void logDebug(String tag, String text) {
+        /*
         try {
             java.util.List<String> lines = new java.util.ArrayList<>();
 
@@ -113,6 +118,7 @@ public class TestHarness implements Serializable {
             java.nio.file.Path file = java.nio.file.Paths.get("/home/sbr/gin/DEBUG-"+tag+"."+System.nanoTime()+".txt");
             java.nio.file.Files.write(file, lines, java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {}
+         */
     }
 
 
@@ -167,6 +173,8 @@ public class TestHarness implements Serializable {
 
     private UnitTestResult runTest(UnitTest test, int rep) {
 
+        logDebug("TH.runTest", System.getProperty("java.class.path"));
+
         UnitTestResult result = new UnitTestResult(test, rep);
 
         final String className  = test.getFullClassName();
@@ -175,6 +183,9 @@ public class TestHarness implements Serializable {
         try {
             Class<?> clazz = Class.forName(className);
             boolean jupiterish = looksLikeJupiter(clazz);
+
+            boolean hasJupiter = hasEngine("junit-jupiter");
+            boolean hasVintage = hasEngine("junit-vintage");
 
             // 1) Try method+class discovery with the right engine bias
             LauncherDiscoveryRequest baseReq = buildRequest(test, jupiterish);
@@ -185,14 +196,27 @@ public class TestHarness implements Serializable {
                 TestPlan plan = launcher.discover(baseReq);
                 boolean hasTests = plan.containsTests();
 
+                logDebug("TH.launcher", "DISCOVERY -> engines=" + launcher.discover(baseReq).countTestIdentifiers(TestIdentifier::isTest)
+                        + ", roots=" + launcher.discover(baseReq).getRoots().size() + ", engines present:" + java.util.ServiceLoader.load(org.junit.platform.engine.TestEngine.class).stream().map(p->p.type().getName()).toList());
+
                 // 2) If nothing found, try class-only discovery
                 if (!hasTests) {
-                    var classOnly = LauncherDiscoveryRequestBuilder.request()
-                            .selectors(selectClass(clazz))
-                            .filters(EngineFilter.includeEngines(
-                                    jupiterish ? new String[]{"junit-jupiter"}
-                                            : new String[]{"junit-jupiter", "junit-vintage"}))
-                            .build();
+                    var classOnlyBuilder = LauncherDiscoveryRequestBuilder.request()
+                            .selectors(selectClass(clazz));
+//                            .filters(EngineFilter.includeEngines(
+//                                    jupiterish ? new String[]{"junit-jupiter"}
+//                                            : new String[]{"junit-jupiter", "junit-vintage"}))
+//                            .build();
+                    if (jupiterish) {
+                        if (hasJupiter) classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter"));
+                    } else {
+                        if (hasJupiter && hasVintage) classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
+                        else if (hasJupiter)          classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter"));
+                        else if (hasVintage)          classOnlyBuilder.filters(EngineFilter.includeEngines("junit-vintage"));
+                        // else: no filter (let launcher decide)
+                    }
+
+                    var classOnly = classOnlyBuilder.build();
 
                     TestPlan plan2 = launcher.discover(classOnly);
                     if (plan2.containsTests()) {
@@ -201,19 +225,89 @@ public class TestHarness implements Serializable {
                     }
                 }
 
-                // 3) If still nothing, consider JUnit 4 fallback only when appropriate
-                if (!hasTests && !jupiterish && hasJUnit4Annotations(clazz, methodName)) {
-                    Request req = Request.method(clazz, methodName);
-                    Result r = new JUnitCore().run(req);
+                logDebug("TH.legacy",
+                        "class=" + clazz.getName()
+                                + " method=" + methodName
+                                + " jupiterish=" + jupiterish
+                                + " hasTests=" + hasTests
+                                + " hasJUnit4Annotations=" + hasJUnit4Annotations(clazz, methodName)
+                                + " superclass=" + (clazz.getSuperclass() == null ? "null" : clazz.getSuperclass().getName()));
 
-                    UnitTestResult utr = new UnitTestResult(test, rep);
-                    utr.setPassed(r.wasSuccessful());
-                    for (Failure f : r.getFailures()) {
-                        utr.addFailure(new Failure(
-                                org.junit.runner.Description.createTestDescription(clazz, methodName),
-                                f.getException()));
+                // 3) If still nothing, consider JUnit 4 fallback only when appropriate
+                for (Method mm : clazz.getDeclaredMethods()) {
+                    logDebug("TH.methods",
+                            clazz.getName() + " :: " + mm.getName()
+                                    + " annotations=" + java.util.Arrays.toString(mm.getAnnotations()));
+                }
+                if (!hasTests && !jupiterish) { // && hasJUnit4Annotations(clazz, methodName)) {
+                    // First try the specific method
+                    try {
+                        logDebug("TH.junitcore", "Trying JUnitCore method request for " + clazz.getName() + "#" + methodName);
+
+                        Request req = Request.method(clazz, methodName);
+                        Result r = new JUnitCore().run(req);
+
+                        UnitTestResult utr = new UnitTestResult(test, rep);
+
+                        // If JUnit actually ran something, trust the result
+                        if (r.getRunCount() > 0 || !r.getFailures().isEmpty()) {
+                            utr.setPassed(r.wasSuccessful());
+
+                            for (Failure f : r.getFailures()) {
+                                utr.addFailure(new Failure(
+                                        org.junit.runner.Description.createTestDescription(clazz, methodName),
+                                        f.getException()));
+                            }
+
+                            return utr;
+                        }
+                    } catch (Throwable ignored) {
+                        logDebug("TH.junitcore", "Method request failed for " + clazz.getName() + "#" + methodName + " : " + ignored);
                     }
-                    return utr;
+
+                    // Second try: run the whole class and infer target result
+                    try {
+                        logDebug("TH.junitcore", "Trying JUnitCore class request for " + clazz.getName());
+
+                        Request req = Request.aClass(clazz);
+                        Result r = new JUnitCore().run(req);
+
+                        UnitTestResult utr = new UnitTestResult(test, rep);
+
+                        boolean targetFailed = false;
+                        Throwable targetThrowable = null;
+
+                        for (Failure f : r.getFailures()) {
+                            String failedMethod = null;
+                            if (f.getDescription() != null) {
+                                failedMethod = f.getDescription().getMethodName();
+                            }
+
+                            if (failedMethod != null && normalizeMethodName(failedMethod).equals(methodName)) {
+                                targetFailed = true;
+                                targetThrowable = f.getException();
+                                break;
+                            }
+                        }
+
+                        if (targetFailed) {
+                            utr.setPassed(false);
+                            if (targetThrowable != null) {
+                                utr.setExceptionType(targetThrowable.getClass().getName());
+                                utr.setExceptionMessage(String.valueOf(targetThrowable.getMessage()));
+                            }
+                            return utr;
+                        }
+
+                        // If the class ran and the target method did not fail, treat it as passed
+                        if (r.getRunCount() > 0) {
+                            utr.setPassed(true);
+                            return utr;
+                        }
+
+                    } catch (Throwable ignored) {
+                        logDebug("TH.junitcore", "Class request failed for " + clazz.getName() + " : " + ignored);
+                    }
                 }
 
                 // 4) If still nothing, report
@@ -221,7 +315,7 @@ public class TestHarness implements Serializable {
                     result.setPassed(false);
                     result.setExceptionType("gin.test.NoTestsDiscovered");
                     result.setExceptionMessage("No tests discovered for " +
-                            className + "#" + methodName + " (Jupiterish=" + jupiterish + ")");
+                            className + "#" + methodName + " (Jupiterish=" + jupiterish + " hasJupiter=" + hasJupiter + " hasVintage=" + hasVintage + ")");
                     return result;
                 }
 
@@ -232,9 +326,30 @@ public class TestHarness implements Serializable {
             }
 
         } catch (Throwable t) {
+            logDebug("TH.caught", t.toString());
+
             result.setPassed(false);
+
+            // unwrap & stringify cause chain + suppressed + top stack frame
+            StringBuilder sb = new StringBuilder(512);
+            Throwable cur = t;
+            int depth = 0;
+            while (cur != null && depth < 6) {
+                sb.append(cur.getClass().getName()).append(": ")
+                        .append(cur.getMessage() == null ? "" : cur.getMessage()).append(" | ");
+                for (Throwable sup : cur.getSuppressed()) {
+                    sb.append("[suppressed: ").append(sup.getClass().getName())
+                            .append(": ").append(String.valueOf(sup.getMessage())).append("] ");
+                }
+                cur = cur.getCause();
+                depth++;
+            }
+
+            sb.append("; child classpath=");
+            sb.append(System.getProperty("java.class.path"));
+
             result.setExceptionType(t.getClass().getName());
-            result.setExceptionMessage(t.getMessage());
+            result.setExceptionMessage(sb.toString());
             return result;
         }
     }
@@ -248,12 +363,39 @@ public class TestHarness implements Serializable {
         String method = normalizeMethodName(test.getMethodName());
 
         var builder = LauncherDiscoveryRequestBuilder.request()
-                .filters(EngineFilter.includeEngines(
-                        jupiterish ? new String[]{"junit-jupiter"}
-                                : new String[]{"junit-jupiter", "junit-vintage"}))
+//                .filters(EngineFilter.includeEngines(
+//                        jupiterish ? new String[]{"junit-jupiter"}
+//                                : new String[]{"junit-jupiter", "junit-vintage"}))
                 // Jupiter timeout only; harmless for Vintage
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default",
                         test.getTimeoutMS() + " ms");
+//
+//
+//        // Optionally narrow to Jupiter only when we know it's there:
+////        if (jupiterish && hasEngine("junit-jupiter")) {
+////            builder.filters(EngineFilter.includeEngines("junit-jupiter"));
+////        }
+//        if (jupiterish) {
+//            builder.filters(EngineFilter.includeEngines("junit-jupiter"));
+//        } else {
+//            // Allow both: many legacy tests are JUnit 4 but some projects mix in Jupiter
+//            builder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
+//        }
+//
+
+        // Change C: only filter to engines that actually exist on this classpath
+        boolean hasJupiter = hasEngine("junit-jupiter");
+        boolean hasVintage = hasEngine("junit-vintage");
+
+        if (jupiterish) {
+            if (hasJupiter) builder.filters(EngineFilter.includeEngines("junit-jupiter"));
+        } else {
+            if (hasJupiter && hasVintage) builder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
+            else if (hasJupiter)          builder.filters(EngineFilter.includeEngines("junit-jupiter"));
+            else if (hasVintage)          builder.filters(EngineFilter.includeEngines("junit-vintage"));
+            // else: no filter (let launcher decide)
+        }
+
 
         // Prefer method-level selector when resolvable; add class as a safety net
         Method m = findMethodDeep(clazz, method);
@@ -389,6 +531,8 @@ public class TestHarness implements Serializable {
         } catch (Throwable ignore) {}
         return false;
     }
+
+
 
 
 }

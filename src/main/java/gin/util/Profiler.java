@@ -312,8 +312,9 @@ public class Profiler implements Serializable {
 
                 }
 
-                //delete individual profiling files
-                if (!saveProfiles) {
+                // delete individual profiling files
+                // (don't do this if reading existing ones)
+                if (!saveProfiles && !excludeProfiler) {
                     try {
                         Files.deleteIfExists(traceFile.toPath());
                     } catch (IOException e) {

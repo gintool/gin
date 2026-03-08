@@ -184,7 +184,7 @@ public class Trace implements Serializable {
     }
 
     private static Map<String, Integer> parseJFRMethodCounts(File jfrF, Project project) throws IOException {
-
+int total = 0, exec = 0, st = 0, sts = 0;
         Map<String, Integer> samples = new HashMap<>();
 
         //use main classes to find methods in the main program
@@ -193,19 +193,31 @@ public class Trace implements Serializable {
         try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
 
             //read all events from the JFR profiling file
-            while (jfr.hasMoreEvents()) {
+            jfrloop:
+            while (true) {
                 try {
+                    if (!jfr.hasMoreEvents()) {
+                        break jfrloop;
+                    }
+                    total++;
+
                     RecordedEvent event = jfr.readEvent();
                     String check = event.getEventType().getName();
 
                     //if this event is an execution sample, it will contain a call stack snapshot
                     if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+                        exec++;
                         RecordedStackTrace s = event.getStackTrace();
+
+                        Logger.info("Found sample: " + check);
 
                         if (s != null) {
 
+                            Logger.info("Attempting parsing. List of main classes [" + mainClasses +"]");
+
                             //traverse the call stack, if a frame is part of the main program,
                             //return it
+                            Logger.info("Parsing trace...");
                             for (int i = 0; i < s.getFrames().size(); i++) {
 
                                 RecordedFrame topFrame = s.getFrames().get(i);
@@ -214,14 +226,19 @@ public class Trace implements Serializable {
                                 String methodName = method.getType().getName();
                                 String className = StringUtils.substringBeforeLast(methodName, ".");
 
+                                Logger.info("c:" + className + ",m:" + methodName);
+
                                 if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
                                     methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
                                     samples.merge(methodName, 1, Integer::sum);
+                                    Logger.debug("Found a match");
                                     break;
                                 }
                             }
+                            Logger.info("Parsing done.");
 
-
+                        } else {
+                            st++;
                         }
                     }
                 } catch (IOException e) {
@@ -234,6 +251,9 @@ public class Trace implements Serializable {
                     return samples;
                 }
             }
+
+            Logger.info("Read " + jfrF + ", found " + total + " total events, " + exec + " execs. " + st + " were missing stacktraces.");
+
             return samples;
 
         }

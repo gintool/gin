@@ -46,7 +46,7 @@ public class Project implements Serializable {
 
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private final File projectDir;
     private final String projectName;
     private final List<File> moduleDirs = new LinkedList<>();
@@ -950,6 +950,7 @@ public class Project implements Serializable {
 
         if (!test.getModuleName().isEmpty()) {
             request.setProjects(java.util.List.of(test.getModuleName())); // -pl :module
+            //request.setAlsoMake(true);
             // Do not add -am here; prime deps in a separate install step if needed
         }
 

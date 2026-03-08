@@ -58,13 +58,19 @@ public class JavaUtils {
     }
 
     public static String getGinLocation() {
+        String forced = System.getProperty("gin.jar");
+        if (forced != null && new java.io.File(forced).isFile()) return forced;
+
+        java.io.File candidate = new java.io.File("build/gin.jar");
+        if (candidate.isFile()) return candidate.getAbsolutePath();
+
         try {
             URL loc = JavaUtils.class.getProtectionDomain().getCodeSource().getLocation();
             if (loc == null) return "";
             Path p = Paths.get(loc.toURI());
             return p.toAbsolutePath().normalize().toString();
         } catch (Exception e) {
-            return "";
+            return "build/gin.jar";
         }
     }
 }

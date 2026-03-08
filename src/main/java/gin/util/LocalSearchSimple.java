@@ -16,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.None;
 import com.sampullara.cli.Argument;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,20 +127,20 @@ public abstract class LocalSearchSimple extends GP {
         throw new IOException("Clustering Failed");
     }
 
-    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, int iteration, int cluster) {
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, int iteration, int cluster, String diff) {
         // ACTION C - Throw away patch
         if (action == "C") {
             UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
-            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "C");
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "C", diff);
         }
 
         // ACTION B - Proceed as normal
-        if (action == "B") {
+        else if (action == "B") {
             // Calculate fitness
             UnitTestResultSet results = testPatch(className, tests, patch, null);
             double newFitness = fitness(results);
-            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B");
-    
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B", diff);
+  
             // Check if better
             if (compareFitness(newFitness, best) > 0) {
                 best = newFitness;
@@ -151,7 +153,8 @@ public abstract class LocalSearchSimple extends GP {
         else {
             //Add dummy fitness entry as we don't want to test the patch
             UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
-            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A");
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A", diff);
+
             bestPatch = patch;
         }
     }
@@ -175,7 +178,7 @@ public abstract class LocalSearchSimple extends GP {
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
          if (Boolean.TRUE.equals(patchCat)){
-            super.writePatchWithPatchCatInfo(-1, 0, results, methodName, orig, 0, -1, "Original");
+            super.writePatchWithPatchCatInfo(-1, 0, results, methodName, orig, 0, -1, "Original", "");
         } else { super.writePatch(-1, 0, results, methodName, orig, 0); }
         
         // Set original as best for now
@@ -187,6 +190,7 @@ public abstract class LocalSearchSimple extends GP {
             // Add a mutation
             Patch patch = neighbour(bestPatch);
             boolean toTest = false;
+            String lastReplacement = "";
             Logger.info("Patch is: " + patch.toString());
             Logger.info("Original Patch is: " + origPatch.toString());
 
@@ -194,19 +198,36 @@ public abstract class LocalSearchSimple extends GP {
                 // Support for PatchCat Integration
                 if (Boolean.TRUE.equals(patchCat)) {
                     Logger.info("Running PatchCat");
-                
+
+                    patch.apply();
+                    Edit lastEdit = patch.getEdits().get(patch.getEdits().size() - 1);
+                    if (lastEdit instanceof LLMReplaceStatement llmEdit) {
+                        lastReplacement = llmEdit.getLastReplacement();
+                    } else {
+                        continue;
+                    }
+                    
+                    // Logger.info("Current patch diff is: " + diff);
+                    Logger.info("Last replacement is: " + lastReplacement);
+
                     ProcessBuilder builder = new ProcessBuilder(
                         "python3",
-                        "../gin/PatchCat/src/PatchCat.py",
-                        patch.toString(),  origPatch.toString()
-                    );                
+                        "../gin/PatchCat/src/PatchCatGin.py",
+                        "--diff-text", lastReplacement.toString(),
+                        "--vectorizer-path", "../gin/PatchCat/src/running-model/vectorizer.pkl",
+                        "--model-path", "../gin/PatchCat/src/running-model/model.pkl"
+                    );           
                     
                     builder.environment().put("PYTHONUNBUFFERED", "1");
-
+                    // builder.redirectErrorStream(true);
+                    
                     Process process = builder.start();
+
                     BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream())
                     );
+
+                    //Read the output from PatchCatGin to get the cluster number
                     String line = reader.readLine();
                     int cluster = -1;
 
@@ -227,7 +248,7 @@ public abstract class LocalSearchSimple extends GP {
 
                     int exit = process.waitFor();
 
-                    implementClusterAction(action, className, methodName, tests, patch, i, cluster);
+                    implementClusterAction(action, className, methodName, tests, patch, i, cluster, lastReplacement);
                     
                 } else { // Regular Local Search without PatchCat
                     // Calculate fitness

@@ -193,11 +193,11 @@ public abstract class GP extends Sampler {
         outputFileWriter.writeNext(entry);
     }
 
-        protected void writePatchWithPatchCatInfo(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement, int cluster, String action) {
+        protected void writePatchWithPatchCatInfo(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement, int cluster, String action, String patch) {
         String[] entry = { methodName
         		, Integer.toString(iteration)
         		, Integer.toString(evaluationNumber)
-                , results.getPatch().toString()
+                , patch
                 , Integer.toString(cluster)
                 , action
                 , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())

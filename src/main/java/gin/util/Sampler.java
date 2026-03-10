@@ -218,9 +218,16 @@ public abstract class Sampler implements Serializable {
                 for (UnitTestResult failedResult : failingTests) {
                     Logger.error(failedResult);
                 }
+
+                long totalCount = resultSet.getResults().size();
+                long passedCount = resultSet.getResults().stream()
+                        .filter(UnitTestResult::getPassed)
+                        .count();
+                long failedCount = totalCount - passedCount;
+                Logger.error("Summary: total=" + totalCount + ", passed=" + passedCount + ", failed=" + failedCount);
             }
         } else {
-            Logger.debug("Successfully passed all tests on the unmodified code.");
+            Logger.debug("Successfully passed all tests on the unmodified code. (" + resultSet.getResults().size() + ")");
         }
 
         //// Set timeout for test cases to: max time on original code + bufferTime, if bufferTime > -1

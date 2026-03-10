@@ -177,6 +177,13 @@ public class ExternalTestRunner extends TestRunner {
 
         // Build child classpath: temp dir + project CP (without extra JUnit) + parent CP
         String childCp     = cleanChildClasspath(this.getClassPath());
+        if (!cpHasLauncherDiscoveryRequestBuilder(childCp)) {
+            String bucket = cpHasJunit6(childCp) ? "junit6" : "junit5";
+            Optional<Path> launcher = extractEmbeddedLauncher(bucket);
+            if (launcher.isPresent()) {
+                childCp = childCp + File.pathSeparator + launcher.get().toAbsolutePath();
+            }
+        }
         String rawClasspath = this.getTemporaryDirectory() + File.pathSeparator +
                 childCp + File.pathSeparator +
                 System.getProperty("java.class.path");
@@ -218,13 +225,20 @@ public class ExternalTestRunner extends TestRunner {
             // == Start one harness JVM for THIS MODULE ==
             while (index < maxIndex) {
 
-                ProcessBuilder builder = new ProcessBuilder(
-                        jvm.getAbsolutePath(),
-                        "-Dtinylog.level=" + Logger.getLevel(),
-                        "-cp", classpath,
-                        HARNESS_CLASS
-                );
-                // This alone is enough to make '.' the module directory for file I/O:
+                String moduleClasspath = withModuleOutputsFirst(classpath, moduleDir);
+
+                List<String> cmd = new ArrayList<>();
+                cmd.add(jvm.getAbsolutePath());
+                cmd.add("-Dtinylog.level=" + Logger.getLevel());
+
+                // add javaagent if present
+                findSystemExitAgentJar(classpath).ifPresent(jar -> cmd.add("-javaagent:" + jar));
+
+                cmd.add("-cp");
+                cmd.add(moduleClasspath);
+                cmd.add(HARNESS_CLASS);
+
+                ProcessBuilder builder = new ProcessBuilder(cmd);
                 builder.directory(moduleDir);
 
                 final Process process = builder
@@ -489,7 +503,7 @@ public class ExternalTestRunner extends TestRunner {
         String name = new java.io.File(path).getName().toLowerCase(java.util.Locale.ROOT);
         // Exclude JUnit 4 and the Vintage engine
         if (name.startsWith("junit-vintage-")) return true;          // Vintage engine
-        if (name.matches("^junit-\\d+.*\\.jar$")) return true;       // junit-4.x.jar
+        //if (name.matches("^junit-\\d+.*\\.jar$")) return true;       // junit-4.x.jar - later decided to comment this out. the library is needed for legacy builds!
 
         // Also exclude obvious Vintage directories on classpath
         String p = path.replace('\\', '/');
@@ -498,5 +512,118 @@ public class ExternalTestRunner extends TestRunner {
         // DO NOT exclude Jupiter or Platform or their friends.
         return false;
     }
+
+    private static Optional<Path> extractEmbeddedLauncher(String bucket) {
+        String resPath = "/embedded-libs/" + bucket + "/launcher.jar";
+        try (InputStream in = ExternalTestRunner.class.getResourceAsStream(resPath)) {
+            if (in == null) return Optional.empty();
+            Path tmpDir = Files.createTempDirectory("gin-junit-launcher-");
+            tmpDir.toFile().deleteOnExit();
+            Path out = tmpDir.resolve("launcher.jar");
+            try (OutputStream os = Files.newOutputStream(out)) {
+                in.transferTo(os);
+            }
+            out.toFile().deleteOnExit();
+            return Optional.of(out);
+        } catch (IOException e) {
+            Logger.error("Failed to extract embedded JUnit launcher: " + e);
+            return Optional.empty();
+        }
+    }
+
+    private static boolean cpHasPlatformLauncher(String cp) {
+        if (cp == null || cp.isBlank()) return false;
+        for (String p : cp.split(File.pathSeparator)) {
+            String name = new File(p).getName().toLowerCase(Locale.ROOT);
+            if (name.startsWith("junit-platform-launcher-")) return true;
+            // directory-style classpaths (rare)
+            String norm = p.replace('\\','/');
+            if (norm.contains("/org/junit/platform/launcher/")) return true;
+        }
+        return false;
+    }
+
+    private static boolean cpHasJunit6(String cp) {
+        if (cp == null || cp.isBlank()) return false;
+
+        for (String p : cp.split(File.pathSeparator)) {
+            String name = new File(p).getName().toLowerCase(Locale.ROOT);
+
+            // Strong signal: Jupiter 6.x present
+            if (name.startsWith("junit-jupiter-") && name.contains("-6.")) return true;
+            if (name.startsWith("junit-jupiter-engine-") && name.contains("-6.")) return true;
+            if (name.startsWith("junit-jupiter-api-") && name.contains("-6.")) return true;
+
+            // Optional: also treat JUnit Platform Suite 6.x as “JUnit 6-era”
+            if (name.startsWith("junit-platform-suite-") && name.contains("-6.")) return true;
+        }
+        return false;
+    }
+
+    private static boolean cpHasLauncherDiscoveryRequestBuilder(String cp) {
+        if (cp == null || cp.isBlank()) return false;
+
+        for (String p : cp.split(File.pathSeparator)) {
+            if (p == null || p.isBlank()) continue;
+
+            File f = new File(p);
+            if (!f.exists()) continue;
+
+            try {
+                if (f.isDirectory()) {
+                    File cls = new File(f, "org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class");
+                    if (cls.isFile()) return true;
+                } else if (f.isFile() && f.getName().endsWith(".jar")) {
+                    try (java.util.jar.JarFile jar = new java.util.jar.JarFile(f)) {
+                        if (jar.getEntry("org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class") != null) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (IOException ignored) { }
+        }
+
+        return false;
+    }
+
+    private static Optional<String> findSystemExitAgentJar(String cp) {
+        if (cp == null) return Optional.empty();
+        for (String e : cp.split(File.pathSeparator)) {
+            if (e == null) continue;
+            String n = new File(e).getName();
+            if (n.startsWith("junit5-system-exit-") && n.endsWith(".jar")) {
+                return Optional.of(e);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static String appendIfDirExists(String cp, File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String p = dir.getAbsolutePath();
+            if (!cp.contains(p)) {
+                return cp + File.pathSeparator + p;
+            }
+        }
+        return cp;
+    }
+
+    private static String withModuleOutputsFirst(String baseCp, File moduleDir) {
+        String cp = baseCp;
+
+        File testClasses = new File(moduleDir, "target/test-classes");
+        File mainClasses = new File(moduleDir, "target/classes");
+
+        // Prepend (order matters: test-classes before classes)
+        List<String> parts = new ArrayList<>();
+        if (testClasses.isDirectory()) parts.add(testClasses.getAbsolutePath());
+        if (mainClasses.isDirectory()) parts.add(mainClasses.getAbsolutePath());
+
+        // Keep the existing cp after
+        parts.add(cp);
+
+        return String.join(File.pathSeparator, parts);
+    }
+
 
 }

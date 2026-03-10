@@ -4,8 +4,6 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
 import org.pmw.tinylog.Logger;
 
 import java.io.Serial;
@@ -14,7 +12,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.concurrent.TimeoutException;
 import org.opentest4j.TestAbortedException;
-import org.junit.AssumptionViolatedException;
 
 
 /**
@@ -44,6 +41,8 @@ public class TestRunListener implements Serializable, TestExecutionListener {
 
     @Override
     public void executionFinished(TestIdentifier id, TestExecutionResult res) {
+        Logger.debug("FINISHED id=" + id.getDisplayName() + " uid=" + id.getUniqueId() + " src=" + id.getSource().orElse(null));
+
         if (!id.isTest()) return;
         if (!isTarget(id)) return;   // only record the target test method
 
@@ -83,8 +82,7 @@ public class TestRunListener implements Serializable, TestExecutionListener {
                     unitTestResult.setExceptionMessage(String.valueOf(t.getMessage()));
                     break;
                 }
-                if (t instanceof org.opentest4j.TestAbortedException
-                        || t instanceof org.junit.AssumptionViolatedException) {
+                if (isAssumption(t)) {
                     unitTestResult.setPassed(true);
                     unitTestResult.setExceptionType(t.getClass().getName());
                     unitTestResult.setExceptionMessage(String.valueOf(t.getMessage()));
@@ -123,26 +121,41 @@ public class TestRunListener implements Serializable, TestExecutionListener {
     private boolean isTarget(TestIdentifier id) {
         if (!id.isTest()) return false;
 
-        // Prefer exact MethodSource match (Jupiter normal path)
-        return id.getSource()
-                .filter(s -> s instanceof org.junit.platform.engine.support.descriptor.MethodSource)
-                .map(s -> (org.junit.platform.engine.support.descriptor.MethodSource) s)
-                .map(ms ->
-                        ms.getClassName().equals(targetClass)
-                                && normalize(ms.getMethodName()).equals(targetMethod))
-                .orElseGet(() -> {
-                    // Fallbacks for engines that don't expose MethodSource (or alter display names)
-                    String dn = id.getDisplayName();
-                    if (dn == null) return false;
+        String wantMethod = normalize(targetMethod);
 
-                    String n = normalize(dn);
-                    if (n.equals(targetMethod)) return true;           // pure method name
-                    if (dn.endsWith("#" + targetMethod)) return true;  // Class#method
-                    if (dn.contains("(" + targetMethod + ")")) return true; // parameterized display
-                    // Last resort: if only one test is discovered/executed, accept it.
+        // 1) Best: MethodSource (normal Jupiter case)
+        boolean byMethodSource = id.getSource()
+                .filter(s -> s instanceof MethodSource)
+                .map(s -> (MethodSource) s)
+                .map(ms -> ms.getClassName().equals(targetClass)
+                        && normalize(ms.getMethodName()).equals(wantMethod))
+                .orElse(false);
+        if (byMethodSource) return true;
+
+        // 2) Fallback: UniqueId usually contains the method segment
+        String uid = id.getUniqueId();
+        if (uid != null) {
+            // match [method:reset()] or [method:reset]
+            if (uid.contains("[method:" + wantMethod + "]") || uid.contains("[method:" + wantMethod + "(")) {
+                // also ensure class appears somewhere in uid to avoid collisions
+                if (uid.contains("[class:" + targetClass + "]") || uid.contains(targetClass)) {
                     return true;
-                });
+                }
+            }
+        }
+
+        // 3) Display-name fallbacks
+        String dn = id.getDisplayName();
+        if (dn != null) {
+            String n = normalize(dn);
+            if (wantMethod.equals(n)) return true;
+            if (dn.endsWith("#" + wantMethod)) return true;
+            if (dn.contains(wantMethod + "(")) return true; // e.g. reset()
+        }
+
+        return false;
     }
+
 
 
     private static void markSkipped(UnitTestResult result, Throwable t, String msg) {
@@ -207,12 +220,23 @@ public class TestRunListener implements Serializable, TestExecutionListener {
     }
 
     public void executionStarted(TestIdentifier testIdentifier) {
-        if (testIdentifier.isTest()) {
-            Logger.debug("Test " + testIdentifier.getDisplayName() + " started.");
-            this.startTime = System.nanoTime();
-            this.startCPUTime = threadMXBean.getCurrentThreadCpuTime();
-            Runtime runtime = Runtime.getRuntime();
-            this.startMemoryUsage = (runtime.totalMemory() - runtime.freeMemory()) / MB;
-        }
+        if (!testIdentifier.isTest()) return;
+        if (!isTarget(testIdentifier)) return;
+
+        Logger.debug("Test " + testIdentifier.getDisplayName() + " started.");
+        this.startTime = System.nanoTime();
+        this.startCPUTime = threadMXBean.getCurrentThreadCpuTime();
+        Runtime runtime = Runtime.getRuntime();
+        this.startMemoryUsage = (runtime.totalMemory() - runtime.freeMemory()) / MB;
     }
+
+    private static boolean isAssumption(Throwable t) {
+        if (t == null) return false;
+        if (t instanceof org.opentest4j.TestAbortedException) return true;
+
+        // JUnit 4 assumption class name check (doesn't require junit on classpath)
+        return "org.junit.AssumptionViolatedException".equals(t.getClass().getName());
+    }
+
+
 }

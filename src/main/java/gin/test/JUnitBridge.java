@@ -110,7 +110,7 @@ public class JUnitBridge implements Serializable {
                         utr.setTimedOut(false);
                     }
 
-                    return result;
+                    return utr;
                 } else {
                     result.setPassed(false);
                     result.setExceptionType("gin.test.NoTestsDiscovered");
@@ -159,7 +159,6 @@ public class JUnitBridge implements Serializable {
         if (m == null) throw new NoSuchMethodException(className + "#" + method);
 
         return org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request()
-                .filters(org.junit.platform.launcher.EngineFilter.includeEngines("junit-jupiter","junit-vintage"))
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default",
                         test.getTimeoutMS() + " ms")
                 .selectors(

@@ -209,11 +209,11 @@ int total = 0, exec = 0, st = 0, sts = 0;
                         exec++;
                         RecordedStackTrace s = event.getStackTrace();
 
-                        Logger.info("Found sample: " + check);
+//                        Logger.info("Found sample: " + check);
 
                         if (s != null) {
 
-                            Logger.info("Attempting parsing. List of main classes [" + mainClasses +"]");
+//                            Logger.info("Attempting parsing. List of main classes [" + mainClasses +"]");
 
                             //traverse the call stack, if a frame is part of the main program,
                             //return it
@@ -226,7 +226,7 @@ int total = 0, exec = 0, st = 0, sts = 0;
                                 String methodName = method.getType().getName();
                                 String className = StringUtils.substringBeforeLast(methodName, ".");
 
-                                Logger.info("c:" + className + ",m:" + methodName);
+//                                Logger.info("c:" + className + ",m:" + methodName);
 
                                 if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
                                     methodName += "." + method.getName() + ":" + topFrame.getLineNumber();

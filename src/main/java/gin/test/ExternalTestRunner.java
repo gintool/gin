@@ -183,11 +183,11 @@ public class ExternalTestRunner extends TestRunner {
             if (launcher.isPresent()) {
                 childCp = childCp + File.pathSeparator + launcher.get().toAbsolutePath();
             }
-            Logger.warn("ETR: embedded launcher bucket=" + bucket +
-                    " present=" + launcher.isPresent() +
-                    " resource=" + ExternalTestRunner.class.getResource("/embedded-libs/" + bucket + "/launcher.jar"));
-            Logger.warn("ETR: child cp contains extracted launcher? " + childCp.contains("gin-junit-launcher-"));
-            Logger.debug("ETR: child cp = " + childCp);
+//            Logger.warn("ETR: embedded launcher bucket=" + bucket +
+//                    " present=" + launcher.isPresent() +
+//                    " resource=" + ExternalTestRunner.class.getResource("/embedded-libs/" + bucket + "/launcher.jar"));
+//            Logger.warn("ETR: child cp contains extracted launcher? " + childCp.contains("gin-junit-launcher-"));
+//            Logger.debug("ETR: child cp = " + childCp);
         }
         String rawClasspath = this.getTemporaryDirectory() + File.pathSeparator +
                 childCp + File.pathSeparator +
@@ -243,7 +243,7 @@ public class ExternalTestRunner extends TestRunner {
                 cmd.add(moduleClasspath);
                 cmd.add(HARNESS_CLASS);
 
-                Logger.debug("ETR: launching harness: " + String.join(" ", cmd));
+//                Logger.debug("ETR: launching harness: " + String.join(" ", cmd));
 
                 ProcessBuilder builder = new ProcessBuilder(cmd);
                 builder.directory(moduleDir);

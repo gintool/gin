@@ -183,11 +183,6 @@ public class ExternalTestRunner extends TestRunner {
             if (launcher.isPresent()) {
                 childCp = childCp + File.pathSeparator + launcher.get().toAbsolutePath();
             }
-//            Logger.warn("ETR: embedded launcher bucket=" + bucket +
-//                    " present=" + launcher.isPresent() +
-//                    " resource=" + ExternalTestRunner.class.getResource("/embedded-libs/" + bucket + "/launcher.jar"));
-//            Logger.warn("ETR: child cp contains extracted launcher? " + childCp.contains("gin-junit-launcher-"));
-//            Logger.debug("ETR: child cp = " + childCp);
         }
         String rawClasspath = this.getTemporaryDirectory() + File.pathSeparator +
                 childCp + File.pathSeparator +
@@ -242,8 +237,6 @@ public class ExternalTestRunner extends TestRunner {
                 cmd.add("-cp");
                 cmd.add(moduleClasspath);
                 cmd.add(HARNESS_CLASS);
-
-//                Logger.debug("ETR: launching harness: " + String.join(" ", cmd));
 
                 ProcessBuilder builder = new ProcessBuilder(cmd);
                 builder.directory(moduleDir);
@@ -510,7 +503,7 @@ public class ExternalTestRunner extends TestRunner {
         String name = new java.io.File(path).getName().toLowerCase(java.util.Locale.ROOT);
         // Exclude JUnit 4 and the Vintage engine
         if (name.startsWith("junit-vintage-")) return true;          // Vintage engine
-        //if (name.matches("^junit-\\d+.*\\.jar$")) return true;       // junit-4.x.jar - actually, keep this. needed for legacy builds!
+        //if (name.matches("^junit-\\d+.*\\.jar$")) return true;       // junit-4.x.jar - later decided to comment this out. the library is needed for legacy builds!
 
         // Also exclude obvious Vintage directories on classpath
         String p = path.replace('\\', '/');

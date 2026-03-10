@@ -203,10 +203,6 @@ public class TestHarness implements Serializable {
                 if (!hasTests) {
                     var classOnlyBuilder = LauncherDiscoveryRequestBuilder.request()
                             .selectors(selectClass(clazz));
-//                            .filters(EngineFilter.includeEngines(
-//                                    jupiterish ? new String[]{"junit-jupiter"}
-//                                            : new String[]{"junit-jupiter", "junit-vintage"}))
-//                            .build();
                     if (jupiterish) {
                         if (hasJupiter) classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter"));
                     } else {
@@ -363,25 +359,9 @@ public class TestHarness implements Serializable {
         String method = normalizeMethodName(test.getMethodName());
 
         var builder = LauncherDiscoveryRequestBuilder.request()
-//                .filters(EngineFilter.includeEngines(
-//                        jupiterish ? new String[]{"junit-jupiter"}
-//                                : new String[]{"junit-jupiter", "junit-vintage"}))
                 // Jupiter timeout only; harmless for Vintage
                 .configurationParameter("junit.jupiter.execution.timeout.test.method.default",
                         test.getTimeoutMS() + " ms");
-//
-//
-//        // Optionally narrow to Jupiter only when we know it's there:
-////        if (jupiterish && hasEngine("junit-jupiter")) {
-////            builder.filters(EngineFilter.includeEngines("junit-jupiter"));
-////        }
-//        if (jupiterish) {
-//            builder.filters(EngineFilter.includeEngines("junit-jupiter"));
-//        } else {
-//            // Allow both: many legacy tests are JUnit 4 but some projects mix in Jupiter
-//            builder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
-//        }
-//
 
         // Change C: only filter to engines that actually exist on this classpath
         boolean hasJupiter = hasEngine("junit-jupiter");

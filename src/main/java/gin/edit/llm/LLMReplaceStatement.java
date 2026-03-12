@@ -20,7 +20,6 @@ import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.utils.Log;
 
 //import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
-//import io.github.ollama4j.Ollama;
 
 import gin.SourceFile;
 import gin.SourceFileTree;

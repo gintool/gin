@@ -19,7 +19,8 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.utils.Log;
 
-import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+//import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+//import io.github.ollama4j.Ollama;
 
 import gin.SourceFile;
 import gin.SourceFileTree;
@@ -142,7 +143,8 @@ public class LLMReplaceStatement extends StatementEdit {
 	    	if ("OpenAI".equalsIgnoreCase(LLMConfig.modelType)) {
 	    		llmQuery = new OpenAILLMQuery();
 	    	} else {
-	    		llmQuery = new Ollama4jLLMQuery("http://localhost:11434", LLMConfig.modelType);
+			String host = "http://localhost:11434";
+	    		llmQuery = new Ollama4jLLMQuery(host, LLMConfig.modelType);
 	    	}
 	
 	    	// TODO here, could call sourceFile.getSource() to provide whole class for context...

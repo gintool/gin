@@ -213,7 +213,11 @@ public abstract class LocalSearchSimple extends GP {
                     ProcessBuilder builder = new ProcessBuilder(
                         "python3",
                         "../gin/PatchCat/src/PatchCatGin.py",
-                        "--diff-text", lastReplacement.toString(),
+                        // KEM left the original code, but I tried with giving PatchCat both before and after, we can comapre performance later
+                        //"--diff-text", lastReplacement.toString(),
+                        // We likely want a flag here to select between the two options!
+                        "--A-text", lastReplacement.toString(),
+                        "--B-text", origPatch.toString(),
                         "--vectorizer-path", "../gin/PatchCat/src/running-model/vectorizer.pkl",
                         "--model-path", "../gin/PatchCat/src/running-model/model.pkl"
                     );           

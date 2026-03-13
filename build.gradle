@@ -47,6 +47,7 @@ dependencies {
     implementation 'org.junit.platform:junit-platform-engine'
     implementation 'org.junit.vintage:junit-vintage-engine'
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     //implementation group: 'junit', name: 'junit', version: '4.13.1'
     //implementation group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
     implementation 'junit:junit:4.13.2'
@@ -76,7 +77,7 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 
     // LLM: ollama4j
-    implementation 'io.github.amithkoujalgi:ollama4j:1.0.44'	
+    implementation 'io.github.ollama4j:ollama4j:1.1.6'	
 
     // https://mvnrepository.com/artifact/com.github.spullara.cli-parser/cli-parser
     implementation group: 'com.github.spullara.cli-parser', name: 'cli-parser', version: '1.1.5'
@@ -212,4 +213,5 @@ tasks.test {
     // hand the jar path to ExternalTestRunner via system property
     systemProperty "gin.jar", "${buildDir}/gin.jar"
 }
+
 

@@ -23,16 +23,86 @@ repositories {
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 
+// this looks pretty messy, but it's so we can top up dependencies for
+// running junit tests from a variety of junit versions
+// while also not clashing with any junit classes included with a given project.
+// the dependencies that goes with these are added further below, then they
+// are bundled in the showjar task
+// ExternalTestRunner then dynamically looks for these and adds them to
+// classpath as needed.
 configurations {
     junit5Launcher {
         canBeConsumed = false
         canBeResolved = true
-        transitive = true
+        transitive = false
     }
+    junit5PlatformEngine {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit5JupiterEngine {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+
     junit6Launcher {
         canBeConsumed = false
         canBeResolved = true
-        transitive = true
+        transitive = false
+    }
+    junit6PlatformEngine {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit6JupiterEngine {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit5PlatformCommons {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit6PlatformCommons {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit5JupiterApi {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit6JupiterApi {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+
+    junit5OpenTest4j {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit6OpenTest4j {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+
+    junit5ApiGuardian {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    junit6ApiGuardian {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
     }
 }
 
@@ -120,15 +190,37 @@ dependencies {
 
     testImplementation "org.mockito:mockito-core:3.+"
 
-    junit5Launcher 'org.junit.platform:junit-platform-launcher:1.11.0'
+//    junit5Launcher 'org.junit.platform:junit-platform-launcher:1.11.0'
+//
+//    junit6Launcher platform("org.junit:junit-bom:6.0.2")
+//    junit6Launcher "org.junit.platform:junit-platform-launcher"
+//    junit6Launcher "org.junit.jupiter:junit-jupiter-engine"
+//    junit6Launcher "org.junit.platform:junit-platform-engine"
+//    junit6Launcher "org.junit.platform:junit-platform-commons"
+//    junit6Launcher "org.opentest4j:opentest4j:1.3.0"
+//    junit6Launcher "org.apiguardian:apiguardian-api:1.1.2"
 
-    junit6Launcher platform("org.junit:junit-bom:6.0.2")
-    junit6Launcher "org.junit.platform:junit-platform-launcher"
-    junit6Launcher "org.junit.jupiter:junit-jupiter-engine"
-    junit6Launcher "org.junit.platform:junit-platform-engine"
-    junit6Launcher "org.junit.platform:junit-platform-commons"
-    junit6Launcher "org.opentest4j:opentest4j:1.3.0"
-    junit6Launcher "org.apiguardian:apiguardian-api:1.1.2"
+    // Embedded JUnit 5 runtime bits
+    junit5Launcher       'org.junit.platform:junit-platform-launcher:1.10.1'
+    junit5PlatformEngine 'org.junit.platform:junit-platform-engine:1.10.1'
+    junit5JupiterEngine  'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+
+    // Embedded JUnit 6 runtime bits
+    junit6Launcher       'org.junit.platform:junit-platform-launcher:6.0.2'
+    junit6PlatformEngine 'org.junit.platform:junit-platform-engine:6.0.2'
+    junit6JupiterEngine  'org.junit.jupiter:junit-jupiter-engine:6.0.2'
+
+    junit5PlatformCommons 'org.junit.platform:junit-platform-commons:1.10.1'
+    junit6PlatformCommons 'org.junit.platform:junit-platform-commons:6.0.2'
+
+    junit5JupiterApi  'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    junit6JupiterApi  'org.junit.jupiter:junit-jupiter-api:6.0.2'
+
+    junit5OpenTest4j  'org.opentest4j:opentest4j:1.3.0'
+    junit6OpenTest4j  'org.opentest4j:opentest4j:1.3.0'
+
+    junit5ApiGuardian 'org.apiguardian:apiguardian-api:1.1.2'
+    junit6ApiGuardian 'org.apiguardian:apiguardian-api:1.1.2'
 }
 
 jar {
@@ -153,6 +245,41 @@ javadoc {
     classpath = configurations.compileClasspath
 }
 
+//shadowJar {
+//    dependencies {
+//        exclude(dependency("org.junit.platform:.*"))
+//        exclude(dependency("org.junit.jupiter:.*"))
+//        exclude(dependency("org.junit.vintage:.*"))
+//        exclude(dependency("junit:junit"))
+//    }
+//
+//    into("embedded-libs/junit5") {
+//        from {
+//            project.configurations.junit5Launcher
+//                    .resolvedConfiguration
+//                    .resolvedArtifacts
+//                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
+//                    .collect { it.file }
+//        }
+//        rename { "launcher.jar" }
+//    }
+//    into("embedded-libs/junit6") {
+//        from {
+//            project.configurations.junit6Launcher
+//                    .resolvedConfiguration
+//                    .resolvedArtifacts
+//                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
+//                    .collect { it.file }
+//        }
+//        rename { "launcher.jar" }
+//    }
+//
+//    destinationDirectory = buildDir
+//    archiveBaseName = 'gin'
+//    archiveVersion = null
+//    archiveClassifier = null
+//    mergeServiceFiles()
+//}
 shadowJar {
     dependencies {
         exclude(dependency("org.junit.platform:.*"))
@@ -161,26 +288,67 @@ shadowJar {
         exclude(dependency("junit:junit"))
     }
 
-    into("embedded-libs/junit5") {
-        from {
-            project.configurations.junit5Launcher
-                    .resolvedConfiguration
-                    .resolvedArtifacts
-                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
-                    .collect { it.file }
-        }
+    from(project.configurations.junit5Launcher) {
+        into("embedded-libs/junit5")
         rename { "launcher.jar" }
+    }
+    from(project.configurations.junit5PlatformEngine) {
+        into("embedded-libs/junit5")
+        rename { "platform-engine.jar" }
+    }
+    from(project.configurations.junit5JupiterEngine) {
+        into("embedded-libs/junit5")
+        rename { "jupiter-engine.jar" }
+    }
+
+    from(project.configurations.junit6Launcher) {
+        into("embedded-libs/junit6")
+        rename { "launcher.jar" }
+    }
+    from(project.configurations.junit6PlatformEngine) {
+        into("embedded-libs/junit6")
+        rename { "platform-engine.jar" }
+    }
+    from(project.configurations.junit6JupiterEngine) {
+        into("embedded-libs/junit6")
+        rename { "jupiter-engine.jar" }
+    }
+    into("embedded-libs/junit5") {
+        from(project.configurations.junit5PlatformCommons.singleFile)
+        rename { "platform-commons.jar" }
+    }
+
+    into("embedded-libs/junit6") {
+        from(project.configurations.junit6PlatformCommons.singleFile)
+        rename { "platform-commons.jar" }
+    }
+
+    into("embedded-libs/junit5") {
+        from(project.configurations.junit5JupiterApi.singleFile)
+        rename { "jupiter-api.jar" }
+    }
+    into("embedded-libs/junit5") {
+        from(project.configurations.junit5OpenTest4j.singleFile)
+        rename { "opentest4j.jar" }
+    }
+    into("embedded-libs/junit5") {
+        from(project.configurations.junit5ApiGuardian.singleFile)
+        rename { "apiguardian.jar" }
+    }
+
+    into("embedded-libs/junit6") {
+        from(project.configurations.junit6JupiterApi.singleFile)
+        rename { "jupiter-api.jar" }
     }
     into("embedded-libs/junit6") {
-        from {
-            project.configurations.junit6Launcher
-                    .resolvedConfiguration
-                    .resolvedArtifacts
-                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
-                    .collect { it.file }
-        }
-        rename { "launcher.jar" }
+        from(project.configurations.junit6OpenTest4j.singleFile)
+        rename { "opentest4j.jar" }
     }
+    into("embedded-libs/junit6") {
+        from(project.configurations.junit6ApiGuardian.singleFile)
+        rename { "apiguardian.jar" }
+    }
+
 
     destinationDirectory = buildDir
     archiveBaseName = 'gin'
@@ -213,3 +381,14 @@ tasks.test {
     systemProperty "gin.jar", "${buildDir}/gin.jar"
 }
 
+tasks.register("printEmbeddedJunitFiles") {
+    doLast {
+        println "junit5Launcher       = " + configurations.junit5Launcher.files
+        println "junit5PlatformEngine = " + configurations.junit5PlatformEngine.files
+        println "junit5JupiterEngine  = " + configurations.junit5JupiterEngine.files
+
+        println "junit6Launcher       = " + configurations.junit6Launcher.files
+        println "junit6PlatformEngine = " + configurations.junit6PlatformEngine.files
+        println "junit6JupiterEngine  = " + configurations.junit6JupiterEngine.files
+    }
+}

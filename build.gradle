@@ -20,9 +20,6 @@ repositories {
     maven { url 'https://repo.gradle.org/gradle/libs-releases' }
 }
 
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.Usage
-
 // this looks pretty messy, but it's so we can top up dependencies for
 // running junit tests from a variety of junit versions
 // while also not clashing with any junit classes included with a given project.
@@ -190,16 +187,6 @@ dependencies {
 
     testImplementation "org.mockito:mockito-core:3.+"
 
-//    junit5Launcher 'org.junit.platform:junit-platform-launcher:1.11.0'
-//
-//    junit6Launcher platform("org.junit:junit-bom:6.0.2")
-//    junit6Launcher "org.junit.platform:junit-platform-launcher"
-//    junit6Launcher "org.junit.jupiter:junit-jupiter-engine"
-//    junit6Launcher "org.junit.platform:junit-platform-engine"
-//    junit6Launcher "org.junit.platform:junit-platform-commons"
-//    junit6Launcher "org.opentest4j:opentest4j:1.3.0"
-//    junit6Launcher "org.apiguardian:apiguardian-api:1.1.2"
-
     // Embedded JUnit 5 runtime bits
     junit5Launcher       'org.junit.platform:junit-platform-launcher:1.10.1'
     junit5PlatformEngine 'org.junit.platform:junit-platform-engine:1.10.1'
@@ -245,41 +232,6 @@ javadoc {
     classpath = configurations.compileClasspath
 }
 
-//shadowJar {
-//    dependencies {
-//        exclude(dependency("org.junit.platform:.*"))
-//        exclude(dependency("org.junit.jupiter:.*"))
-//        exclude(dependency("org.junit.vintage:.*"))
-//        exclude(dependency("junit:junit"))
-//    }
-//
-//    into("embedded-libs/junit5") {
-//        from {
-//            project.configurations.junit5Launcher
-//                    .resolvedConfiguration
-//                    .resolvedArtifacts
-//                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
-//                    .collect { it.file }
-//        }
-//        rename { "launcher.jar" }
-//    }
-//    into("embedded-libs/junit6") {
-//        from {
-//            project.configurations.junit6Launcher
-//                    .resolvedConfiguration
-//                    .resolvedArtifacts
-//                    .findAll { it.moduleVersion.id.group == "org.junit.platform" && it.name == "junit-platform-launcher" }
-//                    .collect { it.file }
-//        }
-//        rename { "launcher.jar" }
-//    }
-//
-//    destinationDirectory = buildDir
-//    archiveBaseName = 'gin'
-//    archiveVersion = null
-//    archiveClassifier = null
-//    mergeServiceFiles()
-//}
 shadowJar {
     dependencies {
         exclude(dependency("org.junit.platform:.*"))
@@ -288,6 +240,7 @@ shadowJar {
         exclude(dependency("junit:junit"))
     }
 
+    // --- JUnit 5 ---
     from(project.configurations.junit5Launcher) {
         into("embedded-libs/junit5")
         rename { "launcher.jar" }
@@ -300,7 +253,24 @@ shadowJar {
         into("embedded-libs/junit5")
         rename { "jupiter-engine.jar" }
     }
+    from(project.configurations.junit5PlatformCommons) {
+        into("embedded-libs/junit5")
+        rename { "platform-commons.jar" }
+    }
+    from(project.configurations.junit5JupiterApi) {
+        into("embedded-libs/junit5")
+        rename { "jupiter-api.jar" }
+    }
+    from(project.configurations.junit5OpenTest4j) {
+        into("embedded-libs/junit5")
+        rename { "opentest4j.jar" }
+    }
+    from(project.configurations.junit5ApiGuardian) {
+        into("embedded-libs/junit5")
+        rename { "apiguardian.jar" }
+    }
 
+    // --- JUnit 6 ---
     from(project.configurations.junit6Launcher) {
         into("embedded-libs/junit6")
         rename { "launcher.jar" }
@@ -313,39 +283,20 @@ shadowJar {
         into("embedded-libs/junit6")
         rename { "jupiter-engine.jar" }
     }
-    into("embedded-libs/junit5") {
-        from(project.configurations.junit5PlatformCommons.singleFile)
+    from(project.configurations.junit6PlatformCommons) {
+        into("embedded-libs/junit6")
         rename { "platform-commons.jar" }
     }
-
-    into("embedded-libs/junit6") {
-        from(project.configurations.junit6PlatformCommons.singleFile)
-        rename { "platform-commons.jar" }
-    }
-
-    into("embedded-libs/junit5") {
-        from(project.configurations.junit5JupiterApi.singleFile)
+    from(project.configurations.junit6JupiterApi) {
+        into("embedded-libs/junit6")
         rename { "jupiter-api.jar" }
     }
-    into("embedded-libs/junit5") {
-        from(project.configurations.junit5OpenTest4j.singleFile)
+    from(project.configurations.junit6OpenTest4j) {
+        into("embedded-libs/junit6")
         rename { "opentest4j.jar" }
     }
-    into("embedded-libs/junit5") {
-        from(project.configurations.junit5ApiGuardian.singleFile)
-        rename { "apiguardian.jar" }
-    }
-
-    into("embedded-libs/junit6") {
-        from(project.configurations.junit6JupiterApi.singleFile)
-        rename { "jupiter-api.jar" }
-    }
-    into("embedded-libs/junit6") {
-        from(project.configurations.junit6OpenTest4j.singleFile)
-        rename { "opentest4j.jar" }
-    }
-    into("embedded-libs/junit6") {
-        from(project.configurations.junit6ApiGuardian.singleFile)
+    from(project.configurations.junit6ApiGuardian) {
+        into("embedded-libs/junit6")
         rename { "apiguardian.jar" }
     }
 
@@ -379,16 +330,4 @@ tasks.test {
 
     // hand the jar path to ExternalTestRunner via system property
     systemProperty "gin.jar", "${buildDir}/gin.jar"
-}
-
-tasks.register("printEmbeddedJunitFiles") {
-    doLast {
-        println "junit5Launcher       = " + configurations.junit5Launcher.files
-        println "junit5PlatformEngine = " + configurations.junit5PlatformEngine.files
-        println "junit5JupiterEngine  = " + configurations.junit5JupiterEngine.files
-
-        println "junit6Launcher       = " + configurations.junit6Launcher.files
-        println "junit6PlatformEngine = " + configurations.junit6PlatformEngine.files
-        println "junit6JupiterEngine  = " + configurations.junit6JupiterEngine.files
-    }
 }

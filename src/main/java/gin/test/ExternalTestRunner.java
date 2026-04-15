@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -175,7 +176,7 @@ public class ExternalTestRunner extends TestRunner {
         File javaBin  = new File(javaHome, "bin");
         File jvm      = new File(javaBin, "java");
 
-        // Build child classpath: temp dir + project CP (without extra JUnit) + parent CP
+        // Build child classpath: temp dir + project CP (without conflicting JUnit/Vintage) + harness CP
         String childCp = cleanChildClasspath(this.getClassPath());
         String bucket = cpHasJunit6(childCp) ? "junit6" : "junit5";
 
@@ -669,5 +670,50 @@ public class ExternalTestRunner extends TestRunner {
         return false;
     }
 
+    private static String buildHarnessClasspath() {
+        String ginJar = System.getProperty("gin.jar");
+
+        if (ginJar != null && !ginJar.isBlank()) {
+            return new File(ginJar).getAbsolutePath();
+        }
+
+        // Fallback only if gin.jar is somehow unavailable
+        String parentCp = System.getProperty("java.class.path", "");
+        LinkedHashSet<String> kept = new LinkedHashSet<>();
+
+        for (String raw : parentCp.split(File.pathSeparator)) {
+            if (raw == null || raw.isBlank()) continue;
+            String norm = new File(raw).getAbsolutePath();
+            if (!isLoggingLibPath(norm)) {
+                kept.add(norm);
+            }
+        }
+
+        return String.join(File.pathSeparator, kept);
+    }
+
+    private static boolean isLoggingLibPath(String path) {
+        String name = new File(path).getName().toLowerCase(Locale.ROOT);
+        String p = path.replace('\\', '/').toLowerCase(Locale.ROOT);
+
+        if (name.startsWith("slf4j-simple-")) return true;
+        if (name.startsWith("slf4j-reload4j-")) return true;
+        if (name.startsWith("logback-classic-")) return true;
+        if (name.startsWith("logback-core-")) return true;
+        if (name.startsWith("log4j-to-slf4j-")) return true;
+        if (name.startsWith("log4j-slf4j-impl-")) return true;
+        if (name.startsWith("log4j-slf4j2-impl-")) return true;
+
+        if (name.equals("slf4j-simple.jar")) return true;
+        if (name.equals("slf4j-reload4j.jar")) return true;
+        if (name.equals("logback-classic.jar")) return true;
+        if (name.equals("logback-core.jar")) return true;
+
+        if (p.contains("/ch/qos/logback/")) return true;
+        if (p.contains("/org/slf4j/impl/")) return true;
+        if (p.contains("/org/apache/logging/slf4j/")) return true;
+
+        return false;
+    }
 
 }

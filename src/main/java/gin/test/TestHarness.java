@@ -4,6 +4,11 @@ import com.sampullara.cli.Args;
 import java.util.Locale;
 
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.Locale;
+
+
 import edu.emory.mathcs.backport.java.util.Arrays;
 
 import gin.util.JavaUtils;
@@ -40,6 +45,7 @@ public class TestHarness implements Serializable {
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
+    private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
     public TestHarness(String[] args) {
         Args.parseOrExit(this, args);
@@ -240,14 +246,22 @@ public class TestHarness implements Serializable {
                     try {
                         logDebug("TH.junitcore", "Trying JUnitCore method request for " + clazz.getName() + "#" + methodName);
 
+                        long startTime = System.nanoTime();
+                        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
+
                         Request req = Request.method(clazz, methodName);
                         Result r = new JUnitCore().run(req);
+
+                        long endTime = System.nanoTime();
+                        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
 
                         UnitTestResult utr = new UnitTestResult(test, rep);
 
                         // If JUnit actually ran something, trust the result
                         if (r.getRunCount() > 0 || !r.getFailures().isEmpty()) {
                             utr.setPassed(r.wasSuccessful());
+                            utr.setExecutionTime(endTime - startTime);
+                            utr.setCPUTime(endCpuTime - startCpuTime);
 
                             for (Failure f : r.getFailures()) {
                                 utr.addFailure(new Failure(
@@ -265,10 +279,18 @@ public class TestHarness implements Serializable {
                     try {
                         logDebug("TH.junitcore", "Trying JUnitCore class request for " + clazz.getName());
 
+                        long startTime = System.nanoTime();
+                        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
+
                         Request req = Request.aClass(clazz);
                         Result r = new JUnitCore().run(req);
 
+                        long endTime = System.nanoTime();
+                        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+
                         UnitTestResult utr = new UnitTestResult(test, rep);
+                        utr.setExecutionTime(endTime - startTime);
+                        utr.setCPUTime(endCpuTime - startCpuTime);
 
                         boolean targetFailed = false;
                         Throwable targetThrowable = null;

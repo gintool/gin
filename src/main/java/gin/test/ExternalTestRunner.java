@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -175,15 +176,64 @@ public class ExternalTestRunner extends TestRunner {
         File javaBin  = new File(javaHome, "bin");
         File jvm      = new File(javaBin, "java");
 
-        // Build child classpath: temp dir + project CP (without extra JUnit) + parent CP
-        String childCp     = cleanChildClasspath(this.getClassPath());
-        if (!cpHasLauncherDiscoveryRequestBuilder(childCp)) {
-            String bucket = cpHasJunit6(childCp) ? "junit6" : "junit5";
-            Optional<Path> launcher = extractEmbeddedLauncher(bucket);
-            if (launcher.isPresent()) {
-                childCp = childCp + File.pathSeparator + launcher.get().toAbsolutePath();
-            }
+        // Build child classpath: temp dir + project CP (without conflicting JUnit/Vintage) + harness CP
+        String childCp = cleanChildClasspath(this.getClassPath());
+        String bucket = cpHasJunit6(childCp) ? "junit6" : "junit5";
+
+        // see notes in build.gradle
+        // the following if blocks dynamically check for and load junit and related
+        // dependencies in the classpath, avoiding clashes with those already
+        // bundled with the target project
+        // bundled with the target project
+
+        // Ensure launcher exists
+        if (!cpHasEntry(childCp, "org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "launcher.jar"));
         }
+
+        // Ensure platform engine exists
+        if (!cpHasEntry(childCp, "org/junit/platform/engine/ConfigurationParameters.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "platform-engine.jar"));
+        }
+
+        // Ensure jupiter engine exists
+        if (!cpHasEntry(childCp, "org/junit/jupiter/engine/JupiterTestEngine.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "jupiter-engine.jar"));
+        }
+
+        // Ensure platform commons exists
+        if (!cpHasEntry(childCp, "org/junit/platform/commons/PreconditionViolationException.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "platform-commons.jar"));
+        }
+
+        if (!cpHasEntry(childCp, "org/junit/jupiter/api/parallel/ExecutionMode.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "jupiter-api.jar"));
+        }
+
+        if (!cpHasEntry(childCp, "org/opentest4j/AssertionFailedError.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "opentest4j.jar"));
+        }
+
+        if (!cpHasEntry(childCp, "org/apiguardian/api/API.class")) {
+            childCp = appendToClasspath(childCp, extractEmbeddedJar(bucket, "apiguardian.jar"));
+        }
+
+        Logger.debug("ETR: bucket=" + bucket + " childCp=" + childCp);
+        Logger.debug("ETR injected launcher? " +
+                cpHasEntry(childCp, "org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class"));
+        Logger.debug("ETR injected platform-engine? " +
+                cpHasEntry(childCp, "org/junit/platform/engine/ConfigurationParameters.class"));
+        Logger.debug("ETR injected jupiter-engine? " +
+                cpHasEntry(childCp, "org/junit/jupiter/engine/JupiterTestEngine.class"));
+        Logger.debug("ETR injected platform-commons? " +
+                cpHasEntry(childCp, "org/junit/platform/commons/PreconditionViolationException.class"));
+        Logger.debug("ETR injected jupiter-api? " +
+                cpHasEntry(childCp, "org/junit/jupiter/api/parallel/ExecutionMode.class"));
+        Logger.debug("ETR injected opentest4j? " +
+                cpHasEntry(childCp, "org/opentest4j/AssertionFailedError.class"));
+        Logger.debug("ETR injected apiguardian? " +
+                cpHasEntry(childCp, "org/apiguardian/api/API.class"));
+
         String rawClasspath = this.getTemporaryDirectory() + File.pathSeparator +
                 childCp + File.pathSeparator +
                 System.getProperty("java.class.path");
@@ -513,36 +563,6 @@ public class ExternalTestRunner extends TestRunner {
         return false;
     }
 
-    private static Optional<Path> extractEmbeddedLauncher(String bucket) {
-        String resPath = "/embedded-libs/" + bucket + "/launcher.jar";
-        try (InputStream in = ExternalTestRunner.class.getResourceAsStream(resPath)) {
-            if (in == null) return Optional.empty();
-            Path tmpDir = Files.createTempDirectory("gin-junit-launcher-");
-            tmpDir.toFile().deleteOnExit();
-            Path out = tmpDir.resolve("launcher.jar");
-            try (OutputStream os = Files.newOutputStream(out)) {
-                in.transferTo(os);
-            }
-            out.toFile().deleteOnExit();
-            return Optional.of(out);
-        } catch (IOException e) {
-            Logger.error("Failed to extract embedded JUnit launcher: " + e);
-            return Optional.empty();
-        }
-    }
-
-    private static boolean cpHasPlatformLauncher(String cp) {
-        if (cp == null || cp.isBlank()) return false;
-        for (String p : cp.split(File.pathSeparator)) {
-            String name = new File(p).getName().toLowerCase(Locale.ROOT);
-            if (name.startsWith("junit-platform-launcher-")) return true;
-            // directory-style classpaths (rare)
-            String norm = p.replace('\\','/');
-            if (norm.contains("/org/junit/platform/launcher/")) return true;
-        }
-        return false;
-    }
-
     private static boolean cpHasJunit6(String cp) {
         if (cp == null || cp.isBlank()) return false;
 
@@ -557,32 +577,6 @@ public class ExternalTestRunner extends TestRunner {
             // Optional: also treat JUnit Platform Suite 6.x as “JUnit 6-era”
             if (name.startsWith("junit-platform-suite-") && name.contains("-6.")) return true;
         }
-        return false;
-    }
-
-    private static boolean cpHasLauncherDiscoveryRequestBuilder(String cp) {
-        if (cp == null || cp.isBlank()) return false;
-
-        for (String p : cp.split(File.pathSeparator)) {
-            if (p == null || p.isBlank()) continue;
-
-            File f = new File(p);
-            if (!f.exists()) continue;
-
-            try {
-                if (f.isDirectory()) {
-                    File cls = new File(f, "org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class");
-                    if (cls.isFile()) return true;
-                } else if (f.isFile() && f.getName().endsWith(".jar")) {
-                    try (java.util.jar.JarFile jar = new java.util.jar.JarFile(f)) {
-                        if (jar.getEntry("org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.class") != null) {
-                            return true;
-                        }
-                    }
-                }
-            } catch (IOException ignored) { }
-        }
-
         return false;
     }
 
@@ -625,5 +619,101 @@ public class ExternalTestRunner extends TestRunner {
         return String.join(File.pathSeparator, parts);
     }
 
+
+    private static Optional<Path> extractEmbeddedJar(String bucket, String fileName) {
+        String resPath = "/embedded-libs/" + bucket + "/" + fileName;
+        try (InputStream in = ExternalTestRunner.class.getResourceAsStream(resPath)) {
+            if (in == null) return Optional.empty();
+
+            Path tmpDir = Files.createTempDirectory("gin-junit-runtime-");
+            tmpDir.toFile().deleteOnExit();
+
+            Path out = tmpDir.resolve(fileName);
+            try (OutputStream os = Files.newOutputStream(out)) {
+                in.transferTo(os);
+            }
+
+            out.toFile().deleteOnExit();
+            return Optional.of(out);
+        } catch (IOException e) {
+            Logger.error("Failed to extract embedded jar " + resPath + ": " + e);
+            return Optional.empty();
+        }
+    }
+
+    private static String appendToClasspath(String cp, Optional<Path> jar) {
+        if (jar.isEmpty()) return cp;
+        return cp + File.pathSeparator + jar.get().toAbsolutePath();
+    }
+
+    private static boolean cpHasEntry(String cp, String entry) {
+        if (cp == null || cp.isBlank()) return false;
+
+        for (String p : cp.split(File.pathSeparator)) {
+            if (p == null || p.isBlank()) continue;
+
+            File f = new File(p);
+            if (!f.exists()) continue;
+
+            try {
+                if (f.isDirectory()) {
+                    if (new File(f, entry).isFile()) return true;
+                } else if (f.isFile() && f.getName().endsWith(".jar")) {
+                    try (java.util.jar.JarFile jf = new java.util.jar.JarFile(f)) {
+                        if (jf.getEntry(entry) != null) return true;
+                    }
+                }
+            } catch (IOException ignored) {
+            }
+        }
+
+        return false;
+    }
+
+    private static String buildHarnessClasspath() {
+        String ginJar = System.getProperty("gin.jar");
+
+        if (ginJar != null && !ginJar.isBlank()) {
+            return new File(ginJar).getAbsolutePath();
+        }
+
+        // Fallback only if gin.jar is somehow unavailable
+        String parentCp = System.getProperty("java.class.path", "");
+        LinkedHashSet<String> kept = new LinkedHashSet<>();
+
+        for (String raw : parentCp.split(File.pathSeparator)) {
+            if (raw == null || raw.isBlank()) continue;
+            String norm = new File(raw).getAbsolutePath();
+            if (!isLoggingLibPath(norm)) {
+                kept.add(norm);
+            }
+        }
+
+        return String.join(File.pathSeparator, kept);
+    }
+
+    private static boolean isLoggingLibPath(String path) {
+        String name = new File(path).getName().toLowerCase(Locale.ROOT);
+        String p = path.replace('\\', '/').toLowerCase(Locale.ROOT);
+
+        if (name.startsWith("slf4j-simple-")) return true;
+        if (name.startsWith("slf4j-reload4j-")) return true;
+        if (name.startsWith("logback-classic-")) return true;
+        if (name.startsWith("logback-core-")) return true;
+        if (name.startsWith("log4j-to-slf4j-")) return true;
+        if (name.startsWith("log4j-slf4j-impl-")) return true;
+        if (name.startsWith("log4j-slf4j2-impl-")) return true;
+
+        if (name.equals("slf4j-simple.jar")) return true;
+        if (name.equals("slf4j-reload4j.jar")) return true;
+        if (name.equals("logback-classic.jar")) return true;
+        if (name.equals("logback-core.jar")) return true;
+
+        if (p.contains("/ch/qos/logback/")) return true;
+        if (p.contains("/org/slf4j/impl/")) return true;
+        if (p.contains("/org/apache/logging/slf4j/")) return true;
+
+        return false;
+    }
 
 }

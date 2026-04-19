@@ -462,8 +462,17 @@ public class Project implements Serializable {
 
             InvocationResult result = null;
 
-            // Extremely detailed debug output.
-            if (DEBUG) {
+            Logger.info("Calculating Maven dependency classpath for project: " + projectName);
+            Logger.info("Project dir: " + projectDir.getAbsolutePath());
+            Logger.info("POM file: " + pomFile.getAbsolutePath());
+            Logger.info("Maven home: " + mavenHome.getAbsolutePath());
+            Logger.info("Goal: org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list");
+            Logger.info("Dependency output file: " + depOutput.getAbsolutePath());
+
+            if (DEBUG) { // Extremely detailed debug output.
+                request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+                request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+            } else {
                 request.setErrorHandler(Logger::info);
             }
 
@@ -478,7 +487,28 @@ public class Project implements Serializable {
             }
 
             if (result.getExitCode() != 0) {
-                Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
+                Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
+                if (result.getExecutionException() != null) {
+                    Logger.error(result.getExecutionException(), "Maven execution exception while calculating dependency classpath");
+                }
+                Logger.error("Project dir was: " + projectDir.getAbsolutePath());
+                Logger.error("POM file was: " + pomFile.getAbsolutePath());
+                Logger.error("Maven home was: " + mavenHome.getAbsolutePath());
+                Logger.error("Dependency output file was: " + depOutput.getAbsolutePath());
+
+                try {
+                    if (depOutput.exists()) {
+                        Logger.error("Contents of dependency output file:");
+                        for (String line : Files.readAllLines(depOutput.toPath())) {
+                            Logger.error("[dep-output] " + line);
+                        }
+                    } else {
+                        Logger.error("Dependency output file was not created.");
+                    }
+                } catch (IOException ioe) {
+                    Logger.error(ioe, "Failed to read dependency output file after Maven failure");
+                }
+
                 System.exit(-1);
             }
 
@@ -566,9 +596,17 @@ public class Project implements Serializable {
 
         InvocationResult result = null;
 
-        // Extremely detailed debug output.
-        if (DEBUG) {
-            request.setErrorHandler(Logger::info);
+        Logger.info("Running Maven task for project: " + projectName);
+        Logger.info("Project dir: " + projectDir.getAbsolutePath());
+        Logger.info("POM file: " + pomFile.getAbsolutePath());
+        Logger.info("Maven home: " + mavenHome.getAbsolutePath());
+        Logger.info("Task: " + task);
+        Logger.info("Profile: " + profile);
+        Logger.info("Extra Maven args: " + Arrays.toString(mavenArgs));
+
+        if (DEBUG) { // Extremely detailed debug output.
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
         }
 
         try {
@@ -580,8 +618,10 @@ public class Project implements Serializable {
         }
 
         if (result.getExitCode() != 0) {
-            Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
-            Logger.error(result.getExecutionException());
+            Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
+            if (result.getExecutionException() != null) {
+                Logger.error(result.getExecutionException(), "Maven execution exception while running tests");
+            }
             System.exit(-1);
         }
 
@@ -932,8 +972,6 @@ public class Project implements Serializable {
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
-        invoker.setOutputHandler(line -> System.out.println("[MVN] " + line));
-        invoker.setErrorHandler(line -> System.err.println("[MVN-ERR] " + line));
 
         Properties properties = new Properties();
         request.setProperties(properties);
@@ -956,12 +994,29 @@ public class Project implements Serializable {
 
         InvocationResult result = null;
 
+        Logger.info("Running Maven task for project: " + projectName);
+        Logger.info("Project dir: " + projectDir.getAbsolutePath());
+        Logger.info("POM file: " + pomFile.getAbsolutePath());
+        Logger.info("Maven home: " + mavenHome.getAbsolutePath());
+        Logger.info("Task: " + task);
+        Logger.info("Profile: " + profile);
+        Logger.info("Extra Maven args: " + Arrays.toString(mavenArgs));
+
+        if (DEBUG) { // Extremely detailed debug output.
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+        }
+
         try {
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
-            Logger.error("Error invoking maven.");
-            Logger.trace(e);
-            System.exit(-1);
+            if (result.getExitCode() != 0) {
+                Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
+                if (result.getExecutionException() != null) {
+                    Logger.error(result.getExecutionException(), "Maven execution exception while running tests");
+                }
+                System.exit(-1);
+            }
         }
 
         if (result.getExitCode() != 0) {

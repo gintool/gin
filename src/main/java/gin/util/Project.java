@@ -998,7 +998,7 @@ public class Project implements Serializable {
         Logger.info("Project dir: " + projectDir.getAbsolutePath());
         Logger.info("POM file: " + pomFile.getAbsolutePath());
         Logger.info("Maven home: " + mavenHome.getAbsolutePath());
-        Logger.info("Task: " + task);
+//        Logger.info("Task: " + task);
         Logger.info("Profile: " + profile);
         Logger.info("Extra Maven args: " + Arrays.toString(mavenArgs));
 

@@ -48,7 +48,7 @@ public class EmptyPatchTester extends Sampler {
         // Create source file for line edits for the example method
         SourceFileLine sourceFile = new SourceFileLine(source.getPath(), null);
 
-        Logger.info("Project directory: " + project.getProjectDir().getAbsolutePath());
+        Logger.info("Project directory: " + projectDirectory.getAbsolutePath());
         Logger.info("Method file: " + super.methodFile.getAbsolutePath());
         Logger.info("Output file: " + super.outputFile.getAbsolutePath());
         Logger.info("Example class under test: " + className);

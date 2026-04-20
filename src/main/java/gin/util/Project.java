@@ -30,6 +30,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -438,99 +439,131 @@ public class Project implements Serializable {
 
     }
 
-    public String getDependenciesClasspath() {
+    private Set<String> getDependenciesClasspathEntriesForPom(File pomDir, File pomFile) {
+        Set<String> entries = new LinkedHashSet<>();
 
-        StringBuilder dependencies = new StringBuilder();
+        File depOutput;
         try {
-            InvocationRequest request = new DefaultInvocationRequest();
+            depOutput = File.createTempFile("gin-" + projectName + "-dependencies", ".txt");
+            depOutput.deleteOnExit();
+        } catch (IOException e) {
+            Logger.error(e, "Error creating temp file for maven dependencies output");
+            return entries;
+        }
 
-            File pomFile = new File(projectDir, "pom.xml");
-            request.setPomFile(pomFile);
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setPomFile(pomFile);
+        request.setBaseDirectory(pomDir);
+        request.setBatchMode(true);
+        request.setGoals(List.of("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
+        request.setProperties(new Properties() {{
+            put("outputFile", depOutput.getAbsolutePath());
+            put("appendOutput", "false");
+            put("outputAbsoluteArtifactFilename", "true");
+        }});
 
-            request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
+        Logger.info("Calculating Maven dependency classpath for pom: " + pomFile.getAbsolutePath());
+        Logger.info("Dependency output file: " + depOutput.getAbsolutePath());
 
-            File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
+        if (DEBUG) {
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+        }
 
-            Properties properties = new Properties();
-            properties.setProperty("outputFile", depOutput.getCanonicalPath());
-            properties.setProperty("appendOutput", "true");
-            properties.setProperty("outputAbsoluteArtifactFilename", "true");
-            request.setProperties(properties);
+        Invoker invoker = new DefaultInvoker();
+        invoker.setMavenHome(mavenHome);
 
-            Invoker invoker = new DefaultInvoker();
-            invoker.setMavenHome(mavenHome);
+        InvocationResult result;
+        try {
+            result = invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            Logger.error(e, "Error invoking maven for pom: " + pomFile.getAbsolutePath());
+            return entries;
+        }
 
-            InvocationResult result = null;
+        List<String> lines = Collections.emptyList();
+        try {
+            if (depOutput.exists()) {
+                lines = Files.readAllLines(depOutput.toPath());
+            }
+        } catch (IOException e) {
+            Logger.error(e, "Failed reading dependency output file: " + depOutput.getAbsolutePath());
+        }
 
-            Logger.info("Calculating Maven dependency classpath for project: " + projectName);
-            Logger.info("Project dir: " + projectDir.getAbsolutePath());
-            Logger.info("POM file: " + pomFile.getAbsolutePath());
-            Logger.info("Maven home: " + mavenHome.getAbsolutePath());
-            Logger.info("Goal: org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list");
-            Logger.info("Dependency output file: " + depOutput.getAbsolutePath());
+        for (String line : lines) {
+            String[] parts = line.trim().split(":");
+            if (parts.length >= 6) {
+                String maybePath = parts[5].trim();
 
-            if (DEBUG) { // Extremely detailed debug output.
-                request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
-                request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+                int moduleIdx = maybePath.indexOf(" -- ");
+                if (moduleIdx >= 0) {
+                    maybePath = maybePath.substring(0, moduleIdx).trim();
+                }
+
+                if (maybePath.contains(".jar")) {
+                    int jarIdx = maybePath.indexOf(".jar");
+                    maybePath = maybePath.substring(0, jarIdx + 4);
+                    entries.add(maybePath);
+                }
+            }
+        }
+
+        if (result.getExitCode() != 0) {
+            Logger.warn("Maven dependency:list returned non-zero exit code " + result.getExitCode()
+                    + " for pom: " + pomFile.getAbsolutePath());
+
+            if (result.getExecutionException() != null) {
+                Logger.error(result.getExecutionException(), "Maven execution exception");
+            }
+
+            if (entries.isEmpty()) {
+                Logger.warn("No dependency jars parsed from output for pom: " + pomFile.getAbsolutePath());
             } else {
-                request.setErrorHandler(Logger::info);
+                Logger.warn("Proceeding with " + entries.size() + " parsed dependency jars from pom: "
+                        + pomFile.getAbsolutePath());
             }
+        }
 
-            request.setOutputHandler(line -> {
-            });
+        return entries;
+    }
 
-            try {
-                result = invoker.execute(request);
-            } catch (MavenInvocationException e) {
-                Logger.error(e, "Error invoking maven.");
-                System.exit(-1);
-            }
+    private String getDependenciesClasspath() {
+        Set<String> allEntries = new LinkedHashSet<>();
 
-            if (result.getExitCode() != 0) {
-                Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
-                if (result.getExecutionException() != null) {
-                    Logger.error(result.getExecutionException(), "Maven execution exception while calculating dependency classpath");
-                }
-                Logger.error("Project dir was: " + projectDir.getAbsolutePath());
-                Logger.error("POM file was: " + pomFile.getAbsolutePath());
-                Logger.error("Maven home was: " + mavenHome.getAbsolutePath());
-                Logger.error("Dependency output file was: " + depOutput.getAbsolutePath());
+        File rootPomFile = new File(projectDir, "pom.xml");
+        if (isMultiModulePom(rootPomFile)) {
+            Logger.info("Detected multi-module Maven project; collecting dependencies per module.");
 
-                try {
-                    if (depOutput.exists()) {
-                        Logger.error("Contents of dependency output file:");
-                        for (String line : Files.readAllLines(depOutput.toPath())) {
-                            Logger.error("[dep-output] " + line);
-                        }
-                    } else {
-                        Logger.error("Dependency output file was not created.");
-                    }
-                } catch (IOException ioe) {
-                    Logger.error(ioe, "Failed to read dependency output file after Maven failure");
-                }
+            // root pom first
+            allEntries.addAll(getDependenciesClasspathEntriesForPom(projectDir, rootPomFile));
 
-                System.exit(-1);
-            }
-
-            List<String> output;
-            Path path = depOutput.toPath();
-            output = Files.readAllLines(path);
-            Files.deleteIfExists(depOutput.toPath());
-
-            if (!output.isEmpty()) {
-                for (String jar : output) {
-                    Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
-                    Matcher matcher = pattern.matcher(jar);
-                    if (matcher.find()) {
-                        dependencies.append(File.pathSeparator).append(matcher.group(1));
-                    }
+            // each discovered module dir
+            for (File dir : moduleDirs) {
+                File modulePom = new File(dir, "pom.xml");
+                if (modulePom.exists()) {
+                    allEntries.addAll(getDependenciesClasspathEntriesForPom(dir, modulePom));
                 }
             }
-        } catch (IOException ex) {
-            Logger.error(ex, "Error reading dependencies classpath file");
+        } else {
+            allEntries.addAll(getDependenciesClasspathEntriesForPom(projectDir, rootPomFile));
+        }
+
+        if (allEntries.isEmpty()) {
+            Logger.error("No Maven dependency jars could be resolved for project: " + projectName);
             System.exit(-1);
         }
-        return dependencies.toString();
+
+        return File.pathSeparator + String.join(File.pathSeparator, allEntries);
+    }
+
+    private boolean isMultiModulePom(File pomFile) {
+        try {
+            String xml = Files.readString(pomFile.toPath(), StandardCharsets.UTF_8);
+            return xml.contains("<modules>") && xml.contains("<module>");
+        } catch (IOException e) {
+            Logger.error(e, "Failed reading pom to detect modules: " + pomFile.getAbsolutePath());
+            return false;
+        }
     }
 
     // Get the names of all unit tests in the project

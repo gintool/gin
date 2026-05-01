@@ -2,6 +2,8 @@
 
 # Gin: A Tool for Experimentation with GI
 
+*Most recent updates have been to the LLM branch: please checkout that for updated functionality. It will be merged in the coming months.*
+
 Gin is a [Genetic Improvement](https://en.wikipedia.org/wiki/Genetic_improvement_(computer_science)) (GI) tool. Genetic
 Improvement is the application of [Genetic Programming](https://en.wikipedia.org/wiki/Genetic_programming) and
 other [Metaheuristics](https://en.wikipedia.org/wiki/Metaheuristic) to existing software, to improve it in some way. In

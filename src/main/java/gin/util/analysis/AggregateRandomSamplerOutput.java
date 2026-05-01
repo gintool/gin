@@ -2,13 +2,10 @@ package gin.util.analysis;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.pmw.tinylog.Logger;
@@ -23,17 +20,18 @@ import com.opencsv.exceptions.CsvValidationException;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 
-
 /**
  * RS output is one line per test
- * This aggregates to one line per edit; with a count of test passes, total tests run, and total run time
+ * This tool aggregates to one line per edit; with a count of test passes, total tests run, and total run time
  */
 public class AggregateRandomSamplerOutput {
 
-	@Argument(alias = "f", description = "Input: a file output by RandomSampler", required = true)
+	@Argument(alias = "if", description = "Input file: a CSV file output by RandomSampler", required = true)
     protected File inputFile;
 	
 	public static void main(String[] args) {
+		Logger.info("Random Sampler output is one line per test.");
+		Logger.info("This tool aggregates to one line per edit; with a count of test passes, total tests run, and total run time.");
 		AggregateRandomSamplerOutput a = new AggregateRandomSamplerOutput(args);
 		a.process();
 	}

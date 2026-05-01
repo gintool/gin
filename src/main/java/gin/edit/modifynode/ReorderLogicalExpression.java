@@ -55,7 +55,7 @@ public class ReorderLogicalExpression extends ModifyNodeEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
         Node node = sf.getNode(this.targetNode);
 

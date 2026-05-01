@@ -1,18 +1,10 @@
 package gin.test;
 
 import com.sampullara.cli.Args;
-import java.util.Locale;
-
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.Locale;
-
-
-import edu.emory.mathcs.backport.java.util.Arrays;
-
-import gin.util.JavaUtils;
-import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.LauncherSession;
+import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.pmw.tinylog.Logger;
@@ -24,13 +16,6 @@ import java.net.Socket;
 import java.text.ParseException;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
-import static org.junit.platform.engine.discovery.DiscoverySelectors.*;
-
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.Request;
-import org.junit.runner.notification.Failure;
-import org.slf4j.LoggerFactory;
 
 /**
  * Runs a given test request. Uses sockets to communicate with ExternalTestRunner.
@@ -40,12 +25,10 @@ public class TestHarness implements Serializable {
     public static final String PORT_PREFIX = "PORT";
     @Serial
     private static final long serialVersionUID = -6547478455821943382L;
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TestHarness.class);
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
-    private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 
     public TestHarness(String[] args) {
         Args.parseOrExit(this, args);
@@ -57,39 +40,22 @@ public class TestHarness implements Serializable {
     }
 
     public void start() {
-        logDebug("TH.start", System.getProperty("java.class.path") + "\n\nuser.dir=" + System.getProperty("user.dir"));
-
         try {
             serverSocket = new ServerSocket(0);
             int port = serverSocket.getLocalPort();
             System.out.println(PORT_PREFIX + "=" + port); // tell the ExternalTestRunner what port we'll be using
 
             clientSocket = serverSocket.accept();
-            out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(),
-                    java.nio.charset.StandardCharsets.UTF_8), true);
-            in  = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(),
-                    java.nio.charset.StandardCharsets.UTF_8));
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
             String command;
             while ((command = in.readLine()) != null) {
-                command = command.trim();
-                if (command.isEmpty()) {
-                    continue; // ignore keep-alives/blank lines
-                }
-                if ("stop".equalsIgnoreCase(command)) {
-                    // optional: let the parent know we’re stopping
-                    out.println("ok");   // autoFlush should be true
-                    out.flush();
-                    break;               // exit the loop -> stop()
-                }
-
                 try {
                     String response = runTest(command);
-
-                    out.println((response != null ? cleanForSocket(response) : "crash,unknown,Unknown,0,false,0,0,gin.test.TestHarness$NoResponse"));
-                } catch (Throwable t) {
-                    // return a synthetic CSV line the parent can parse
-                    out.println("crash,unknown,Unknown,0,false,0,0," + t.getClass().getName());
-                    //t.printStackTrace(System.err);
+                    out.println(response);
+                } catch (ParseException e) {
+                    break;
                 }
             }
             stop();
@@ -112,36 +78,18 @@ public class TestHarness implements Serializable {
 
     }
 
-    /* this method is for debugging purposes; the testharness's output doesn't
-     * end up in the main log so we write directly to a local file instead */
-    public static void logDebug(String tag, String text) {
-        /*
-        try {
-            java.util.List<String> lines = new java.util.ArrayList<>();
-
-            lines.add(text);
-
-            java.nio.file.Path file = java.nio.file.Paths.get("/home/sbr/gin/DEBUG-"+tag+"."+System.nanoTime()+".txt");
-            java.nio.file.Files.write(file, lines, java.nio.charset.StandardCharsets.UTF_8);
-        } catch (IOException e) {}
-         */
-    }
-
-
     private String runTest(String command) throws ParseException {
 
         String testName;
         int rep;
         long timeoutMS;
-        String wdField;
 
         String[] params = command.split(",");
         try {
-            if (params.length == 4) {
+            if (params.length == 3) {
                 testName = params[0];
                 rep = Integer.parseInt(params[1]);
                 timeoutMS = Long.parseLong(params[2]);
-                wdField = params[3];
             } else {
                 throw new ParseException("Not a test format: " + command, 0);
             }
@@ -149,28 +97,8 @@ public class TestHarness implements Serializable {
             throw new ParseException("Not a test format: " + command, 0);
         }
 
-        File workingDir = null;
-        try {
-            if (wdField != null && !wdField.isBlank()) {
-                File f = new File(wdField);
-                workingDir = f.isAbsolute()
-                        ? f.getCanonicalFile()
-                        : new File(new File(System.getProperty("user.dir")).getCanonicalFile(), wdField).getCanonicalFile();
-            }
-        } catch (IOException ignore) {
-            workingDir = null;
-        }
-
-        // If the caller passed a module dir and it exists, adopt it for file-based tests
-        if (workingDir != null && workingDir.isDirectory()) {
-            System.setProperty("user.dir", workingDir.getAbsolutePath());
-            System.setProperty("basedir",  workingDir.getAbsolutePath());
-            System.setProperty("maven.multiModuleProjectDirectory", workingDir.getAbsolutePath());
-        }
-
         UnitTest test = UnitTest.fromString(testName);
         test.setTimeoutMS(timeoutMS);
-        //switchToModuleDir(absDir);
         UnitTestResult result = runTest(test, rep);
 
         return result.toString();
@@ -179,362 +107,74 @@ public class TestHarness implements Serializable {
 
     private UnitTestResult runTest(UnitTest test, int rep) {
 
-        logDebug("TH.runTest", System.getProperty("java.class.path"));
-
         UnitTestResult result = new UnitTestResult(test, rep);
 
-        final String className  = test.getFullClassName();
-        final String methodName = normalizeMethodName(test.getMethodName());
+        String className = test.getFullClassName();
+
+        LauncherDiscoveryRequest request;
 
         try {
-            Class<?> clazz = Class.forName(className);
-            boolean jupiterish = looksLikeJupiter(clazz);
+            Class.forName(className);
+            request = buildRequest(test);
 
-            boolean hasJupiter = hasEngine("junit-jupiter");
-            boolean hasVintage = hasEngine("junit-vintage");
+        } catch (ClassNotFoundException e) {
+            Logger.error("Unable to find test class file: " + className);
+            Logger.error("Is the class file on provided classpath?");
+            Logger.trace(e);
 
-            // 1) Try method+class discovery with the right engine bias
-            LauncherDiscoveryRequest baseReq = buildRequest(test, jupiterish);
+            result.setExceptionType(e.getClass().getName());
+            result.setExceptionMessage(e.getMessage());
+            return result;
+        } catch (NoSuchMethodException e) {
+            Logger.error(e.getMessage());
+            Logger.error("Note that parametirised JUnit tetsts are not allowed in Gin.");
+            Logger.trace(e);
 
-            try (LauncherSession session = LauncherFactory.openSession()) {
-                Launcher launcher = session.getLauncher();
+            result.setExceptionType(e.getClass().getName());
+            result.setExceptionMessage(e.getMessage());
+            return result;
 
-                TestPlan plan = launcher.discover(baseReq);
-                boolean hasTests = plan.containsTests();
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Logger.error("Exception when instrumenting tests with a timeout: " + e);
+            Logger.error(e.getMessage());
+            Logger.trace(e);
 
-                logDebug("TH.launcher", "DISCOVERY -> engines=" + launcher.discover(baseReq).countTestIdentifiers(TestIdentifier::isTest)
-                        + ", roots=" + launcher.discover(baseReq).getRoots().size() + ", engines present:" + java.util.ServiceLoader.load(org.junit.platform.engine.TestEngine.class).stream().map(p->p.type().getName()).toList());
+            result.setExceptionType(e.getClass().getName());
+            result.setExceptionMessage(e.getMessage());
+            return result;
 
-                // 2) If nothing found, try class-only discovery
-                if (!hasTests) {
-                    var classOnlyBuilder = LauncherDiscoveryRequestBuilder.request()
-                            .selectors(selectClass(clazz));
-                    if (jupiterish) {
-                        if (hasJupiter) classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter"));
-                    } else {
-                        if (hasJupiter && hasVintage) classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
-                        else if (hasJupiter)          classOnlyBuilder.filters(EngineFilter.includeEngines("junit-jupiter"));
-                        else if (hasVintage)          classOnlyBuilder.filters(EngineFilter.includeEngines("junit-vintage"));
-                        // else: no filter (let launcher decide)
-                    }
+        }
 
-                    var classOnly = classOnlyBuilder.build();
+        try (LauncherSession session = LauncherFactory.openSession()) {
+            Launcher launcher = session.getLauncher();
+            TestPlan testPlan = launcher.discover(request);
+            launcher.execute(testPlan, new TestRunListener(result));
 
-                    TestPlan plan2 = launcher.discover(classOnly);
-                    if (plan2.containsTests()) {
-                        plan = plan2;
-                        hasTests = true;
-                    }
-                }
+        } catch (Exception e) {
+            Logger.error("Error running junit: " + e);
 
-                logDebug("TH.legacy",
-                        "class=" + clazz.getName()
-                                + " method=" + methodName
-                                + " jupiterish=" + jupiterish
-                                + " hasTests=" + hasTests
-                                + " hasJUnit4Annotations=" + hasJUnit4Annotations(clazz, methodName)
-                                + " superclass=" + (clazz.getSuperclass() == null ? "null" : clazz.getSuperclass().getName()));
-
-                // 3) If still nothing, consider JUnit 4 fallback only when appropriate
-                for (Method mm : clazz.getDeclaredMethods()) {
-                    logDebug("TH.methods",
-                            clazz.getName() + " :: " + mm.getName()
-                                    + " annotations=" + java.util.Arrays.toString(mm.getAnnotations()));
-                }
-                if (!hasTests && !jupiterish) { // && hasJUnit4Annotations(clazz, methodName)) {
-                    // First try the specific method
-                    try {
-                        logDebug("TH.junitcore", "Trying JUnitCore method request for " + clazz.getName() + "#" + methodName);
-
-                        long startTime = System.nanoTime();
-                        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
-
-                        Request req = Request.method(clazz, methodName);
-                        Result r = new JUnitCore().run(req);
-
-                        long endTime = System.nanoTime();
-                        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
-
-                        UnitTestResult utr = new UnitTestResult(test, rep);
-
-                        // If JUnit actually ran something, trust the result
-                        if (r.getRunCount() > 0 || !r.getFailures().isEmpty()) {
-                            utr.setPassed(r.wasSuccessful());
-                            utr.setExecutionTime(endTime - startTime);
-                            utr.setCPUTime(endCpuTime - startCpuTime);
-
-                            for (Failure f : r.getFailures()) {
-                                utr.addFailure(new Failure(
-                                        org.junit.runner.Description.createTestDescription(clazz, methodName),
-                                        f.getException()));
-                            }
-
-                            return utr;
-                        }
-                    } catch (Throwable ignored) {
-                        logDebug("TH.junitcore", "Method request failed for " + clazz.getName() + "#" + methodName + " : " + ignored);
-                    }
-
-                    // Second try: run the whole class and infer target result
-                    try {
-                        logDebug("TH.junitcore", "Trying JUnitCore class request for " + clazz.getName());
-
-                        long startTime = System.nanoTime();
-                        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
-
-                        Request req = Request.aClass(clazz);
-                        Result r = new JUnitCore().run(req);
-
-                        long endTime = System.nanoTime();
-                        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
-
-                        UnitTestResult utr = new UnitTestResult(test, rep);
-                        utr.setExecutionTime(endTime - startTime);
-                        utr.setCPUTime(endCpuTime - startCpuTime);
-
-                        boolean targetFailed = false;
-                        Throwable targetThrowable = null;
-
-                        for (Failure f : r.getFailures()) {
-                            String failedMethod = null;
-                            if (f.getDescription() != null) {
-                                failedMethod = f.getDescription().getMethodName();
-                            }
-
-                            if (failedMethod != null && normalizeMethodName(failedMethod).equals(methodName)) {
-                                targetFailed = true;
-                                targetThrowable = f.getException();
-                                break;
-                            }
-                        }
-
-                        if (targetFailed) {
-                            utr.setPassed(false);
-                            if (targetThrowable != null) {
-                                utr.setExceptionType(targetThrowable.getClass().getName());
-                                utr.setExceptionMessage(String.valueOf(targetThrowable.getMessage()));
-                            }
-                            return utr;
-                        }
-
-                        // If the class ran and the target method did not fail, treat it as passed
-                        if (r.getRunCount() > 0) {
-                            utr.setPassed(true);
-                            return utr;
-                        }
-
-                    } catch (Throwable ignored) {
-                        logDebug("TH.junitcore", "Class request failed for " + clazz.getName() + " : " + ignored);
-                    }
-                }
-
-                // 4) If still nothing, report
-                if (!hasTests) {
-                    result.setPassed(false);
-                    result.setExceptionType("gin.test.NoTestsDiscovered");
-                    result.setExceptionMessage("No tests discovered for " +
-                            className + "#" + methodName + " (Jupiterish=" + jupiterish + " hasJupiter=" + hasJupiter + " hasVintage=" + hasVintage + ")");
-                    return result;
-                }
-
-                // 5) Execute the discovered plan (Jupiter will happily run package-private tests)
-                launcher.execute(plan, new TestRunListener(result, className, normalizeMethodName(methodName)));
-
-                return result;
-            }
-
-        } catch (Throwable t) {
-            logDebug("TH.caught", t.toString());
-
-            result.setPassed(false);
-
-            // unwrap & stringify cause chain + suppressed + top stack frame
-            StringBuilder sb = new StringBuilder(512);
-            Throwable cur = t;
-            int depth = 0;
-            while (cur != null && depth < 6) {
-                sb.append(cur.getClass().getName()).append(": ")
-                        .append(cur.getMessage() == null ? "" : cur.getMessage()).append(" | ");
-                for (Throwable sup : cur.getSuppressed()) {
-                    sb.append("[suppressed: ").append(sup.getClass().getName())
-                            .append(": ").append(String.valueOf(sup.getMessage())).append("] ");
-                }
-                cur = cur.getCause();
-                depth++;
-            }
-
-            sb.append("; child classpath=");
-            sb.append(System.getProperty("java.class.path"));
-
-            result.setExceptionType(t.getClass().getName());
-            result.setExceptionMessage(sb.toString());
+            result.setExceptionType(e.getClass().getName());
+            result.setExceptionMessage(e.getMessage());
             return result;
         }
-    }
 
-
-    private LauncherDiscoveryRequest buildRequest(UnitTest test, boolean jupiterish)
-            throws ClassNotFoundException {
-
-        ClassLoader cl = getClass().getClassLoader();
-        Class<?> clazz = cl.loadClass(test.getFullClassName());
-        String method = normalizeMethodName(test.getMethodName());
-
-        var builder = LauncherDiscoveryRequestBuilder.request()
-                // Jupiter timeout only; harmless for Vintage
-                .configurationParameter("junit.jupiter.execution.timeout.test.method.default",
-                        test.getTimeoutMS() + " ms");
-
-        // Change C: only filter to engines that actually exist on this classpath
-        boolean hasJupiter = hasEngine("junit-jupiter");
-        boolean hasVintage = hasEngine("junit-vintage");
-
-        if (jupiterish) {
-            if (hasJupiter) builder.filters(EngineFilter.includeEngines("junit-jupiter"));
-        } else {
-            if (hasJupiter && hasVintage) builder.filters(EngineFilter.includeEngines("junit-jupiter", "junit-vintage"));
-            else if (hasJupiter)          builder.filters(EngineFilter.includeEngines("junit-jupiter"));
-            else if (hasVintage)          builder.filters(EngineFilter.includeEngines("junit-vintage"));
-            // else: no filter (let launcher decide)
-        }
-
-
-        // Prefer method-level selector when resolvable; add class as a safety net
-        Method m = findMethodDeep(clazz, method);
-        if (m != null) {
-//            builder.selectors(selectMethod(clazz, m.getName()), selectClass(clazz));
-            builder.selectors(selectMethod(clazz, m.getName()));
-        } else {
-            builder.selectors(selectClass(clazz));
-        }
-
-        return builder.build();
-    }
-
-    /*
-     * Class.getMethod returns only public methods; Class.getDeclaredMethod ignores superclasses
-     * This tries to get all methods including superclasses
-     */
-    public Method getMethod(Class<?> clazz, String methodName) throws NoSuchMethodException {
-        try {
-            return clazz.getDeclaredMethod(methodName);
-        } catch (NoSuchMethodException e) {
-            if (clazz.equals(Object.class)) {
-                throw e;
-            } else {
-                return getMethod(clazz.getSuperclass(), methodName);
-            }
-        }
+        return result;
 
     }
 
-    // Normalise method name for selectors:
-    //  - strip trailing "()"
-    //  - strip parameterized suffixes like "[0]", "[arg=…]"
-    private static String normalizeMethodName(String m) {
-        String s = m;
-        if (s.endsWith("()")) s = s.substring(0, s.length() - 2);
-        // remove […] suffixes that appear in parameterized display names
-        int idx = s.indexOf('[');
-        if (idx > 0) s = s.substring(0, idx);
-        return s;
+    public LauncherDiscoveryRequest buildRequest(UnitTest test) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
+        ClassLoader loader = this.getClass().getClassLoader();
+
+        String testClassname = test.getFullClassName();
+        Class<?> clazz = loader.loadClass(testClassname);
+
+        String methodName = test.getMethodName().replace("()", "");
+        Method method = clazz.getDeclaredMethod(methodName);
+
+        return LauncherDiscoveryRequestBuilder.request()
+                .selectors(selectMethod(clazz, method.getName()))
+                .configurationParameter("junit.jupiter.execution.timeout.test.method.default", test.getTimeoutMS() + " ms")
+                .build();
     }
 
-    // Walks superclasses to find a declared method (JUnit 3/4 inheritance cases)
-    private static java.lang.reflect.Method findMethodDeep(Class<?> c, String name) {
-        Class<?> k = c;
-        while (k != null && k != Object.class) {
-            for (var m : k.getDeclaredMethods()) {
-                if (m.getName().equals(name)) return m;
-            }
-            k = k.getSuperclass();
-        }
-        return null;
-    }
-
-    private static boolean hasJUnit4(Class<?> clazz, String method) {
-        try {
-            // walk superclasses to find the method
-            for (Class<?> k = clazz; k != null && k != Object.class; k = k.getSuperclass()) {
-                for (var mm : k.getDeclaredMethods()) {
-                    if (mm.getName().equals(method)) {
-                        // JUnit 4?
-                        if (mm.isAnnotationPresent(org.junit.Test.class)) return true;
-                        // JUnit 3 style?
-                        boolean isPublic = java.lang.reflect.Modifier.isPublic(mm.getModifiers());
-                        boolean isVoid = mm.getReturnType() == Void.TYPE;
-                        boolean noArgs = mm.getParameterCount() == 0;
-                        if (isPublic && isVoid && noArgs && method.startsWith("test")) return true;
-                    }
-                }
-            }
-        } catch (Throwable ignore) {
-        }
-        return false;
-    }
-
-    private static void switchToModuleDir(String abs) {
-        if (abs == null || abs.isBlank()) return;
-        System.setProperty("user.dir", abs);
-        System.setProperty("basedir", abs);
-        System.setProperty("maven.multiModuleProjectDirectory", abs);
-    }
-
-    private static String cleanForSocket(String s) {
-        if (s == null) return "";
-        // collapse CR/LF/TAB to single spaces, strip ANSI, then kill commas
-        String t = s.replace('\r',' ').replace('\n',' ').replace('\t',' ');
-        t = t.replaceAll("\\u001B\\[[;\\d]*m", ""); // strip ANSI color if any
-        t = t.replace(',', ';');                    // avoid CSV breakage
-        return t.trim();
-    }
-
-
-    private static boolean looksLikeJupiter(Class<?> clazz) {
-        try {
-            // class-level annotations like @Nested, @TestInstance, @ExtendWith …
-            for (var a : clazz.getAnnotations()) {
-                if (a.annotationType().getName().startsWith("org.junit.jupiter.")) return true;
-            }
-            // method-level annotations like @Test, @ParameterizedTest, @RepeatedTest …
-            for (var m : clazz.getDeclaredMethods()) {
-                for (var a : m.getAnnotations()) {
-                    if (a.annotationType().getName().startsWith("org.junit.jupiter.")) return true;
-                }
-            }
-        } catch (Throwable ignore) { }
-        return false;
-    }
-
-    private static boolean hasJUnit4Annotations(Class<?> clazz, String method) {
-        try {
-            for (Class<?> k = clazz; k != null && k != Object.class; k = k.getSuperclass()) {
-                for (var mm : k.getDeclaredMethods()) {
-                    if (!mm.getName().equals(method)) continue;
-                    if (mm.isAnnotationPresent(org.junit.Test.class)) return true; // JUnit 4 @Test
-                    // JUnit 3 fallback:
-                    boolean isPublic = java.lang.reflect.Modifier.isPublic(mm.getModifiers());
-                    boolean isVoid   = mm.getReturnType() == Void.TYPE;
-                    boolean noArgs   = mm.getParameterCount() == 0;
-                    if (isPublic && isVoid && noArgs && method.startsWith("test")) return true;
-                }
-            }
-        } catch (Throwable ignore) { }
-        return false;
-    }
-
-    private static boolean hasEngine(String id) {
-        try {
-            java.util.ServiceLoader<org.junit.platform.engine.TestEngine> sl =
-                    java.util.ServiceLoader.load(org.junit.platform.engine.TestEngine.class);
-            for (var e : sl) {
-                if (id.equals(e.getId())) return true;
-            }
-        } catch (Throwable ignore) {}
-        return false;
-    }
-
-
-
-
-}
+}    

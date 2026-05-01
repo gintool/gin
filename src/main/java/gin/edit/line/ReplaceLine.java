@@ -55,7 +55,7 @@ public class ReplaceLine extends LineEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         if (sourceLine == destinationLine) {
             return sourceFile; // no-op
         }

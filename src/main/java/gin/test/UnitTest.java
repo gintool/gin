@@ -34,77 +34,45 @@ public class UnitTest implements Comparable<UnitTest>, Serializable {
     }
 
     public static UnitTest fromString(String test) throws ParseException {
-        if (test == null) throw new ParseException("Null test spec", 0);
 
-        String spec = org.apache.commons.lang3.StringUtils.trim(test);
+        UnitTest ginTest;
 
-        // Parse:  "<class>.<method> [<module>]"  (module part optional)
-        // Use last " [" to avoid accidental splits if class names ever contain spaces.
-        String classAndMethod;
-        String moduleName = "";
+        test = StringUtils.strip(test);
 
-        int lb = spec.lastIndexOf(" [");
-        if (lb > 0 && spec.endsWith("]")) {
-            classAndMethod = org.apache.commons.lang3.StringUtils.trim(spec.substring(0, lb));
-            moduleName = org.apache.commons.lang3.StringUtils.strip(spec.substring(lb + 1), "[]");
-        } else {
-            classAndMethod = spec;
-        }
+        String[] testSplit = test.split(" ");
 
-        if (!classAndMethod.contains(".")) {
-            throw new ParseException("Invalid test selector (expected Class#method or Class.method): " + spec, 0);
-        }
+        if (testSplit.length == 2) {
 
-        // Accept both "Class#method" and "Class.method"
-        String className;
-        String methodName;
-        int hash = classAndMethod.lastIndexOf('#');
-        if (hash >= 0) {
-            className = classAndMethod.substring(0, hash).trim();
-            methodName = classAndMethod.substring(hash + 1).trim();
-        } else {
-            className = org.apache.commons.lang3.StringUtils.substringBeforeLast(classAndMethod, ".").trim();
-            methodName = org.apache.commons.lang3.StringUtils.substringAfterLast(classAndMethod, ".").trim();
-        }
+            String testName = testSplit[0];
+            String moduleName = testSplit[1];
 
-        if (org.apache.commons.lang3.StringUtils.isBlank(className) ||
-                org.apache.commons.lang3.StringUtils.isBlank(methodName)) {
-            throw new ParseException("Invalid test selector parts in: " + spec, 0);
-        }
+            if ((testName.contains(".")) && (moduleName.startsWith("[")) && (moduleName.endsWith("]"))) {
 
-        // If no module declared, we're done.
-        if (org.apache.commons.lang3.StringUtils.isBlank(moduleName)) {
-            return new UnitTest(className, methodName);
-        }
+                String className = StringUtils.substringBeforeLast(testName, ".");
+                String methodName = StringUtils.substringAfterLast(testName, ".");
 
-        java.nio.file.Path cwd = java.nio.file.Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
-        boolean inModule =
-                (cwd.getFileName() != null && moduleName.equals(cwd.getFileName().toString()));
+                moduleName = StringUtils.strip(moduleName, "[]");
+                if (moduleName.isEmpty()) {
+                    ginTest = new UnitTest(className, methodName);
+                } else {
+                    File moduleDir = new File(moduleName);
+                    if ((moduleDir.exists()) && (moduleDir.isDirectory())) {
+                        ginTest = new UnitTest(className, methodName, moduleName);
+                    } else {
+                        throw new ParseException("UnitTest " + test + " not created as module directory " + moduleName + "does not exist.", 0);
+                    }
+                }
 
-        boolean hasChild = java.nio.file.Files.isDirectory(cwd.resolve(moduleName));
+            } else {
+                throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
 
-        // Also try a short upward search (useful when running under a temp module root)
-        boolean foundNearby = false;
-        java.nio.file.Path p = cwd;
-        for (int i = 0; i < 3 && p != null && !foundNearby; i++, p = p.getParent()) {
-            if (java.nio.file.Files.isDirectory(p.resolve(moduleName))) {
-                foundNearby = true;
-                break;
             }
+
+        } else {
+            throw new ParseException("UnitTest " + test + " not created due to invalid input format. It should be: <testClassName>.<testMethodName> [<moduleName>]", 0);
         }
 
-        if (!(inModule || hasChild || foundNearby)) {
-            // Do not fail here; the harness may already have set the working dir.
-            // Just log a gentle warning
-            try {
-                org.pmw.tinylog.Logger.warn(
-                        "UnitTest {} declared module '{}', but '{}' has no such subdir nearby; proceeding anyway.",
-                        spec, moduleName, cwd);
-            } catch (Throwable ignored) { /* logging optional */ }
-        }
-
-        // Preserve the module name; harness will use the absolute dir it computed.
-        return new UnitTest(className, methodName, moduleName);
+        return ginTest;
     }
 
     public String getTestName() {

@@ -54,12 +54,6 @@ public class PatchAnalyser implements Serializable {
             + "You probably don't want to set this to true for Automatic Program Repair.")
     protected Boolean failFast = false;
 
-    @Argument(alias = "nr", description = "No run. Patches will be applied, but not executed.")
-    protected Boolean noRun = false;
-
-    @Argument(alias = "od", description = "Save to the given output directory, of provided.")
-    protected String outputDir = null;
-
     PatchAnalyser(String[] args) {
 
         Args.parseOrExit(this, args);
@@ -101,7 +95,7 @@ public class PatchAnalyser implements Serializable {
             cleanPatch = patchText.replaceFirst("\\|", "").trim();
         }
 
-        String[] editStrings = cleanPatch.trim().split("\\| (?=gin).+"); // only count separators with "gin" following then (i.e. the start of a new edit)
+        String[] editStrings = cleanPatch.trim().split("\\|");
 
         boolean allLineEdits = true;
         boolean allStatementEdits = true;
@@ -137,13 +131,11 @@ public class PatchAnalyser implements Serializable {
             } catch (IllegalAccessException e) {
                 Logger.error("Cannot parse patch: access error invoking edit class.");
                 Logger.trace(e);
-                //System.exit(-1);
-                return null;
+                System.exit(-1);
             } catch (InvocationTargetException e) {
                 Logger.error("Cannot parse patch: invocation error invoking edit class.");
                 Logger.trace(e);
-                //System.exit(-1);
-                return null;
+                System.exit(-1);
             }
 
             allLineEdits &= editInstance.getEditType() == EditType.LINE;
@@ -182,20 +174,17 @@ public class PatchAnalyser implements Serializable {
 
     }
 
-    protected void analyse() {
+    private void analyse() {
 
         // Create SourceFile and tester classes, parse the patch and generate patched source.
         SourceFileLine sourceFileLine = new SourceFileLine(source.getAbsolutePath(), null);
         SourceFileTree sourceFileTree = new SourceFileTree(source.getAbsolutePath(), null);
 
-        InternalTestRunner testRunner = (!noRun ? new InternalTestRunner(className, classPath, testClassName, failFast) : null);
+        InternalTestRunner testRunner = new InternalTestRunner(className, classPath, testClassName, failFast);
 
         // Dump statement numbering to a file
-        String statementNumbering = sourceFileTree.statementListWithIDs();
+        String statementNumbering = sourceFileTree.statementList();
         String statementFilename = source + ".statements";
-        if (outputDir != null) {
-            statementFilename = outputDir +  File.separator + className + ".statements";
-        }
         try {
             FileUtils.writeStringToFile(new File(statementFilename), statementNumbering, Charset.defaultCharset());
         } catch (IOException e) {
@@ -207,11 +196,8 @@ public class PatchAnalyser implements Serializable {
         Logger.info("Statement numbering written to: " + statementFilename);
 
         // Dump block numbering to a file
-        String blockNumbering = sourceFileTree.blockListWithIDs();
+        String blockNumbering = sourceFileTree.blockList();
         String blockFilename = source + ".blocks";
-        if (outputDir != null) {
-            blockFilename = outputDir +  File.separator + className + ".blocks";
-        }
         try {
             FileUtils.writeStringToFile(new File(blockFilename), blockNumbering, Charset.defaultCharset());
         } catch (IOException e) {
@@ -230,9 +216,6 @@ public class PatchAnalyser implements Serializable {
 
         // Write the patched source to file, for reference
         String patchedFilename = source + ".patched";
-        if (outputDir != null) {
-            patchedFilename = outputDir +  File.separator + className + ".patched";
-        }
         try {
             FileUtils.writeStringToFile(new File(patchedFilename), patchedSource, Charset.defaultCharset());
         } catch (IOException e) {
@@ -245,17 +228,11 @@ public class PatchAnalyser implements Serializable {
         // Evaluate original class
         Logger.info("Timing original class execution...");
         Patch emptyPatch = new Patch(sourceFileTree);
-        long originalExecutionTime = 0;
-        if (!noRun) {
-            originalExecutionTime = testRunner.runTests(emptyPatch, null, REPS).totalExecutionTime();
-            Logger.info("Original execution time: " + originalExecutionTime);
-        }
+        long originalExecutionTime = testRunner.runTests(emptyPatch, REPS).totalExecutionTime();
+        Logger.info("Original execution time: " + originalExecutionTime);
 
         // Write the original source to file, for easy diff with *.patched file
         patchedFilename = source + ".original";
-        if (outputDir != null) {
-            patchedFilename = outputDir +  File.separator + className + ".original";
-        }
         try {
             FileUtils.writeStringToFile(new File(patchedFilename), emptyPatch.apply(), Charset.defaultCharset());
         } catch (IOException e) {
@@ -265,24 +242,21 @@ public class PatchAnalyser implements Serializable {
         }
         Logger.info("Parsed patch written to: " + patchedFilename);
 
-        if (!noRun) {
-            // Evaluate patch
-            Logger.info("Timing patched sourceFile execution...");
-            UnitTestResultSet resultSet = testRunner.runTests(patch, null, REPS);
+        // Evaluate patch
+        Logger.info("Timing patched sourceFile execution...");
+        UnitTestResultSet resultSet = testRunner.runTests(patch, REPS);
 
-            // Output test results
-            logTestResults(resultSet);
+        // Output test results
+        logTestResults(resultSet);
 
-            Logger.info("Execution time of patched sourceFile: " + resultSet.totalExecutionTime());
-            float speedup = 100.0f * ((originalExecutionTime - resultSet.totalExecutionTime()) /
-                    (1.0f * originalExecutionTime));
-            if (resultSet.getValidPatch() && resultSet.getCleanCompile()) {
-                Logger.info("Speedup (%): " + speedup);
-            } else {
-                Logger.info("Speedup (%): not applicable");
-            }
+        Logger.info("Execution time of patched sourceFile: " + resultSet.totalExecutionTime());
+        float speedup = 100.0f * ((originalExecutionTime - resultSet.totalExecutionTime()) /
+                (1.0f * originalExecutionTime));
+        if (resultSet.getValidPatch() && resultSet.getCleanCompile()) {
+            Logger.info("Speedup (%): " + speedup);
+        } else {
+            Logger.info("Speedup (%): not applicable");
         }
-        Logger.info("Finished analysing. Patched files produced if successfully parsed.");
 
     }
 

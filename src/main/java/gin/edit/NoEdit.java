@@ -22,7 +22,7 @@ public class NoEdit extends Edit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         return sourceFile;
     }
 

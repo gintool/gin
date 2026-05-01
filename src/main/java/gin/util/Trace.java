@@ -184,7 +184,7 @@ public class Trace implements Serializable {
     }
 
     private static Map<String, Integer> parseJFRMethodCounts(File jfrF, Project project) throws IOException {
-int total = 0, exec = 0, st = 0, sts = 0;
+
         Map<String, Integer> samples = new HashMap<>();
 
         //use main classes to find methods in the main program
@@ -193,62 +193,37 @@ int total = 0, exec = 0, st = 0, sts = 0;
         try (RecordingFile jfr = new RecordingFile(Paths.get(jfrF.getAbsolutePath()))) {
 
             //read all events from the JFR profiling file
-            jfrloop:
-            while (true) {
-                try {
-                    if (!jfr.hasMoreEvents()) {
-                        break jfrloop;
-                    }
-                    total++;
+            while (jfr.hasMoreEvents()) {
+                RecordedEvent event = jfr.readEvent();
+                String check = event.getEventType().getName();
+//System.out.println("******" + check);
+                //if this event is an exectution sample, it will contain a call stack snapshot
+                if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
+                    RecordedStackTrace s = event.getStackTrace();
 
-                    RecordedEvent event = jfr.readEvent();
-                    String check = event.getEventType().getName();
+                    if (s != null) {
 
-                    //if this event is an execution sample, it will contain a call stack snapshot
-                    if (check.endsWith("jdk.ExecutionSample")) { // com.oracle.jdk.ExecutionSample for Oracle JDK, jdk.ExecutionSample for OpenJDK
-                        exec++;
-                        RecordedStackTrace s = event.getStackTrace();
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
+                        for (int i = 0; i < s.getFrames().size(); i++) {
 
-//                        Logger.info("Found sample: " + check);
+                            RecordedFrame topFrame = s.getFrames().get(i);
+                            RecordedMethod method = topFrame.getMethod();
 
-                        if (s != null) {
+                            String methodName = method.getType().getName();
+                            String className = StringUtils.substringBeforeLast(methodName, ".");
 
-                            //traverse the call stack, if a frame is part of the main program,
-                            //return it
-                            Logger.info("Parsing trace...");
-                            for (int i = 0; i < s.getFrames().size(); i++) {
-
-                                RecordedFrame topFrame = s.getFrames().get(i);
-                                RecordedMethod method = topFrame.getMethod();
-
-                                String methodName = method.getType().getName();
-                                String className = StringUtils.substringBeforeLast(methodName, ".");
-
-                                if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                    methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                                    samples.merge(methodName, 1, Integer::sum);
-                                    Logger.debug("Found a match");
-                                    break;
-                                }
+                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                samples.merge(methodName, 1, Integer::sum);
+                                break;
                             }
-                            Logger.info("Parsing done.");
-
-                        } else {
-                            st++;
                         }
+
+
                     }
-                } catch (IOException e) {
-                    // don't use the word exception here, as it's somewhat expected
-                    // "exception" triggers a fail in the Gin unit tests
-                    Logger.warn("IOEx. reading JFR. " +
-                            "Probably this is because of something causing multiple writes to the JFR log files." +
-                            "If you get lots of these it will likely impact on the reliability of the profiling results.");
-                    return samples;
                 }
             }
-
-            Logger.info("Read " + jfrF + ", found " + total + " total events, " + exec + " execs. " + st + " were missing stacktraces.");
-
             return samples;
 
         }
@@ -266,73 +241,64 @@ int total = 0, exec = 0, st = 0, sts = 0;
 
         for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
 
-            try {
-                String method = entry.getKey();
-                String className = StringUtils.substringBeforeLast(method, ".");
+            String method = entry.getKey();
+            String className = StringUtils.substringBeforeLast(method, ".");
 
-                boolean includeMethod = shouldIncludeMethod(method);
+            boolean includeMethod = shouldIncludeMethod(method);
 
-                // Check if belongs to this project
-                boolean classInMain = mainClasses.contains(className);
-                boolean classInTest = testClasses.contains(className);
+            // Check if belongs to this project
+            boolean classInMain = mainClasses.contains(className);
+            boolean classInTest = testClasses.contains(className);
 
-                boolean hasLineNumber = entry.getKey().contains(":");
+            boolean hasLineNumber = entry.getKey().contains(":");
 
-                if (classInMain && includeMethod && hasLineNumber) {
+            if (classInMain && includeMethod && hasLineNumber) {
 
-                    String lineRegex = "^(.*):(\\d+)";
-                    Pattern linePattern = Pattern.compile(lineRegex);
-                    Matcher lineMatcher = linePattern.matcher(entry.getKey());
+                String lineRegex = "^(.*):(\\d*)";
+                Pattern linePattern = Pattern.compile(lineRegex);
+                Matcher lineMatcher = linePattern.matcher(entry.getKey());
+                lineMatcher.find();
 
-                    if (lineMatcher.find()) {
+                String methodName = lineMatcher.group(1);
+                int lineNumber = Integer.parseInt(lineMatcher.group(2));
 
-                        String methodName = lineMatcher.group(1);
-                        int lineNumber = Integer.parseInt(lineMatcher.group(2));
+                String fullMethodName = project.getMethodSignature(methodName, lineNumber);
 
-                        String fullMethodName = project.getMethodSignature(methodName, lineNumber);
-
-                        // If we can find the original method (we may not, e.g. interface overridden)
-                        if (fullMethodName == null) {
-                            Logger.warn("Excluding method as class in main tree but method not found: " + method);
-                            if (method.contains(".values")) {
-                                Logger.warn("This is likely because the method relates to an enum type.");
-                            }
-                        } else {
-                            cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
-                        }
-                    } else {
-                        Logger.info("Excluding method because no line number found: " + method);
+                // If we can find the original method (we may not, e.g. interface overridden)
+                if (fullMethodName == null) {
+                    Logger.warn("Excluding method as class in main tree but method not found: " + method);
+                    if (method.contains(".values")) {
+                        Logger.warn("This is likely because the method relates to an enum type.");
                     }
+                } else {
+                    cleanTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
+                }
+
+            } else {
+
+                if (!includeMethod) {
+
+                    Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
+
+                } else if (classInTest) {
+
+                    Logger.info("Excluding method because class is a test class: " + method);
+
+                } else if (!hasLineNumber) {
+
+                    Logger.info("Excluding method because hprof gave no line number: " + method);
+
+                } else if (method.contains(project.getProjectName())) {
+
+                    Logger.warn("Excluding method because not in main project tree: " + method);
+                    Logger.warn(" ...but the method contains the project name! Possibly a bug.");
 
                 } else {
 
-                    if (!includeMethod) {
-
-                        Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
-
-                    } else if (classInTest) {
-
-                        Logger.info("Excluding method because class is a test class: " + method);
-
-                    } else if (!hasLineNumber) {
-
-                        Logger.info("Excluding method because hprof gave no line number: " + method);
-
-                    } else if (method.contains(project.getProjectName())) {
-
-                        Logger.warn("Excluding method because not in main project tree: " + method);
-                        Logger.warn(" ...but the method contains the project name! Possibly a bug.");
-
-                    } else {
-
-                        Logger.info("Excluding method because not in main project tree: " + method);
-
-                    }
+                    Logger.info("Excluding method because not in main project tree: " + method);
 
                 }
-            } catch (Exception e) {
-                Logger.warn("Exception cleaning method counts: ");
-                Logger.warn(e);
+
             }
 
         }

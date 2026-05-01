@@ -1,5 +1,13 @@
 package gin.test;
 
+import org.mdkt.compiler.CompiledCode;
+import org.mdkt.compiler.InMemoryJavaCompiler;
+import org.pmw.tinylog.Logger;
+
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serial;
@@ -7,17 +15,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-
-import org.mdkt.compiler.CompiledCode;
-import org.mdkt.compiler.InMemoryJavaCompiler;
-import org.pmw.tinylog.Logger;
 
 /**
  * Wraps the InMemoryJavaCompiler to compile a class given its name and a classpath.
@@ -27,16 +24,6 @@ public class Compiler implements Serializable {
     @Serial
     private static final long serialVersionUID = -5411786808143665676L;
 
-    private String lastError;
-    
-    public Compiler() {
-    	this.lastError = null;
-    }
-    
-    public String getLastError() {
-		return lastError;
-	}
-    
     /**
      * Compile a class to bytecode, given the fully qualified classname, a source string, and an optional classpath.
      *
@@ -45,10 +32,9 @@ public class Compiler implements Serializable {
      * @param classPath Standard Java classpath string.
      * @return the compiled code
      */
-    public CompiledCode compile(String className, String source, String classPath) {
+    public static CompiledCode compile(String className, String source, String classPath) {
 
         CompiledCode code;
-        lastError = null;
 
         try {
 
@@ -62,7 +48,7 @@ public class Compiler implements Serializable {
             compiler.useOptions("-classpath", fullClassPath, "-Xlint:unchecked");
 
             code = compiler.compileToRawBytes(className, source);
-            
+
         } catch (Exception e) {
 
             if (e.getMessage().contains("does not exist")) {
@@ -70,7 +56,6 @@ public class Compiler implements Serializable {
             }
 
             code = null;
-            lastError = e.getMessage();
 
         }
 
@@ -78,13 +63,11 @@ public class Compiler implements Serializable {
 
     }
 
-    public boolean compileFile(File source, String classPath) {
+    public static boolean compileFile(File source, String classPath) {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        DiagnosticCollector<JavaFileObject> diagnosticsCollector = new DiagnosticCollector<JavaFileObject>();
         boolean compiled = false;
-        lastError = null;
-        try (StandardJavaFileManager fm = compiler.getStandardFileManager(diagnosticsCollector, null, null)) {
+        try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             List<String> options = new ArrayList<>();
             options.add("-cp");
             options.add(classPath + File.pathSeparator + System.getProperty("java.class.path"));
@@ -92,18 +75,10 @@ public class Compiler implements Serializable {
             Iterable<? extends JavaFileObject> compilationUnit = fm.getJavaFileObjectsFromFiles(Collections.singletonList(source));
 
             JavaCompiler.CompilationTask task;
-            task = compiler.getTask(null, fm, diagnosticsCollector, options, null, compilationUnit);
+            task = compiler.getTask(null, fm, null, options, null, compilationUnit);
 
             if (!task.call()) {
                 Logger.warn("Error during compilation of source on disk: " + source);
-                
-                lastError = "";
-                List<Diagnostic<? extends JavaFileObject>> diagnostics = diagnosticsCollector.getDiagnostics();
-                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics) {
-                    // read error dertails from the diagnostic object
-                    lastError += diagnostic.getMessage(null) + System.lineSeparator();
-                }
-                
             } else {
                 compiled = true;
             }

@@ -104,7 +104,7 @@ public class BinaryOperatorReplacement extends ModifyNodeEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         SourceFileTree sf = (SourceFileTree) sourceFile;
 
         // first, get the node from the cu

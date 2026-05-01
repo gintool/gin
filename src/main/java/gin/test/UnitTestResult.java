@@ -251,10 +251,10 @@ public class UnitTestResult implements Serializable {
                 repNumber,
                 passed,
                 timedOut,
-                exceptionType != null ? exceptionType : "null",
-                exceptionMessage != null ? exceptionMessage : "null",
-                expectedValue != null ? expectedValue : "null",
-                actualValue != null ? actualValue : "null",
+                exceptionType,
+                exceptionMessage,
+                expectedValue,
+                actualValue,
                 executionTime,
                 cpuTime);
     }

@@ -79,7 +79,7 @@ public class CopyStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
 
         // no check for source==destination here as it will copy+insert in location
 

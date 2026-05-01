@@ -219,49 +219,39 @@ public class MemoryTrace {
 
             //read all events from the JFR profiling file
             while (jfr.hasMoreEvents()) {
-                try {
-                    RecordedEvent event = jfr.readEvent();
-                    String check = event.getEventType().getName();
+                RecordedEvent event = jfr.readEvent();
+                String check = event.getEventType().getName();
 
-                    //there are two kinds of events we could be looking for
-                    // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
-                    // the latter is for temp objects, but importantly comes with
-                    // stack trace info which we can use to identify location
-                    // ObjectCount doesn't seem to have this (it would also need
-                    // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
-                    if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
-                        RecordedStackTrace s = event.getStackTrace();
+                //there are two kinds of events we could be looking for
+                // jdk.ObjectCount and jdk.ObjectAllocationInNewTLAB
+                // the latter is for temp objects, but importantly comes with
+                // stack trace info which we can use to identify location
+                // ObjectCount doesn't seem to have this (it would also need
+                // the JFR argument to be XX:StartFlightRecording:jdk.ObjectCount#enabled=true)
+                if (check.endsWith("jdk.ObjectAllocationInNewTLAB")) { // com.oracle.jdk.ObjectAllocationInNewTLAB for Oracle JDK, jdk.ObjectAllocationInNewTLAB for OpenJDK
+                    RecordedStackTrace s = event.getStackTrace();
 
-                        if (s != null) {
+                    if (s != null) {
 
-                            //traverse the call stack, if a frame is part of the main program,
-                            //return it
-                            for (int i = 0; i < s.getFrames().size(); i++) {
+                        //traverse the call stack, if a frame is part of the main program,
+                        //return it
+                        for (int i = 0; i < s.getFrames().size(); i++) {
 
-                                RecordedFrame topFrame = s.getFrames().get(i);
-                                RecordedMethod method = topFrame.getMethod();
+                            RecordedFrame topFrame = s.getFrames().get(i);
+                            RecordedMethod method = topFrame.getMethod();
 
-                                String methodName = method.getType().getName();
-                                String className = StringUtils.substringBeforeLast(methodName, ".");
+                            String methodName = method.getType().getName();
+                            String className = StringUtils.substringBeforeLast(methodName, ".");
 
-                                if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
-                                    methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
-                                    samples.merge(methodName, 1, Integer::sum);
-                                    break;
-                                }
+                            if (mainClasses.contains(methodName) || mainClasses.contains(className)) {
+                                methodName += "." + method.getName() + ":" + topFrame.getLineNumber();
+                                samples.merge(methodName, 1, Integer::sum);
+                                break;
                             }
-
-
                         }
+
+
                     }
-                } catch (IOException e) {
-                    // don't use the word exception here, as it's somewhat expected
-                    // "exception" triggers a fail in the Gin unit tests
-                    Logger.warn("IOEx. reading JFR. " +
-                            "Probably this is because of something causing multiple writes to the JFR log files." +
-                            "If you get lots of these it will likely impact on the reliability of the profiling results.");
-                    //Logger.warn(e);
-                    return samples;
                 }
             }
             return samples;
@@ -280,74 +270,66 @@ public class MemoryTrace {
         Set<String> testClasses = project.allTestClasses();
 
         for (Map.Entry<String, Integer> entry : methodCounts.entrySet()) {
-            try {
-                String method = entry.getKey();
-                String className = StringUtils.substringBeforeLast(method, ".");
 
-                boolean includeMethod = shouldIncludeMethod(method);
+            String method = entry.getKey();
 
-                // Check if belongs to this project
-                boolean classInMain = mainClasses.contains(className);
-                boolean classInTest = testClasses.contains(className);
+            String className = StringUtils.substringBeforeLast(method, ".");
 
-                boolean hasLineNumber = entry.getKey().contains(":");
+            boolean includeMethod = shouldIncludeMethod(method);
 
-                if (classInMain && includeMethod && hasLineNumber) {
+            // Check if belongs to this project
+            boolean classInMain = mainClasses.contains(className);
+            boolean classInTest = testClasses.contains(className);
 
-                    String lineRegex = "^(.*):(\\d+)";
-                    Pattern linePattern = Pattern.compile(lineRegex);
-                    Matcher lineMatcher = linePattern.matcher(entry.getKey());
+            boolean hasLineNumber = entry.getKey().contains(":");
 
-                    if (lineMatcher.find()) {
+            if (classInMain && includeMethod && hasLineNumber) {
 
-                        String methodName = lineMatcher.group(1);
-                        int lineNumber = Integer.parseInt(lineMatcher.group(2));
+                String lineRegex = "^(.*):(\\d*)";
+                Pattern linePattern = Pattern.compile(lineRegex);
+                Matcher lineMatcher = linePattern.matcher(entry.getKey());
+                lineMatcher.find();
 
-                        String fullMethodName = project.getMethodSignature(methodName, lineNumber);
+                String methodName = lineMatcher.group(1);
+                int lineNumber = Integer.parseInt(lineMatcher.group(2));
 
-                        // If we can find the original method (we may not, e.g. interface overridden)
-                        if (fullMethodName == null) {
-                            Logger.warn("Excluding method as class in main tree but method not found: " + method);
-                            if (method.contains(".values")) {
-                                Logger.warn("This is likely because the method relates to an enum type.");
-                            }
-                        } else {
-                            cleanMemoryTrace.merge(fullMethodName, entry.getValue(), Integer::sum);
-                        }
+                String fullMethodName = project.getMethodSignature(methodName, lineNumber);
 
-                    } else {
-                        Logger.info("Excluding method because no line number found: " + method);
+                // If we can find the original method (we may not, e.g. interface overridden)
+                if (fullMethodName == null) {
+                    Logger.warn("Excluding method as class in main tree but method not found: " + method);
+                    if (method.contains(".values")) {
+                        Logger.warn("This is likely because the method relates to an enum type.");
                     }
+                } else {
+                    cleanMemoryTrace.put(fullMethodName, entry.getValue());
+                }
+
+            } else {
+
+                if (!includeMethod) {
+
+                    Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
+
+                } else if (classInTest) {
+
+                    Logger.info("Excluding method because class is a test class: " + method);
+
+                } else if (!hasLineNumber) {
+
+                    Logger.info("Excluding method because hprof gave no line number: " + method);
+
+                } else if (method.contains(project.getProjectName())) {
+
+                    Logger.warn("Excluding method because not in main project tree: " + method);
+                    Logger.warn(" ...but the method contains the project name! Possibly a bug.");
 
                 } else {
 
-                    if (!includeMethod) {
-
-                        Logger.info("Excluding method because exceptional case (inner class etc.): " + method);
-
-                    } else if (classInTest) {
-
-                        Logger.info("Excluding method because class is a test class: " + method);
-
-                    } else if (!hasLineNumber) {
-
-                        Logger.info("Excluding method because hprof gave no line number: " + method);
-
-                    } else if (method.contains(project.getProjectName())) {
-
-                        Logger.warn("Excluding method because not in main project tree: " + method);
-                        Logger.warn(" ...but the method contains the project name! Possibly a bug.");
-
-                    } else {
-
-                        Logger.info("Excluding method because not in main project tree: " + method);
-
-                    }
+                    Logger.info("Excluding method because not in main project tree: " + method);
 
                 }
-            } catch (Exception e) {
-                Logger.warn("Exception cleaning method counts: ");
-                Logger.warn(e);
+
             }
 
         }
@@ -366,7 +348,7 @@ public class MemoryTrace {
             return false;
         }
 
-        return !method.contains("clinit");
+        return !method.contains("<clinit>");
 
     }
 

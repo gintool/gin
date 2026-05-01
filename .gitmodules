@@ -1,6 +1,0 @@
-[submodule "PatchCat"]
-	path = PatchCat
-	url = https://github.com/karineek/PatchCat
-[submodule "Docker"]
-	path = Docker
-	url = https://github.com/domsob/gin-docker

@@ -55,7 +55,7 @@ public class SwapStatement extends StatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
 
         if (sourceStatement == destinationStatement) {
             return sourceFile; // no-op

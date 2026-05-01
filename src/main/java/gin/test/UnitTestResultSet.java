@@ -1,11 +1,11 @@
 package gin.test;
 
+import gin.Patch;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import gin.Patch;
 
 /**
  * Holds the results of running a set of tests.
@@ -20,38 +20,30 @@ public class UnitTestResultSet implements Serializable {
     private final List<UnitTestResult> results;
 
     private final Patch patch;
-    private final Boolean patchValid;
-    private final Boolean compiledOK;
-    private String compileError = "N/A";
+    private final boolean patchValid;
+    private final boolean compiledOK;
     private final List<Boolean> editsValid;
-    private final String patchedCode;
 
     /**
      * was the patch effectively a no-op? i.e. was there some difference between
      * input and output source?
      */
-    private final Boolean noOp;
+    private final boolean noOp;
 
-    public UnitTestResultSet(Patch patch, String patchedCode, Boolean patchValid, List<Boolean> editsValid, Boolean compiledOK, String compileError, Boolean noOp, List<UnitTestResult> results) {
+    public UnitTestResultSet(Patch patch, boolean patchValid, List<Boolean> editsValid, boolean compiledOK, boolean noOp, List<UnitTestResult> results) {
         this.patch = patch;
         this.patchValid = patchValid;
         this.editsValid = new ArrayList<>(editsValid);
         this.compiledOK = compiledOK;
-        this.compileError = compileError;
         this.results = results;
         this.noOp = noOp;
-        this.patchedCode = patchedCode;
     }
 
     public Patch getPatch() {
         return patch;
     }
-    
-    public String getPatchedCode() {
-		return patchedCode;
-	}
 
-    public Boolean getValidPatch() {
+    public boolean getValidPatch() {
         return patchValid;
     }
 
@@ -59,15 +51,11 @@ public class UnitTestResultSet implements Serializable {
         return editsValid;
     }
 
-    public Boolean getCleanCompile() {
+    public boolean getCleanCompile() {
         return compiledOK;
     }
-    
-    public String getCompileError() {
-		return compileError;
-	}
 
-    public Boolean getNoOp() {
+    public boolean getNoOp() {
         return noOp;
     }
 
@@ -75,10 +63,7 @@ public class UnitTestResultSet implements Serializable {
         return results;
     }
 
-    public Boolean allTestsSuccessful() {
-        if (results.isEmpty()) {
-            return null;
-        }
+    public boolean allTestsSuccessful() {
         for (UnitTestResult testResult : results) {
             if (!testResult.getPassed()) {
                 return false;
@@ -121,10 +106,6 @@ public class UnitTestResultSet implements Serializable {
 
         StringBuilder myrep = new StringBuilder(String.format("UnitTestResultSet. Patch %s;  Valid: %b; Compiled: %b; NoOp: %b.",
                 patch, patchValid, compiledOK, noOp));
-        if (!compiledOK) {
-        	myrep.append(" Compile error: ");
-        	myrep.append(" [").append(compileError).append("]");
-        }
         if (results.size() > 0) {
             myrep.append(" Results follow: ");
         }

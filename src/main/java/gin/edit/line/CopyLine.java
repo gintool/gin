@@ -55,7 +55,7 @@ public class CopyLine extends LineEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         // no check for source/dest being same here as it'll duplicate and insert the line
 
         SourceFileLine sf = (SourceFileLine) sourceFile;

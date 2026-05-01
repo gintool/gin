@@ -44,7 +44,7 @@ public class DeleteLine extends LineEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile, Object metadata) {
+    public SourceFile apply(SourceFile sourceFile) {
         SourceFileLine sf = (SourceFileLine) sourceFile;
         return sf.removeLine(lineToDelete);
     }

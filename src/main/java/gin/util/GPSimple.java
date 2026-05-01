@@ -65,7 +65,7 @@ public abstract class GPSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(-1, 0, results, methodName, orig, 0);
+        super.writePatch(results, methodName, orig, 0);
 
         // Generation 1
         Map<Patch, Double> population = new HashMap<>();
@@ -76,16 +76,13 @@ public abstract class GPSimple extends GP {
             // Add a mutation
             Patch patch = mutate(origPatch);
             // If fitnessThreshold met, add it
-            results = testPatch(className, tests, patch, null);
-            double fitness = fitness(results);
-            super.writePatch(-1, i, results, methodName, fitness, 0);
+            results = testPatch(className, tests, patch);
             if (fitnessThreshold(results, orig)) {
-                population.put(patch, fitness);
+                population.put(patch, fitness(results));
             }
 
         }
 
-        int evals = indNumber;
         for (int g = 0; g < genNumber; g++) {
 
             // Previous generation
@@ -116,14 +113,14 @@ public abstract class GPSimple extends GP {
                 Logger.debug("Testing patch: " + patch);
 
                 // Test the patched source file
-                results = testPatch(className, tests, patch, null);
+                results = testPatch(className, tests, patch);
                 double newFitness = fitness(results);
 
                 // If fitness threshold met, add patch to the mating population
                 if (fitnessThreshold(results, orig)) {
                     newPopulation.put(patch, newFitness);
                 }
-                super.writePatch(g, evals++, results, methodName, newFitness, compareFitness(newFitness, orig));
+                super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
             }
 
             population = new HashMap<>(newPopulation);

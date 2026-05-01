@@ -8,20 +8,18 @@ import com.sampullara.cli.Argument;
 import gin.test.UnitTest;
 
 import gin.util.enums.ProfilerChoice;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.pmw.tinylog.Logger;
 
-import java.io.*;
-import java.lang.reflect.Field;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
- * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof or jfr.
+ * Simple profiler for mvn/gradle projects to find the "hot" methods of a test suite using hprof.
  * <p>
  * Run directly from the commandline.
  * <p>
@@ -30,11 +28,10 @@ import java.util.regex.Pattern;
 public class MemoryProfiler {
 
     private static final String[] HEADER = {"Project", "MethodIndex", "Method", "Count", "Tests"};
-    private static final String WORKING_DIR = "profiler_out";
+    private static final String WORKING_DIR = "hprof";
     private static String HPROF_ARG = "-agentlib:hprof=heap=sites,lineno=y,depth=1,interval=$hprofInterval,file=";
-    private static final String JFR_ARG = "-Xlog:jfr+system=info -XX:+FlightRecorder -XX:FlightRecorderOptions=stackdepth=256 -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin#JFRNAME#,settings=#SETTINGSNAME#,dumponexit=true,settings=profile,filename=#JFRNAME#"; // Could replace ObjectAllocationInNewTLAB with ObjectCount (former is for tmp objects and includes stacktrace) - note no support for Java >9 and <17
-
-
+    private static String JFR_ARG = "-XX:+FlightRecorder -XX:StartFlightRecording:jdk.ObjectAllocationInNewTLAB#enabled=true,name=Gin,dumponexit=true,settings=profile,filename="; // Could replace ObjectAllocationInNewTLAB with ObjectCount (former is for tmp objects and includes stacktrace)
+    
     
     // Instance Members
     private final File workingDir;
@@ -69,9 +66,7 @@ public class MemoryProfiler {
     @Argument(alias = "prof", description = "Profiler to use: JFR or HPROF. Default is JFR")
     protected String profilerChoice = String.valueOf(ProfilerChoice.JFR);
     @Argument(alias = "save", description = "Save individual profiling files, default is delete, set command as 's' to save")
-    protected boolean saveProfiles = false;
-    @Argument(alias = "ba", description = "Comma separated list of arguments to pass to Maven or Gradle")
-    protected String[] buildToolArgs = new String[0];
+    protected boolean saveChoice = false;
 
     public MemoryProfiler(String[] args) {
         Args.parseOrExit(this, args);
@@ -91,14 +86,6 @@ public class MemoryProfiler {
         }
         if (this.mavenHome != null) {
             project.setMavenHome(this.mavenHome);
-        } else {
-            // If maven home is not set manually, tries to find a home dir in
-            // the system variables
-            String mavenHomePath = MavenUtils.findMavenHomePath();
-            if (mavenHomePath != null) {
-                this.mavenHome = FileUtils.getFile(mavenHomePath);
-                project.setMavenHome(this.mavenHome);
-            }
         }
         project.setUp();
         
@@ -130,7 +117,7 @@ public class MemoryProfiler {
         Logger.info("Profiling project: " + this.project);
 
         if (!this.skipInitialRun) {
-            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
+            project.runAllUnitTests(this.mavenTaskName, this.mavenProfile);
         }
 
         Set<UnitTest> tests = project.parseTestReports();
@@ -144,16 +131,16 @@ public class MemoryProfiler {
             tests = Sets.newHashSet(Iterables.limit(tests, profileFirstNTests));
         }
 
-        Map<UnitTest, List<ProfileResult>> results;
+        Map<UnitTest, ProfileResult> results;
         if (!this.excludeMemoryProfiler) {
             results = profileTestSuite(tests);
+            tests = tests.stream()
+                    .filter(test -> results.containsKey(test) && results.get(test).success)
+                    .collect(Collectors.toSet());
             reportSummary(results);
-        } else {
-            // Build purely from disk (optionally pass a timestamp to filter)
-            results = buildResultsFromExistingFiles(tests /*, someTimestampOrNull */);
         }
 
-        List<MemoryTrace> testMemoryTraces = parseMemoryTraces(results.values());
+        List<MemoryTrace> testMemoryTraces = parseMemoryTraces(tests);
 
         List<HotMethod> hotMethods = calcHotMethods(testMemoryTraces);
 
@@ -164,17 +151,12 @@ public class MemoryProfiler {
 
     }
 
-    private void reportSummary(Map<UnitTest, List<ProfileResult>> results) {
+    private void reportSummary(Map<UnitTest, ProfileResult> results) {
 
         Logger.info("Profiling report summary");
-        Logger.info("Total number of tests run: " + results.values().stream()
-                .mapToLong(List::size)
-                .sum());
+        Logger.info("Total number of tests run: " + results.size());
 
-        //List<ProfileResult> failures = results.values().stream().filter(result -> !result.success).toList();
-        List<ProfileResult> failures = results.values().stream()
-                .flatMap(List::stream)        // flatten List<ProfileResult> into a stream of ProfileResult
-                .filter(result -> !result.success)
+        List<ProfileResult> failures = results.values().stream().filter(result -> !result.success)
                 .toList();
 
         if (!failures.isEmpty()) {
@@ -192,9 +174,9 @@ public class MemoryProfiler {
 
     // Run entire test suite, one test at a time, with hprof enabled
 
-    protected Map<UnitTest, List<ProfileResult>> profileTestSuite(Set<UnitTest> tests) {
+    protected Map<UnitTest, ProfileResult> profileTestSuite(Set<UnitTest> tests) {
 
-        Map<UnitTest, List<ProfileResult>> results = new HashMap<>();
+        Map<UnitTest, ProfileResult> results = new HashMap<>();
 
         ensureWorkingDirectory();
 
@@ -216,17 +198,14 @@ public class MemoryProfiler {
 
             testCount++;
 
-            List<ProfileResult> profileResultsForThisTest = new ArrayList<>(this.reps);
             for (int rep = 1; rep <= this.reps; rep++) {
 
                 String args;
 
-                long startTime = System.currentTimeMillis(); // this is to give each JFR output a unique filename
-
                 if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
                     args = HPROF_ARG + hprofFile(test, rep).getAbsolutePath();
                 } else {
-                    args = JFR_ARG.replace("#JFRNAME#", jfrFile(test, rep, startTime).getAbsolutePath()).replace("#SETTINGSNAME#", writeJfrConfigNextToOutputs(workingDir).toString());
+                    args = JFR_ARG + jfrFile(test, rep).getAbsolutePath();
                 }
                 
                 String progressMessage = String.format("Running unit test %s (%d/%d) Rep %d/%d",
@@ -237,27 +216,16 @@ public class MemoryProfiler {
                 ProfileResult profileResult;
 
                 try {
-                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile, this.buildToolArgs);
-                    profileResult = new ProfileResult(test, true, null, rep, startTime, jfrFile(test, rep, startTime).getAbsolutePath());
-
-                    // Optional: wait briefly to ensure the dump completed before reading
-                    try {
-                        java.nio.file.Path p = jfrFile(test, rep, startTime).toPath();
-                        long s1 = java.nio.file.Files.size(p);
-                        Thread.sleep(200);
-                        long s2 = java.nio.file.Files.size(p);
-                        if (s1 != s2) Thread.sleep(500);
-                    } catch (Exception ignore) {}
+                    project.runUnitTest(test, args, this.mavenTaskName, this.mavenProfile);
+                    profileResult = new ProfileResult(test, true, null);
                 } catch (FailedToExecuteTestException e) {
                     Logger.warn("Failed to execute test: " + test + " due to Exception: " + e);
-                    profileResult = new ProfileResult(test, false, e, rep, startTime, jfrFile(test, rep, startTime).getAbsolutePath());
+                    profileResult = new ProfileResult(test, false, e);
                 }
 
-                profileResultsForThisTest.add(profileResult);
+                results.put(test, profileResult);
 
             }
-
-            results.put(test, profileResultsForThisTest);
 
         }
 
@@ -269,30 +237,20 @@ public class MemoryProfiler {
         return test.getMethodName().contains("[");
     }
 
-    protected List<MemoryTrace> parseMemoryTraces(/*Set*/ Collection<List<ProfileResult>> results) {
+    protected List<MemoryTrace> parseMemoryTraces(Set<UnitTest> tests) {
 
         List<MemoryTrace> allMemoryTraces = new LinkedList<>();
 
         outer:
-        for (List<ProfileResult> results2 : results) {
-            for (ProfileResult result : results2) {
-                Logger.info("Parsing..." + result.filename);
-                // skip if test failed
-                if (!result.success) {
-                    Logger.info("Skipped");
-                    continue outer;
-                }
-                Logger.info("Processing");
+        for (UnitTest test : tests) {
 
-                UnitTest test = result.test;
+            List<MemoryTrace> testMemoryTraces = new LinkedList<>();
 
-                List<MemoryTrace> testMemoryTraces = new LinkedList<>();
+            if (isParameterizedTest(test)) {
+                continue;
+            }
 
-                if (isParameterizedTest(test)) {
-                    continue;
-                }
-
-//              for (int rep = 1; rep <= this.reps; rep++) { // no need to repeat, there's a result file per repeat!
+            for (int rep = 1; rep <= this.reps; rep++) {
 
                 Logger.info("Parsing trace for test: " + test);
 
@@ -300,11 +258,11 @@ public class MemoryProfiler {
                 MemoryTrace trace;
 
                 if (this.profilerChoice.equalsIgnoreCase("HPROF")) {
-                    traceFile = hprofFile(test, result.rep);
+                    traceFile = hprofFile(test, rep);
                     trace = MemoryTrace.fromHPROFFile(this.project, test, traceFile);
                     testMemoryTraces.add(trace);
                 } else {
-                    traceFile = jfrFile(test, result.rep, result.startTime);
+                    traceFile = jfrFile(test, rep);
                     try {
                         trace = MemoryTrace.fromJFRFile(this.project, test, traceFile);
                         testMemoryTraces.add(trace);
@@ -313,22 +271,23 @@ public class MemoryProfiler {
                         continue outer;
                     }
                 }
-
-
+                
+                
                 //delete individual profiling files
-                if (!saveProfiles) {
+                if (!saveChoice) {
                     try {
                         Files.deleteIfExists(traceFile.toPath());
                     } catch (IOException e) {
                         Logger.warn("Failed to delete profiling file with IOException: " + e);
                     }
                 }
-
-                MemoryTrace combinedMemoryTrace = MemoryTrace.mergeMemoryTraces(testMemoryTraces);
-
-                allMemoryTraces.add(combinedMemoryTrace);
-
+                
             }
+
+            MemoryTrace combinedMemoryTrace = MemoryTrace.mergeMemoryTraces(testMemoryTraces);
+
+            allMemoryTraces.add(combinedMemoryTrace);
+
         }
 
         return allMemoryTraces;
@@ -422,17 +381,17 @@ public class MemoryProfiler {
         }
 
     }
-
-    private File jfrFile(UnitTest test, int rep, long startTime) {
+    
+    private File jfrFile(UnitTest test, int rep) {
         String testName = test.getTestName();
         String cleanTest = testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
-        String filename = cleanTest + "_" + rep + "_" + startTime + ".jfr";
+        String filename = cleanTest + "_" + rep + ".jfr";
         return new File(workingDir, filename);
     }
 
     private File hprofFile(UnitTest test, int rep) {
         String testName = test.getTestName();
-        String cleanTest = testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String cleanTest = testName.replace(" ", "_");
         String filename = cleanTest + "_" + rep + ".hprof";
         String filenameNoBrackets = filename.replace("()", "");
         return new File(workingDir, filenameNoBrackets);
@@ -446,186 +405,15 @@ public class MemoryProfiler {
 
     }
 
-    static Path writeJfrConfigNextToOutputs(File projectDir) {
-        String res = "gin-profile.jfc";
-        try (var in = Thread.currentThread().getContextClassLoader().getResourceAsStream(res)) {
-            if (in == null) throw new FileNotFoundException("Missing resource: " + res);
-            Path dir = new File(projectDir, "jfr-config").toPath();
-            Files.createDirectories(dir);
-            Path out = dir.resolve("gin-profile.jfc");
-            Files.copy(in, out, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            return out.toAbsolutePath();
-        } catch (IOException e) {
-            Logger.error("Couldn't move JFR config file to working directory. Exception was:");
-            Logger.error(e);
-            System.exit(1);
-            return null;
-        }
-    }
-
-    /**
-     * Rebuild results by scanning profiler_out for JFR files produced earlier.
-     * Matches files named: <sanitizedTest>_<rep>_<startTime>.jfr
-     * (same scheme as jfrFile(...))
-     */
-    protected Map<UnitTest, List<ProfileResult>> buildResultsFromExistingFiles(Set<UnitTest> tests) {
-        boolean wantJfr   = this.profilerChoice.equalsIgnoreCase("JFR");
-        boolean wantHprof = this.profilerChoice.equalsIgnoreCase("HPROF");
-        return buildResultsFromExistingFiles(tests, wantJfr, wantHprof, null);
-    }
-
-    /**
-     * Variant that filters by exact startTime (ms since epoch). If timestampFilter is null, returns all.
-     */
-    protected Map<UnitTest, List<ProfileResult>> buildResultsFromExistingFiles(Set<UnitTest> tests, boolean includeJfr, boolean includeHprof, Long timestampFilter) {
-
-        Map<UnitTest, List<ProfileResult>> out = new HashMap<>();
-
-        if (workingDir == null || !workingDir.isDirectory()) {
-            Logger.warn("Working directory not found: " + workingDir + " — returning empty results.");
-            return out;
-        }
-
-        // Precompute sanitized test name -> UnitTest for quick lookup.
-        Map<String, UnitTest> bySanitized = new HashMap<>(tests.size());
-        for (UnitTest t : tests) {
-            // Skip parameterized tests, consistent with runtime behaviour.
-            if (isParameterizedTest(t)) continue;
-            bySanitized.put(sanitizeForJfr(t.getTestName()), t); // class.method  -> sanitized
-        }
-
-        // Files we care about: *.jfr
-        File[] files = workingDir.listFiles((dir, name) ->
-                (includeJfr   && name.endsWith(".jfr"))   ||
-                        (includeHprof && name.endsWith(".hprof")));
-        if (files == null || files.length == 0) return out;
-
-        //   JFR:   <sanitized>_<rep>_<millis>.jfr
-        //   HPROF: <sanitized>_<rep>.hprof
-        Pattern JFR  = Pattern.compile("^(?<t>.+)_(?<rep>\\d+)_(?<ts>\\d{10,})\\.jfr$");
-        Pattern HPROF= Pattern.compile("^(?<t>.+)_(?<rep>\\d+)\\.hprof$");
-
-        for (File f : files) {
-            String name = f.getName();
-
-            // Try JFR first
-            if (includeJfr) {
-                Matcher mj = JFR.matcher(name);
-                if (mj.matches()) {
-                    String sanitized = mj.group("t");
-                    int rep; long ts;
-                    try {
-                        rep = Integer.parseInt(mj.group("rep"));
-                        ts  = Long.parseLong(mj.group("ts"));
-                    } catch (NumberFormatException nfe) {
-                        continue;
-                    }
-                    if (timestampFilter != null && ts != timestampFilter) continue;
-
-                    UnitTest test = bySanitized.get(sanitized);
-                    if (test == null) continue;
-
-                    ProfileResult pr = new ProfileResult(
-                            test,
-                            true,
-                            null,
-                            rep,
-                            ts,
-                            f.getAbsolutePath()
-                    );
-                    out.computeIfAbsent(test, k -> new ArrayList<>()).add(pr);
-                    continue;
-                }
-            }
-
-            // Try HPROF
-            if (includeHprof) {
-                Matcher mh = HPROF.matcher(name);
-                if (mh.matches()) {
-                    String sanitized = mh.group("t");
-                    int rep;
-                    try {
-                        rep = Integer.parseInt(mh.group("rep"));
-                    } catch (NumberFormatException nfe) {
-                        continue;
-                    }
-                    UnitTest test = bySanitized.get(sanitized);
-                    if (test == null) continue;
-
-                    // startTime is unused for HPROF in parseTraces(); set lastModified for traceability.
-                    long ts = f.lastModified();
-
-                    ProfileResult pr = new ProfileResult(
-                            test,
-                            true,
-                            null,
-                            rep,
-                            ts,
-                            f.getAbsolutePath()
-                    );
-                    out.computeIfAbsent(test, k -> new ArrayList<>()).add(pr);
-                }
-            }
-        }
-
-        // Stable ordering
-        for (List<ProfileResult> list : out.values()) {
-            list.sort(Comparator
-                    .comparingInt((ProfileResult r) -> r.rep)
-                    .thenComparingLong(r -> r.startTime));
-        }
-
-        return out;
-    }
-
-    private static String sanitizeForJfr(String testName) {
-        // Must match the logic in jfrFile(UnitTest,int,long)
-        return testName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_"); // keep dot and dash only
-    }
-    
-    private void printCommandlineArguments() {
-
-        try {
-            Field[] fields = Profiler.class.getDeclaredFields();
-            for (Field field : fields) {
-                field.setAccessible(true);
-                if (field.isAnnotationPresent(Argument.class)) {
-                    Argument argument = field.getAnnotation(Argument.class);
-                    String name = argument.description();
-                    Object value = field.get(this);
-                    if (value instanceof File) {
-                        Logger.info(name + ": " + ((File) value).getPath());
-                    } else if (value instanceof String[]) {
-                        Logger.info(name + ": " + Arrays.toString((String[])value));
-                    } else if (value == null) {
-                        Logger.info(name + ": ");
-                    } else {
-                        Logger.info(name + ": " + value);
-                    }
-                }
-            }
-        } catch (IllegalAccessException e) {
-            Logger.error("Error printing commandline arguments.");
-            System.exit(-1);
-        }
-
-    }
-
     static class ProfileResult {
         UnitTest test;
         boolean success;
         Exception exception;
-        int rep;
-        long startTime;
-        String filename;
 
-        ProfileResult(UnitTest test, boolean success, Exception exception, int rep, long startTime, String filename) {
+        ProfileResult(UnitTest test, boolean success, Exception exception) {
             this.test = test;
             this.success = success;
             this.exception = exception;
-            this.rep = rep;
-            this.startTime = startTime;
-            this.filename = filename;
         }
     }
 

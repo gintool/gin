@@ -37,6 +37,7 @@ import java.util.List;
  * <p>
  * Furthermore, every edit needs a (SourceFile,Random) constructor for the places that
  * a new edit is created
+ * <p>Edit is parametrised by the type of meta data that can be passed to it
  */
 public abstract class Edit implements Serializable {
 
@@ -99,7 +100,17 @@ public abstract class Edit implements Serializable {
      * @param sourceFile on which to apply the edit
      * @return updated copy of the sourceFile; or null if the edit couldn't be applied for some reason
      */
-    public abstract SourceFile apply(SourceFile sourceFile);
+    public SourceFile apply(SourceFile sourceFile) {
+    	return apply(sourceFile, null); 
+    }
+    
+    /**
+     * @param sourceFile on which to apply the edit
+     * @param metadata to use when applying the edit; could use, e.g., an error code or filter on how to apply it
+     * @return updated copy of the sourceFile; or null if the edit couldn't be applied for some reason
+     */
+    // implementation note: considering making metadata generic rather than just an Object but that's a wider scale refactoring
+    public abstract SourceFile apply(SourceFile sourceFile, Object metadata);
 
     public enum EditType {LINE, STATEMENT, MODIFY_STATEMENT, MATCHED_STATEMENT, INSERT_STATEMENT}
 }

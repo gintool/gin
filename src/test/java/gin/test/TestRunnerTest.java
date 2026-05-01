@@ -68,7 +68,7 @@ public class TestRunnerTest {
         for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
-            Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
+            new Compiler().compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
         }
 
     }
@@ -84,7 +84,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
 
         List<UnitTestResult> results = resultSet.getResults();
         UnitTestResult result = results.get(0);
@@ -101,7 +101,7 @@ public class TestRunnerTest {
         DeleteLine edit = new DeleteLine(sourceFile.getAbsolutePath(), 7); // deletes result=10 hence introducing a bug
         deletePatch.add(edit);
 
-        UnitTestResultSet modifiedResultSet = internalTestRunner.runTests(deletePatch, 1);
+        UnitTestResultSet modifiedResultSet = internalTestRunner.runTests(deletePatch, null, 1);
 
         assertTrue(modifiedResultSet.getValidPatch());
         assertTrue(modifiedResultSet.getCleanCompile());
@@ -128,7 +128,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         UnitTestResult result = results.get(0);
         assertTrue(result.getPassed());
@@ -154,7 +154,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFile);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         UnitTestResult result = results.get(0);
 
@@ -180,7 +180,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFile);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         UnitTestResult result = results.get(0);
 
@@ -209,7 +209,7 @@ public class TestRunnerTest {
                 "\n" +
                 "}";
 
-        CompiledCode code = Compiler.compile("mypackage.NewExample", srcCode, TestConfiguration.EXAMPLE_DIR_NAME);
+        CompiledCode code = new Compiler().compile("mypackage.NewExample", srcCode, TestConfiguration.EXAMPLE_DIR_NAME);
 
         try (CacheClassLoader loader = new CacheClassLoader(TestConfiguration.EXAMPLE_DIR_NAME)) {
             loader.setCustomCompiledCode("mypackage.NewExample", code.getByteCode());
@@ -239,7 +239,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(3, results.size());
         UnitTestResult result = results.get(0);
@@ -267,7 +267,7 @@ public class TestRunnerTest {
 
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, 1);
+        UnitTestResultSet resultSet = internalTestRunner.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(2, results.size());
         UnitTestResult result = results.get(0);

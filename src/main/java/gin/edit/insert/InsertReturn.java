@@ -72,7 +72,7 @@ public class InsertReturn extends InsertStatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
 
         SourceFileTree sf = (SourceFileTree) sourceFile;
 

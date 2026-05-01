@@ -40,12 +40,21 @@ public abstract class GP extends Sampler {
 
     @Argument(alias = "in", description = "Number of individuals")
     protected Integer indNumber = 10;
-
+    
+    @Argument(alias = "mn", description = "Only search over first n hot methods")
+    protected Integer methodNumber = Integer.MAX_VALUE;
+    
     @Argument(alias = "ms", description = "Random seed for mutation operator selection")
     protected Integer mutationSeed = 123;
 
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
+
+    @Argument(alias = "pb", description = "Probability of combined")
+    protected Double combinedProbablity = 0.5;
+
+    @Argument(alias = "pc", description = "Enable patchCat")
+    protected Boolean patchCat = false;
 
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;
@@ -89,7 +98,8 @@ public abstract class GP extends Sampler {
 
             writeNewHeader();
 
-            for (TargetMethod method : methodData) {
+            int numberToSearch = Math.min(methodData.size(), methodNumber);
+            for (TargetMethod method : methodData.subList(0, numberToSearch)) {
 
                 Logger.info("Running GP on method " + method);
 
@@ -132,14 +142,33 @@ public abstract class GP extends Sampler {
     /*============== Helper methods  ==============*/
 
     protected void writeNewHeader() {
-        String[] entry = {"MethodName"
+        String[] entry;
+
+        if (Boolean.TRUE.equals(patchCat)) {
+            entry = new String[] { "MethodName"
+                , "Iteration"
+        		, "EvaluationNumber"
                 , "Patch"
+                , "Cluster"
+                , "Action"
                 , "Compiled"
                 , "AllTestsPassed"
                 , "TotalExecutionTime(ms)"
                 , "Fitness"
                 , "FitnessImprovement"
-        };
+            };
+        } else {
+            entry = new String[] { "MethodName"
+                    , "Iteration"
+                    , "EvaluationNumber"
+                    , "Patch"
+                    , "Compiled"
+                    , "AllTestsPassed"
+                    , "TotalExecutionTime(ms)"
+                    , "Fitness"
+                    , "FitnessImprovement"
+            };
+        }
         try {
             outputFileWriter = new CSVWriter(new FileWriter(outputFile));
             outputFileWriter.writeNext(entry);
@@ -150,13 +179,31 @@ public abstract class GP extends Sampler {
         }
     }
 
-    protected void writePatch(UnitTestResultSet results, String methodName, double fitness, double improvement) {
-        String[] entry = {methodName
+    protected void writePatch(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement) {
+        String[] entry = { methodName
+        		, Integer.toString(iteration)
+        		, Integer.toString(evaluationNumber)
                 , results.getPatch().toString()
-                , Boolean.toString(results.getCleanCompile())
-                , Boolean.toString(results.allTestsSuccessful())
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
                 , Float.toString(results.totalExecutionTime() / 1000000.0f)
-                , Double.toString(fitness)
+                , fitness == null ? "null" : Double.toString(fitness)
+                , Double.toString(improvement)
+        };
+        outputFileWriter.writeNext(entry);
+    }
+
+        protected void writePatchWithPatchCatInfo(int iteration, int evaluationNumber, UnitTestResultSet results, String methodName, Double fitness, double improvement, int cluster, String action, String patch) {
+        String[] entry = { methodName
+        		, Integer.toString(iteration)
+        		, Integer.toString(evaluationNumber)
+                , patch
+                , Integer.toString(cluster)
+                , action
+                , results.getCleanCompile() == null ? "null" : Boolean.toString(results.getCleanCompile())
+                , results.allTestsSuccessful() == null ? "null" : Boolean.toString(results.allTestsSuccessful())
+                , Float.toString(results.totalExecutionTime() / 1000000.0f)
+                , fitness == null ? "null" : Double.toString(fitness)
                 , Double.toString(improvement)
         };
         outputFileWriter.writeNext(entry);

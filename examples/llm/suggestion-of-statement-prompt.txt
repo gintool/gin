@@ -1,0 +1,76 @@
+Please give me $COUNT$ different Java implementations of this method body.
+
+This code belongs to project $PROJECT$.
+
+Wrap all code in curly braces, if it is not already. Do not include any method or class declarations. Label all code as java.
+
+Label all code as java.
+
+Given code:
+```java
+$DESTINATION$
+```
+
+Here are some example of changes you can make:
+- Copy Statement: Copy a statement from one place to another within the method.
+- Delete Statement: Delete a randomly chosen statement from the method.
+- Replace Statement: Replace one statement with another within the method.
+- Swap Statements: Swap the positions of two statements within the method.
+- Modify Expression: Change an expression within a statement, such as altering a mathematical operation or logical condition.
+- Inline Variable: Inline a variable within its usage scope, replacing the variable with its actual value.
+- Extract Method: Take a part of the existing code and move it into a new method, then call that method from the original location.
+- Rename Variable: Change the name of a variable to something different, ensuring the code remains syntactically correct.
+- Conditional Restructuring: Modify the structure of conditional statements, such as changing from an if-else to a switch statement or vice versa.
+- Loop Transformation: Change the structure of loops, like converting a for loop to a while loop or introducing enhanced for-loops.
+- Exception Handling: Add, remove, or modify exception handling statements to change how errors are handled in the code.
+- Type Conversion: Change the type of a variable or cast it to a different type.
+- Method Invocation Change: Modify the way a method is invoked, such as changing from a static to an instance method or vice versa.
+- Null Handling: Introduce or remove null checks or change the way null values are handled.
+- Array Manipulation: Modify array-related operations, like changing array initialization or adjusting array indices.
+- String Manipulation: Alter how strings are concatenated, formatted, or manipulated within the code.
+- Lambda Expression: Introduce or modify lambda expressions, making use of Java's functional programming features.
+- Static Field Usage: Change how static fields are accessed or modified within the method.
+- Interface Implementation: Implement or remove interface methods, adjusting the class structure accordingly.
+- Class Instantiation: Change the way objects are instantiated or modify constructor invocations.
+- Enumeration Usage: Introduce or modify the usage of Java enums within the method.
+- Collections Manipulation: Modify how collections (lists, maps, sets, etc.) are used or populated in the method.
+- Bitwise Operations: Introduce or change bitwise operations within the code.
+- Annotation Handling: Add, modify, or remove annotations within the method.
+- Stream API Usage: Introduce or modify the usage of Java Stream API for data processing.
+- File I/O Operations: Change the way files are read from or written to within the method.
+- Time and Date Operations: Modify how time and date operations are performed in the code.
+- Random Number Generation: Introduce or modify the generation of random numbers within the method.
+- Thread Handling: Change how threads are managed or synchronized within the code.
+- Reflection Usage: Introduce or modify the use of reflection in the method.
+- Regular Expression Handling: Introduce or modify regular expressions within the method for pattern matching.
+- Environment Variable Access: Change how environment variables are accessed or utilized in the code.
+- Resource Management: Adjust resource management practices, such as closing streams or connections.
+- Enum Switch: Modify the usage of switch statements with enums, changing how cases are handled.
+- Optional Class Usage: Introduce or modify the use of Java's Optional class for handling potentially absent values.
+- Custom Exception Handling: Add, remove, or modify custom exception classes and their handling.
+- Reflection API: Introduce or modify the use of Java Reflection API to inspect or manipulate class information.
+- Custom Annotations: Add, remove, or modify custom annotations within the method.
+- Method Reference: Introduce or modify method references, utilizing Java's functional programming features.
+- Functional Interface: Introduce or modify the use of functional interfaces and lambda expressions.
+- If Statement: Modify the structure of if statements, changing conditions or introducing nested if blocks.
+- Else Statement: Adjust the handling of else statements, including the introduction or removal of else clauses.
+- For Loop: Modify the structure of for-loops, changing initialization, condition checks, or increment statements.
+- Enhanced For Loop: Adjust the usage of enhanced for loops, particularly with collections or arrays.
+- While Loop: Modify the structure of while loops, changing loop conditions or introducing additional checks.
+- Do-While Loop: Adjust the usage of do-while loops, modifying loop conditions or changing the loop body.
+- Nested Loops: Introduce or modify nested loops, changing the complexity of loop structures.
+- Ternary Operator: Change the usage of the ternary operator (? :), modifying conditions or expressions.
+- Switch Statement: Introduce or modify switch statements, adjusting cases or changing how they handle fall-through.
+- Break and Continue Statements: Modify the usage of break and continue statements within loops, changing loop control flow.
+- Guard Clauses: Introduce or modify guard clauses, which are early returns or exceptions to handle special cases.
+- Early Exit: Change the structure to introduce early exits from methods based on certain conditions.
+- Try-Catch Blocks: Introduce or modify try-catch blocks, adjusting how exceptions are handled within the code.
+- Finally Block: Modify the usage of finally blocks, changing the cleanup or resource management code.
+- Multi-Catch Exception Handling: Introduce or modify multi-catch blocks, handling multiple exception types in a single block.
+- Thread Sleep and Interruption: Adjust the usage of Thread.sleep() and interruption handling within the code.
+- Lambda Expressions with Parameters: Introduce or modify lambda expressions with parameters for functional interfaces.
+- Functional Interfaces with Multiple Methods: Modify the usage of functional interfaces with more than one abstract method.
+- Method Overloading: Introduce or modify method overloading within the code.
+- Variable Initialization: Modify how variables are initialized, considering different strategies or conditions.
+
+In all of these examples, the statements to change are chosen at random. They do not have to be whole lines, just valid Java statements.

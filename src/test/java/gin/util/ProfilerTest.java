@@ -20,11 +20,14 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.function.Executable;
 
 public class ProfilerTest {
 
@@ -50,7 +53,7 @@ public class ProfilerTest {
         Set<UnitTest> tests = new HashSet<>();
         UnitTest test = new UnitTest("example.ExampleTest", "profileEnumTest");
         tests.add(test);
-        Map<UnitTest, Profiler.ProfileResult> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
+        Map<UnitTest, List<Profiler.ProfileResult>> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
 
         File scratchFile = new File("scratchhprof" + File.separator + "testEnumProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
@@ -59,7 +62,7 @@ public class ProfilerTest {
                 .level(Level.WARNING)
                 .activate();
 
-        profiler.parseTraces(tests);
+        profiler.parseTraces(unitTestProfileResult.values());
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
@@ -73,7 +76,12 @@ public class ProfilerTest {
 
         // Ensures the results of all test cases when executed by the profiler is a success
         assertFalse(unitTestProfileResult.isEmpty());
-        Assertions.assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+        //Assertions.assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+        assertAll(
+                unitTestProfileResult.values().stream()
+                        .flatMap(List::stream)
+                        .map(pr -> (Executable) () -> assertTrue(pr.success, "Failed: " + pr))
+        );
 
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up
@@ -121,7 +129,7 @@ public class ProfilerTest {
         Profiler profiler = new Profiler(args);
         Set<UnitTest> tests = new HashSet<>();
         tests.add(test);
-        Map<UnitTest, Profiler.ProfileResult> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
+        Map<UnitTest, List<Profiler.ProfileResult>> unitTestProfileResult = profiler.profileTestSuite(tests);//Use this to generate the profiling file
 
         File scratchFile = new File("scratchjfr" + File.separator + "testJFRProfiling.txt");
         FileWriter fileWriter = new FileWriter(scratchFile.getAbsolutePath());
@@ -130,17 +138,32 @@ public class ProfilerTest {
                 .level(Level.INFO)
                 .activate();
 
-        profiler.parseTraces(tests);
+        profiler.parseTraces(unitTestProfileResult.values());
 
         String logMessages = FileUtils.readFileToString(scratchFile, Charset.defaultCharset());
 
         String primeFunc = "INFO: Parsing trace for test: " + test.getTestName() + " []";
         assertTrue(logMessages.contains(primeFunc));
-        assertFalse(StringUtils.containsIgnoreCase(logMessages, "exception"));
+//        assertFalse(StringUtils.containsIgnoreCase(logMessages, "exception"));
+//
+//        // Ensures the results of all test cases when executed by the profiler is a success
+//        assertFalse(unitTestProfileResult.isEmpty());
+        Assertions.assertFalse(
+                StringUtils.containsIgnoreCase(logMessages, "exception"),
+                "Profiler log contained 'exception':\n" + logMessages
+        );
+        Assertions.assertFalse(
+                unitTestProfileResult.isEmpty(),
+                "Profiler returned no JFR results for test " + test + "\nLog:\n" + logMessages
+        );
 
-        // Ensures the results of all test cases when executed by the profiler is a success
-        assertFalse(unitTestProfileResult.isEmpty());
-        Assertions.assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+
+        //assertAll(unitTestProfileResult.values().stream().map(result -> () -> assertTrue(result.success)));
+        assertAll(
+                unitTestProfileResult.values().stream()
+                        .flatMap(List::stream)
+                        .map(pr -> (Executable) () -> assertTrue(pr.success, "Failed: " + pr))
+        );
 
         fileWriter.close();
         Files.deleteIfExists(scratchFile.toPath());  // tidy up

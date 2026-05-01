@@ -43,7 +43,7 @@ public class ExternalTestRunnerTest {
         for (String sourceFilename : sourceFilenames) {
             File packageDir = new File(TestConfiguration.EXAMPLE_DIR, packageName);
             File sourceFile = new File(packageDir, sourceFilename);
-            Compiler.compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
+            new Compiler().compileFile(sourceFile, TestConfiguration.EXAMPLE_DIR_NAME);
         }
     }
 
@@ -89,7 +89,8 @@ public class ExternalTestRunnerTest {
 
         Path expectedClassPath = runnerReuse.getTemporaryPackageDirectory().resolve(className + ".class");
 
-        boolean success = runnerReuse.compileClassToTempDir(patchedSource);
+        Compiler compiler = new Compiler();
+        boolean success = runnerReuse.compileClassToTempDir(patchedSource, compiler);
 
         assertTrue(success);
         assertTrue(expectedClassPath.toFile().exists());
@@ -114,7 +115,7 @@ public class ExternalTestRunnerTest {
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(3, results.size());
         UnitTestResult result = results.get(0);
@@ -144,7 +145,7 @@ public class ExternalTestRunnerTest {
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = runnerReuse.runTests(patch, 1);
+        UnitTestResultSet resultSet = runnerReuse.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(2, results.size());
         UnitTestResult result = results.get(0);
@@ -172,7 +173,7 @@ public class ExternalTestRunnerTest {
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(3, results.size());
         UnitTestResult result = results.get(0);
@@ -202,7 +203,7 @@ public class ExternalTestRunnerTest {
         SourceFileLine sourceFileLine = new SourceFileLine(sourceFile.getPath(), targetMethodNames);
         Patch patch = new Patch(sourceFileLine);
 
-        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, 1);
+        UnitTestResultSet resultSet = runnerMakeNew.runTests(patch, null, 1);
         List<UnitTestResult> results = resultSet.getResults();
         assertEquals(2, results.size());
         UnitTestResult result = results.get(0);
@@ -218,7 +219,7 @@ public class ExternalTestRunnerTest {
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
         ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, false, false);
-        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), null, 2);
         assertTrue(results.getResults().get(0).getPassed());
         // The second repetition fails
         assertFalse(results.getResults().get(1).getPassed());
@@ -230,7 +231,7 @@ public class ExternalTestRunnerTest {
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
         ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, true, false, false);
-        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), null, 2);
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
     }
@@ -241,7 +242,7 @@ public class ExternalTestRunnerTest {
         UnitTest test = new UnitTest("mypackage.Poison", "testPoison");
         tests.add(test);
         ExternalTestRunner externalRunner = new ExternalTestRunner(fullClassName, classPath, tests, false, true, false);
-        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), 2);
+        UnitTestResultSet results = externalRunner.runTests(new Patch(new SourceFileLine(sourceFile, methodName)), null, 2);
         assertTrue(results.getResults().get(0).getPassed());
         assertTrue(results.getResults().get(1).getPassed());
     }

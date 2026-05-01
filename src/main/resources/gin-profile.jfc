@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration version="2.0"
+  label="Gin Profile"
+  description="High-signal sampling for Java apps. Faster Execut...onSample, include NativeMethodSample, I/O &amp; waits with stacks.">
+
+  <!-- CPU-on-CPU samples (Java) -->
+  <event name="jdk.ExecutionSample">
+    <setting name="enabled">true</setting>
+    <setting name="period">10 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+
+  <!-- CPU-on-CPU samples (native) -->
+  <event name="jdk.NativeMethodSample">
+    <setting name="enabled">true</setting>
+    <setting name="period">10 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+
+  <!-- I/O & waits (with stacks) -->
+  <event name="jdk.SocketRead">
+    <setting name="enabled">true</setting>
+    <setting name="threshold">0 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+  <event name="jdk.FileRead">
+    <setting name="enabled">true</setting>
+    <setting name="threshold">0 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+  <event name="jdk.JavaMonitorWait">
+    <setting name="enabled">true</setting>
+    <setting name="threshold">0 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+  <event name="jdk.ThreadPark">
+    <setting name="enabled">true</setting>
+    <setting name="threshold">0 ms</setting>
+    <setting name="stackTrace">true</setting>
+  </event>
+
+  <!-- Useful context -->
+  <event name="jdk.CPULoad"><setting name="enabled">true</setting></event>
+  <event name="jdk.ActiveRecording"><setting name="enabled">true</setting></event>
+  <event name="jdk.ActiveSetting"><setting name="enabled">true</setting></event>
+</configuration>

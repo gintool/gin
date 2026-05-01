@@ -61,8 +61,8 @@ code.
 
 Gin requires:
 
-* JDK 17
-* Gradle (tested with version 8.0.2)
+* JDK 21
+* Gradle (tested with version 9.0.0)
 * A number of dependencies, which can be downloaded manually or via Gradle (recommended)
 * For Maven projects: make sure the Java version is set to the same version as Gin's.
 
@@ -74,7 +74,7 @@ The library dependencies can be found in the build.gradle file.
 
 If you have multiple JREs on your system, you may need to call something
 like `export JAVA_HOME="/usr/lib/jvm/java-17-oracle/jre"` as well as `update-alternatives` (Linux) to ensure that Gradle
-uses Java 17.
+uses Java 21. Many of us use <https://sdkman.io> to manage gradle/maven/java versions and Gin works well with this.
 
 ### Important to note
 
@@ -85,7 +85,7 @@ There are a few known issues that should be noted:
 
 ### Installing and Building gin
 
-These instructions were tested on OS X and Ubuntu 22.04 LTS.
+These instructions were tested on OS X, Ubuntu 22.04 LTS, and Linux Mint 22.1 Cinnamon.
 
 Clone the repo:
 
@@ -94,7 +94,7 @@ git clone https://github.com/gintool/gin.git
 ```
 
 Build using gradle (alternatively import into your favourite IDE, such as IntelliJ). We also provide a gradle wrapper
-with Gradle 8.0.2.
+with Gradle 9.0.0.
 
 ```
 cd gin

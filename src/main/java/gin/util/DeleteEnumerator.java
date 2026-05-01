@@ -98,7 +98,7 @@ public class DeleteEnumerator extends Sampler {
                 for (int line : combination) {
                     patch.add(new DeleteLine(fileName, lines.get(line)));
                 }
-                UnitTestResultSet results = testPatch(className, tests, patch);
+                UnitTestResultSet results = testPatch(className, tests, patch, null);
                 writeResults(results, methodID);
 
             }
@@ -119,7 +119,7 @@ public class DeleteEnumerator extends Sampler {
                 for (int stmt : combination) {
                     patch.add(new DeleteStatement(fileName, stmts.get(stmt)));
                 }
-                UnitTestResultSet results = testPatch(className, tests, patch);
+                UnitTestResultSet results = testPatch(className, tests, patch, null);
                 writeResults(results, methodID);
 
             }

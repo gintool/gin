@@ -114,7 +114,7 @@ public class InsertContinueWithIf extends InsertStatementEdit {
 
         Matcher m = p.matcher(description);
 
-        if (m.find()) { // i.e. an "if", not a plain continue;
+        if (m.find()) { // i.e. an "i<Void> f", not a plain continue;
             String strStatement = m.group(1);
 
             Expression condition;
@@ -156,7 +156,7 @@ public class InsertContinueWithIf extends InsertStatementEdit {
     }
 
     @Override
-    public SourceFile apply(SourceFile sourceFile) {
+    public SourceFile apply(SourceFile sourceFile, Object metadata) {
 
         SourceFileTree sf = (SourceFileTree) sourceFile;
 

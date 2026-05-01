@@ -209,6 +209,15 @@ public class SourceFileTree extends SourceFile {
         findBlocks();
     }
 
+    public List<Node> getTargetMethodRootNode() {
+        if (this.targetMethodRootNodes == null) {
+            return null;
+        }
+
+        List<Node> targetNode = getTargetMethodRootNodesFromCU(this.compilationUnit, this.targetMethods);
+        return targetNode;
+    }
+
     /*============== the following are general getter methods used in various places ==============*/
 
     /**

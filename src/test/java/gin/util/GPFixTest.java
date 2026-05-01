@@ -77,7 +77,7 @@ public class GPFixTest {
         try (CSVReader reader = new CSVReader(new FileReader(outputFile))) {
             List<String[]> lines = reader.readAll();
 
-            assertEquals(lines.size(), 7);
+            assertEquals(lines.size(), 11);
 
             String[] header = lines.get(0);
 

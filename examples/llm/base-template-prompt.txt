@@ -1,0 +1,6 @@
+Give me $COUNT$ different Java implementations of this method body:```
+$DESTINATION$
+```
+This code belongs to project $PROJECT$.
+
+Wrap all code in curly braces, if it is not already. Do not include any method or class declarations. Label all code as java.

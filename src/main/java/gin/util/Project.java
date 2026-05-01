@@ -30,6 +30,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -46,7 +47,7 @@ public class Project implements Serializable {
 
     private static final String DEFAULT_MAVEN_HOME = File.separator + "usr" + File.separator + "local" + File.separator;
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private final File projectDir;
     private final String projectName;
     private final List<File> moduleDirs = new LinkedList<>();
@@ -57,7 +58,7 @@ public class Project implements Serializable {
     private final List<File> mainClassDirs = new LinkedList<>();
     private final List<File> testClassDirs = new LinkedList<>();
     private File mavenHome = new File(DEFAULT_MAVEN_HOME);
-    private String gradleVersion = "7.6";
+    private String gradleVersion = "9.0.0";
     private BuildType buildType;
 
     /**
@@ -286,8 +287,13 @@ public class Project implements Serializable {
     private void detectDirsGradle() {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
-        if (gradleVersion != null) {
-            connector = connector.useGradleVersion(gradleVersion);
+
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
+            connector.useGradleVersion(gradleVersion);
         }
 
         // Source Directories
@@ -433,88 +439,150 @@ public class Project implements Serializable {
 
     }
 
-    public String getDependenciesClasspath() {
+    private Set<String> getDependenciesClasspathEntriesForPom(File pomDir, File pomFile) {
+        Set<String> entries = new LinkedHashSet<>();
 
-        StringBuilder dependencies = new StringBuilder();
+        File depOutput;
         try {
-            InvocationRequest request = new DefaultInvocationRequest();
+            depOutput = File.createTempFile("gin-" + projectName + "-dependencies", ".txt");
+            depOutput.deleteOnExit();
+        } catch (IOException e) {
+            Logger.error(e, "Error creating temp file for maven dependencies output");
+            return entries;
+        }
 
-            File pomFile = new File(projectDir, "pom.xml");
-            request.setPomFile(pomFile);
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setPomFile(pomFile);
+        request.setBaseDirectory(pomDir);
+        request.setBatchMode(true);
+        request.setGoals(List.of("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
+        request.setProperties(new Properties() {{
+            put("outputFile", depOutput.getAbsolutePath());
+            put("appendOutput", "false");
+            put("outputAbsoluteArtifactFilename", "true");
+        }});
 
-            request.setGoals(Collections.singletonList("org.apache.maven.plugins:maven-dependency-plugin:3.1.1:list"));
+        Logger.info("Calculating Maven dependency classpath for pom: " + pomFile.getAbsolutePath());
+        Logger.info("Dependency output file: " + depOutput.getAbsolutePath());
 
-            File depOutput = Files.createTempFile("gin-" + projectName + "-dependencies", ".txt").toFile();
+        if (DEBUG) {
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+        }
 
-            Properties properties = new Properties();
-            properties.setProperty("outputFile", depOutput.getCanonicalPath());
-            properties.setProperty("appendOutput", "true");
-            properties.setProperty("outputAbsoluteArtifactFilename", "true");
-            request.setProperties(properties);
+        Invoker invoker = new DefaultInvoker();
+        invoker.setMavenHome(mavenHome);
 
-            Invoker invoker = new DefaultInvoker();
-            invoker.setMavenHome(mavenHome);
+        InvocationResult result;
+        try {
+            result = invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            Logger.error(e, "Error invoking maven for pom: " + pomFile.getAbsolutePath());
+            return entries;
+        }
 
-            InvocationResult result = null;
-
-            // Extremely detailed debug output.
-            if (DEBUG) {
-                request.setErrorHandler(Logger::info);
+        List<String> lines = Collections.emptyList();
+        try {
+            if (depOutput.exists()) {
+                lines = Files.readAllLines(depOutput.toPath());
             }
+        } catch (IOException e) {
+            Logger.error(e, "Failed reading dependency output file: " + depOutput.getAbsolutePath());
+        }
 
-            request.setOutputHandler(line -> {
-            });
+        for (String line : lines) {
+            String[] parts = line.trim().split(":");
+            if (parts.length >= 6) {
+                String maybePath = parts[5].trim();
 
-            try {
-                result = invoker.execute(request);
-            } catch (MavenInvocationException e) {
-                Logger.error(e, "Error invoking maven.");
-                System.exit(-1);
-            }
+                int moduleIdx = maybePath.indexOf(" -- ");
+                if (moduleIdx >= 0) {
+                    maybePath = maybePath.substring(0, moduleIdx).trim();
+                }
 
-            if (result.getExitCode() != 0) {
-                Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
-                System.exit(-1);
-            }
-
-            List<String> output;
-            Path path = depOutput.toPath();
-            output = Files.readAllLines(path);
-            Files.deleteIfExists(depOutput.toPath());
-
-            if (!output.isEmpty()) {
-                for (String jar : output) {
-                    Pattern pattern = Pattern.compile("(?:compile|:runtime|:test|:provided):(.*\\.jar)(.*)");
-                    Matcher matcher = pattern.matcher(jar);
-                    if (matcher.find()) {
-                        dependencies.append(File.pathSeparator).append(matcher.group(1));
-                    }
+                if (maybePath.contains(".jar")) {
+                    int jarIdx = maybePath.indexOf(".jar");
+                    maybePath = maybePath.substring(0, jarIdx + 4);
+                    entries.add(maybePath);
                 }
             }
-        } catch (IOException ex) {
-            Logger.error(ex, "Error reading dependencies classpath file");
+        }
+
+        if (result.getExitCode() != 0) {
+            Logger.warn("Maven dependency:list returned non-zero exit code " + result.getExitCode()
+                    + " for pom: " + pomFile.getAbsolutePath());
+
+            if (result.getExecutionException() != null) {
+                Logger.error(result.getExecutionException(), "Maven execution exception");
+            }
+
+            if (entries.isEmpty()) {
+                Logger.warn("No dependency jars parsed from output for pom: " + pomFile.getAbsolutePath());
+            } else {
+                Logger.warn("Proceeding with " + entries.size() + " parsed dependency jars from pom: "
+                        + pomFile.getAbsolutePath());
+            }
+        }
+
+        return entries;
+    }
+
+    private String getDependenciesClasspath() {
+        Set<String> allEntries = new LinkedHashSet<>();
+
+        File rootPomFile = new File(projectDir, "pom.xml");
+        if (isMultiModulePom(rootPomFile)) {
+            Logger.info("Detected multi-module Maven project; collecting dependencies per module.");
+
+            // root pom first
+            allEntries.addAll(getDependenciesClasspathEntriesForPom(projectDir, rootPomFile));
+
+            // each discovered module dir
+            for (File dir : moduleDirs) {
+                File modulePom = new File(dir, "pom.xml");
+                if (modulePom.exists()) {
+                    allEntries.addAll(getDependenciesClasspathEntriesForPom(dir, modulePom));
+                }
+            }
+        } else {
+            allEntries.addAll(getDependenciesClasspathEntriesForPom(projectDir, rootPomFile));
+        }
+
+        if (allEntries.isEmpty()) {
+            Logger.error("No Maven dependency jars could be resolved for project: " + projectName);
             System.exit(-1);
         }
-        return dependencies.toString();
+
+        return File.pathSeparator + String.join(File.pathSeparator, allEntries);
+    }
+
+    private boolean isMultiModulePom(File pomFile) {
+        try {
+            String xml = Files.readString(pomFile.toPath(), StandardCharsets.UTF_8);
+            return xml.contains("<modules>") && xml.contains("<module>");
+        } catch (IOException e) {
+            Logger.error(e, "Failed reading pom to detect modules: " + pomFile.getAbsolutePath());
+            return false;
+        }
     }
 
     // Get the names of all unit tests in the project
-    public void runAllUnitTests(String task, String mavenProfile) {
+    public void runAllUnitTests(String task, String mavenProfile, String[] buildToolArgs) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, new Properties());
+            runAllUnitTestsMaven(task, mavenProfile, new Properties(), buildToolArgs);
         } else {
-            runAllUnitTestsGradle(new Properties());
+            runAllUnitTestsGradle(new Properties(), buildToolArgs);
         }
 
     }
 
-    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties) {
+    public void runAllUnitTestsWithProperties(String task, String mavenProfile, Properties properties, String[] buildToolArgs) {
 
         if (isMavenProject()) {
-            runAllUnitTestsMaven(task, mavenProfile, properties);
+            runAllUnitTestsMaven(task, mavenProfile, properties, buildToolArgs);
         } else {
-            runAllUnitTestsGradle(properties);
+            runAllUnitTestsGradle(properties, buildToolArgs);
         }
 
     }
@@ -528,7 +596,7 @@ public class Project implements Serializable {
     }
 
     // Maven
-    private void runAllUnitTestsMaven(String task, String profile, Properties properties) {
+    private void runAllUnitTestsMaven(String task, String profile, Properties properties, String[] mavenArgs) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -551,15 +619,27 @@ public class Project implements Serializable {
         for (String property : properties.stringPropertyNames()) {
             Logger.info(property + "=" + properties.getProperty(property));
         }
+        
+        for (String mavenArg : mavenArgs) {
+        	request.addArg(mavenArg);
+        }
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
 
         InvocationResult result = null;
 
-        // Extremely detailed debug output.
-        if (DEBUG) {
-            request.setErrorHandler(Logger::info);
+        Logger.info("Running Maven task for project: " + projectName);
+        Logger.info("Project dir: " + projectDir.getAbsolutePath());
+        Logger.info("POM file: " + pomFile.getAbsolutePath());
+        Logger.info("Maven home: " + mavenHome.getAbsolutePath());
+        Logger.info("Task: " + task);
+        Logger.info("Profile: " + profile);
+        Logger.info("Extra Maven args: " + Arrays.toString(mavenArgs));
+
+        if (DEBUG) { // Extremely detailed debug output.
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
         }
 
         try {
@@ -571,8 +651,10 @@ public class Project implements Serializable {
         }
 
         if (result.getExitCode() != 0) {
-            Logger.error("Invocation of Maven gave non-zero return code:" + result.getExitCode());
-            Logger.error(result.getExecutionException());
+            Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
+            if (result.getExecutionException() != null) {
+                Logger.error(result.getExecutionException(), "Maven execution exception while running tests");
+            }
             System.exit(-1);
         }
 
@@ -580,11 +662,15 @@ public class Project implements Serializable {
     }
 
     // Gradle
-    private void runAllUnitTestsGradle(Properties properties) {
+    private void runAllUnitTestsGradle(Properties properties, String[] gradleArgs) {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(projectDir);
 
-        if (gradleVersion != null) {
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
 
@@ -592,6 +678,8 @@ public class Project implements Serializable {
 
         TestLauncher launcher = connection.newTestLauncher();
 
+        launcher.addArguments(gradleArgs);        
+        
         launcher = launcher.withJvmTestClasses("*");
         if (properties.containsKey("argLine")) {
             Logger.info("Running Gradle profile with argument line: " + properties.getProperty("argLine"));
@@ -759,10 +847,19 @@ public class Project implements Serializable {
                 }
 
                 Elements testCases = doc.getElementsByTag("testcase");
+                testCaseLoop:
                 for (Element testCase : testCases) {
 
                     String className = testCase.attr("classname");
                     String methodName = testCase.attr("name");
+
+                    // Special case: sometimes we have parameters included in the name
+                    // (e.g. checkstyle com.puppycrawl.tools.checkstyle.MainTest.testPrintXpathFullOption(Capturable, Capturable) )   )
+                    // We can't run these so throw away!
+                    if (methodName.contains("(")) {
+                        //methodName = methodName.substring(0, methodName.indexOf('('));
+                        continue testCaseLoop;
+                    }
 
                     // Special case: sometimes parameter notes (e.g. seeds) added by Spring etc.
                     if (methodName.contains(" ")) {
@@ -791,18 +888,18 @@ public class Project implements Serializable {
 
     }
 
-    public void runUnitTest(UnitTest test, String args, String task, String mavenProfile) throws
+    public void runUnitTest(UnitTest test, String args, String task, String mavenProfile, String[] buildToolArgs) throws
             FailedToExecuteTestException {
 
         if (isMavenProject()) {
-            runUnitTestMaven(test, args, task, mavenProfile);
+            runUnitTestMaven(test, args, task, mavenProfile, buildToolArgs);
         } else {
-            runUnitTestGradle(test, args);
+            runUnitTestGradle(test, args, buildToolArgs);
         }
 
     }
 
-    public void runUnitTestGradle(UnitTest test, String args) {
+    public void runUnitTestGradle(UnitTest test, String args, String[] gradleArgs) {
 
         File connectionDir = projectDir;
 
@@ -812,7 +909,11 @@ public class Project implements Serializable {
 
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(connectionDir);
 
-        if (gradleVersion != null) {
+        // Prefer the child's wrapper if present, else fall back to supplied Gradle version
+        Path wrapperProps = projectDir.toPath().resolve("gradle/wrapper/gradle-wrapper.properties");
+        if (Files.exists(wrapperProps)) {
+            connector.useBuildDistribution();              // <-- use the child's gradle-wrapper.properties
+        } else if (gradleVersion != null) {
             connector.useGradleVersion(gradleVersion);
         }
 
@@ -820,6 +921,8 @@ public class Project implements Serializable {
 
         TestLauncher testLauncher = connection.newTestLauncher();
 
+        testLauncher.addArguments(gradleArgs);
+        
         Map<String, String> variables = new HashMap<>();
         variables.put("JAVA_TOOL_OPTIONS", args);
 
@@ -849,7 +952,7 @@ public class Project implements Serializable {
     }
 
 
-    public void runUnitTestMaven(UnitTest test, String args, String taskName, String profile)
+    public void runUnitTestMaven(UnitTest test, String args, String taskName, String profile, String[] mavenArgs)
             throws FailedToExecuteTestException {
 
         // Maven requires a # separating class and method, with no parentheses
@@ -866,33 +969,106 @@ public class Project implements Serializable {
             request.setProfiles(Collections.singletonList(profile));
         }
 
+        for (String mavenArg : mavenArgs) {
+        	request.addArg(mavenArg);
+        }
+
         request.setGoals(Collections.singletonList(taskName));
+
+        request.setUpdateSnapshots(true);
+        request.setAlsoMake(false);
+
+        File userSettings = new File(mavenHome, "conf/settings.xml");
+        if (userSettings.isFile()) {
+            request.setUserSettingsFile(userSettings);
+        }
+
+        request.setLocalRepositoryDirectory(new File(System.getProperty("user.home") + "/.m2/repository"));
+        request.addArg("-X"); // extra debugging
+        request.setBatchMode(true); // silence the “interactive mode” warning with
+
+//        Logger.info("Maven home: " + (resolvedHome == null ? "(PATH)" : resolvedHome));
+//        Logger.info("User settings: " + (userSettings != null && userSettings.isFile() ? userSettings : "(default)"));
+
+
+
+        // --- CAPTURE OUTPUT so failures are readable ---
+        final StringBuilder outBuf = new StringBuilder(8192);
+        final StringBuilder errBuf = new StringBuilder(8192);
+
+        request.setOutputHandler(line -> {
+            if (line != null) outBuf.append(line).append('\n');
+        });
+        request.setErrorHandler(line -> {
+            if (line != null) errBuf.append(line).append('\n');
+        });
 
         Invoker invoker = new DefaultInvoker();
         invoker.setMavenHome(mavenHome);
 
         Properties properties = new Properties();
         request.setProperties(properties);
-        properties.setProperty("argLine", args);
         properties.setProperty("test", testName);
+        properties.setProperty("surefire.failIfNoSpecifiedTests", "false");
+
+        // Inject into Maven's environment so the **fork** inherits it
+        request.getProperties().remove("argLine");
+        request.setShellEnvironmentInherited(true); // usually true by default
+        request.addShellEnvironment("JDK_JAVA_OPTIONS", args);
+        request.addArg("-DforkCount=1");
+        request.addArg("-DreuseForks=false");
+
 
         if (!test.getModuleName().isEmpty()) {
-            List<String> moduleList = new LinkedList<>();
-            moduleList.add(test.getModuleName());
-            request.setProjects(moduleList);
+            request.setProjects(java.util.List.of(test.getModuleName())); // -pl :module
+            //request.setAlsoMake(true);
+            // Do not add -am here; prime deps in a separate install step if needed
         }
 
         InvocationResult result = null;
 
+        Logger.info("Running Maven task for project: " + projectName);
+        Logger.info("Project dir: " + projectDir.getAbsolutePath());
+        Logger.info("POM file: " + pomFile.getAbsolutePath());
+        Logger.info("Maven home: " + mavenHome.getAbsolutePath());
+//        Logger.info("Task: " + task);
+        Logger.info("Profile: " + profile);
+        Logger.info("Extra Maven args: " + Arrays.toString(mavenArgs));
+
+        if (DEBUG) { // Extremely detailed debug output.
+            request.setErrorHandler(line -> Logger.error("[maven-stderr] " + line));
+            request.setOutputHandler(line -> Logger.info("[maven-stdout] " + line));
+        }
+
         try {
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
-            Logger.error("Error invoking maven.");
-            Logger.trace(e);
-            System.exit(-1);
+            if (result.getExitCode() != 0) {
+                Logger.error("Invocation of Maven gave non-zero return code: " + result.getExitCode());
+                if (result.getExecutionException() != null) {
+                    Logger.error(result.getExecutionException(), "Maven execution exception while running tests");
+                }
+                System.exit(-1);
+            }
         }
 
         if (result.getExitCode() != 0) {
+            try {
+                // Persist logs to a temp file for quick inspection from the calling test
+                File tmp = File.createTempFile("gin-mvn-", ".log");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(tmp, java.nio.charset.StandardCharsets.UTF_8)) {
+                    pw.println("=== MAVEN STDOUT ===");
+                    pw.print(outBuf);
+                    pw.println("\n=== MAVEN STDERR ===");
+                    pw.print(errBuf);
+                }
+                Logger.error("Invocation of Maven returned non-zero exit code: " + result.getExitCode());
+                Logger.error("Full Maven output saved to: " + tmp.getAbsolutePath());
+
+                Logger.error(outBuf);
+                Logger.error(errBuf);
+            } catch(IOException e) {e.printStackTrace();}
+
             Logger.error("Error running tests: " + test);
             throw new FailedToExecuteTestException(BuildType.MAVEN, "Non-zero return code:" + result.getExitCode(), test);
         }

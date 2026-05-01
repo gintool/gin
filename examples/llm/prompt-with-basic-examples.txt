@@ -1,0 +1,52 @@
+Please give me $COUNT$ different Java implementations of this method body:
+
+```
+$DESTINATION$
+```
+
+This code belongs to project $PROJECT$.
+
+I will give you three examples of structural changes you could try. If you have this code:
+
+```
+int[] numbers = {1, 2, 3, 4, 5};
+int sum = 0;
+
+for (int num : numbers) {
+    sum += num;
+}
+```
+
+Example 1: You could try using a while loop instead of a for loop:
+
+```
+int[] numbers = {1, 2, 3, 4, 5};
+int sum = 0;
+int i = 0;
+
+while (i < numbers.length) {
+    sum += numbers[i];
+    i++;
+}
+```
+
+Example 2: You could try using Streams:
+
+```
+import java.util.Arrays;
+
+int[] numbers = {1, 2, 3, 4, 5};
+
+int sum = Arrays.stream(numbers).sum();
+```
+
+Example 3: You could try variating the loop indices: 
+
+```
+int[] numbers = {1, 2, 3, 4, 5};
+int sum = 0;
+
+for (int i = 0; i < numbers.length; i++) {
+    sum += numbers[i];
+}
+```

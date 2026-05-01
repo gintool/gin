@@ -28,7 +28,7 @@ public class LocalSearchRuntime extends LocalSearchSimple {
 
     /*============== Implementation of abstract methods  ==============*/
     protected UnitTestResultSet initFitness(String className, List<UnitTest> tests, Patch origPatch) {
-        return testPatch(className, tests, origPatch);
+        return testPatch(className, tests, origPatch, null);
     }
 
     // Calculate fitness

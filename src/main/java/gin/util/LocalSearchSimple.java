@@ -2,16 +2,33 @@ package gin.util;
 
 import gin.Patch;
 import gin.edit.Edit;
+import gin.edit.line.CopyLine;
+import gin.edit.line.DeleteLine;
+import gin.edit.line.LineEdit;
+import gin.edit.llm.LLMMaskedStatement;
+import gin.edit.llm.LLMReplaceStatement;
 import gin.test.UnitTest;
+import gin.test.UnitTestResult;
 import gin.test.UnitTestResultSet;
 import org.pmw.tinylog.Logger;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo.None;
+import com.sampullara.cli.Argument;
+
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Random;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Method-based LocalSearchSimple search.
@@ -24,13 +41,51 @@ public abstract class LocalSearchSimple extends GP {
     // Probability of adding an edit during uniform crossover
     private static final double MUTATE_PROBABILITY = 0.5;
 
+    // Whether to use LLM edits
+    private boolean ifLLM = false;
+
+    private Class <? extends Edit> LLMedit = null;
+
+    private List<Class <? extends Edit>> NoneLLMedit = new ArrayList<>();
+
+    private Double best = null;
+    private Patch bestPatch = null;
+
     public LocalSearchSimple(String[] args) {
         super(args);
+        SetLLMedits();
     }
 
     // Constructor used for testing
     public LocalSearchSimple(File projectDir, File methodFile) {
-        super(projectDir, methodFile);
+        super(projectDir, methodFile); 
+        SetLLMedits();
+    }
+
+    private void SetLLMedits () {
+        if (super.editTypes.contains(LLMMaskedStatement.class) || super.editTypes.contains(LLMReplaceStatement.class)) {
+            ifLLM = true;
+            if (super.editTypes.contains(LLMMaskedStatement.class)) {
+                LLMedit = LLMMaskedStatement.class;
+            } else if (super.editTypes.contains(LLMReplaceStatement.class)) {
+                LLMedit = LLMReplaceStatement.class;
+            }
+
+            for (Class <? extends Edit> edit : super.editTypes) {
+                if (edit != LLMedit) {
+                    NoneLLMedit.add(edit);
+                }
+            }
+        }
+
+
+        Logger.info("=== LocalSearchSimple ===");
+        Logger.info("LLM edits: " + ifLLM);
+        Logger.info("None LLM edits: " + NoneLLMedit.toString());
+        Logger.info("LLM edit: " + LLMedit);
+        Logger.info("=====================================");
+
+
     }
 
     // Whatever initialisation needs to be done for fitness calculations
@@ -44,6 +99,65 @@ public abstract class LocalSearchSimple extends GP {
     // Calculate fitness threshold, for selection to the next generation
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
+
+    public String clusterAction(int cluster) throws IOException{
+        switch (cluster) {
+            case 4:
+            case 10:
+            case 15:
+            case 17:
+                return "A";
+            case 0:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 9:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 16:
+                return "B";
+            case 1:
+            case 2:
+            case 6:
+                return "C";
+        }
+        throw new IOException("Clustering Failed");
+    }
+
+    public void implementClusterAction(String action, String className, String methodName, List<UnitTest> tests, Patch patch, int iteration, int cluster, String diff) {
+        // ACTION C - Throw away patch
+        if (action == "C") {
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "C", diff);
+        }
+
+        // ACTION B - Proceed as normal
+        else if (action == "B") {
+            // Calculate fitness
+            UnitTestResultSet results = testPatch(className, tests, patch, null);
+            double newFitness = fitness(results);
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, newFitness, compareFitness(newFitness, best), cluster, "B", diff);
+  
+            // Check if better
+            if (compareFitness(newFitness, best) > 0) {
+                best = newFitness;
+                bestPatch = patch;
+                Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
+            }
+        }
+
+        // ACTION A- Skip testing and keep patch- we need to figure out how to do this
+        else {
+            //Add dummy fitness entry as we don't want to test the patch
+            UnitTestResultSet results = new UnitTestResultSet(patch, "", null, new ArrayList<>(), null, "", null, new ArrayList<>()); 
+            super.writePatchWithPatchCatInfo(iteration, iteration, results, methodName, null, 0, cluster, "A", diff);
+
+            bestPatch = patch;
+        }
+    }
 
     /*============== Implementation of abstract methods  ==============*/
 
@@ -63,36 +177,139 @@ public abstract class LocalSearchSimple extends GP {
 
         // Calculate fitness and record result, including fitness improvement (currently 0)
         double orig = fitness(results);
-        super.writePatch(results, methodName, orig, 0);
-
-        // Keep best 
-        double best = orig;
-        Patch bestPatch = origPatch;
+         if (Boolean.TRUE.equals(patchCat)){
+            super.writePatchWithPatchCatInfo(-1, 0, results, methodName, orig, 0, -1, "Original", "");
+        } else { super.writePatch(-1, 0, results, methodName, orig, 0); }
+        
+        // Set original as best for now
+        best = orig;
+        bestPatch = origPatch;
 
         for (int i = 1; i < indNumber; i++) {
 
             // Add a mutation
-            Patch patch = mutate(bestPatch);
+            Patch patch = neighbour(bestPatch);
+            boolean toTest = false;
+            String lastReplacement = "";
+            Logger.info("Patch is: " + patch.toString());
+            Logger.info("Original Patch is: " + origPatch.toString());
 
-            // Calculate fitness
-            results = testPatch(className, tests, patch);
-            double newFitness = fitness(results);
-            super.writePatch(results, methodName, newFitness, compareFitness(newFitness, orig));
+            try {
+                // Support for PatchCat Integration
+                if (Boolean.TRUE.equals(patchCat)) {
+                    Logger.info("Running PatchCat");
 
-            // Check if better
-            if (compareFitness(newFitness, best) > 0) {
-                best = newFitness;
-                bestPatch = patch;
+                    patch.apply();
+                    Edit lastEdit = patch.getEdits().get(patch.getEdits().size() - 1);
+                    if (lastEdit instanceof LLMReplaceStatement llmEdit) {
+                        lastReplacement = llmEdit.getLastReplacement();
+                    } else {
+                        continue;
+                    }
+                    
+                    // Logger.info("Current patch diff is: " + diff);
+                    Logger.info("Last replacement is: " + lastReplacement);
+
+                    ProcessBuilder builder = new ProcessBuilder(
+                        "python3",
+                        "../gin/PatchCat/src/PatchCatGin.py",
+                        // KEM left the original code, but I tried with giving PatchCat both before and after, we can comapre performance later
+                        //"--diff-text", lastReplacement.toString(),
+                        // We likely want a flag here to select between the two options!
+                        "--A-text", lastReplacement.toString(),
+                        "--B-text", origPatch.toString(),
+                        "--vectorizer-path", "../gin/PatchCat/src/running-model/vectorizer.pkl",
+                        "--model-path", "../gin/PatchCat/src/running-model/model.pkl"
+                    );           
+                    
+                    builder.environment().put("PYTHONUNBUFFERED", "1");
+                    // builder.redirectErrorStream(true);
+                    
+                    Process process = builder.start();
+
+                    BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream())
+                    );
+
+                    //Read the output from PatchCatGin to get the cluster number
+                    String line = reader.readLine();
+                    int cluster = -1;
+
+                    Logger.info("Line is: " + line);
+                    if (line != null && !line.isEmpty()) {
+                        // Regex to capture digits inside [..], e.g. [13]
+                        Pattern pattern = Pattern.compile("\\[(\\d+)]");
+                        Matcher matcher = pattern.matcher(line);
+
+                        if (matcher.find()) {
+                            String numStr = matcher.group(1); // "13"
+                            cluster = Integer.parseInt(numStr);
+                            Logger.info("Cluster is: " + cluster);
+                        }
+                    }
+
+                    String action = clusterAction(cluster);
+
+                    int exit = process.waitFor();
+
+                    implementClusterAction(action, className, methodName, tests, patch, i, cluster, lastReplacement);
+                    
+                } else { // Regular Local Search without PatchCat
+                    // Calculate fitness
+                    results = testPatch(className, tests, patch, null);
+                    double newFitness = fitness(results);
+                    super.writePatch(i, i, results, methodName, newFitness, compareFitness(newFitness, orig));
+
+                    // Check if better
+                    if (compareFitness(newFitness, best) > 0) {
+                        best = newFitness;
+                        bestPatch = patch;
+                        Logger.info("New best patch found: " + bestPatch.toString() + " with fitness: " + best);
+                    }
+                }
+            } catch (IOException | InterruptedException e) {
+                 Logger.info("Running PatchCat Failed");
+                e.printStackTrace();
             }
         }
     }
 
     /*====== GP Operators ======*/
 
+    /**
+     * Generate a neighbouring patch, by either deleting an edit, or adding a new one.
+     *
+     * @param patch Generate a neighbour of this patch.
+     * @return A neighbouring patch.
+     */
+    Patch neighbour(Patch patch) {
+
+        Patch neighbour = patch.clone();
+
+        if(ifLLM && NoneLLMedit.size() > 0){
+            Logger.info("LLM edit" + super.combinedProbablity);
+            if (neighbour.size() > 0 && super.mutationRng.nextFloat() > super.combinedProbablity) {
+                neighbour.addRandomEditOfClasses(super.mutationRng, Arrays.asList(LLMedit));
+            } 
+            else {
+                neighbour.addRandomEditOfClasses(super.mutationRng, NoneLLMedit);
+            }
+        } else {
+            neighbour.addRandomEditOfClasses(super.mutationRng, super.editTypes);
+        }
+
+
+        return neighbour;
+
+    }
+
+
     // Adds a random edit of the given type with equal probability among allowed types
+    // TODO: This is a bit of a hack, as it assumes that if only put one edit type, it is LLMReplaceStatement or LLMMaskedStatement
     protected Patch mutate(Patch oldPatch) {
         Patch patch = oldPatch.clone();
         patch.addRandomEditOfClasses(super.mutationRng, super.editTypes);
+
         return patch;
     }
 

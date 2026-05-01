@@ -5,6 +5,8 @@ import gin.edit.Edit.EditType;
 import gin.edit.NoEdit;
 import gin.edit.line.LineEdit;
 import gin.edit.statement.StatementEdit;
+import gin.edit.llm.LLMMaskedStatement;
+import gin.edit.llm.LLMReplaceStatement;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
 
@@ -115,10 +117,12 @@ public class Patch implements Serializable, Cloneable {
      * can be reported via lastApplyWasInvalid(); and we act as if the edit didn't happen at all
      * (move to next edit for 1 and 2; or return original unaltered source for 3)
      * <p>
+     * 
+     * @param metadata to use when applying the edits; could use, e.g., an error code or filter on how to apply it
      *
      * @return text of patched sourcecode; if there were problems, we just get the same sourcefile back
      */
-    public String apply() {
+    public String apply(Object metadata) {
 
         SourceFile patchedSourceFile = sourceFile.copyOf();
         lastApplyWasValid = true;
@@ -126,7 +130,7 @@ public class Patch implements Serializable, Cloneable {
 
         for (Edit edit : edits) {
             try {
-                SourceFile patchedByThisEdit = edit.apply(patchedSourceFile);
+                SourceFile patchedByThisEdit = edit.apply(patchedSourceFile, metadata);
                 if (patchedByThisEdit == null) {
                     lastApplyWasValid = false;
                     editsValidOnLastApply.add(false);
@@ -139,6 +143,8 @@ public class Patch implements Serializable, Cloneable {
                 editsValidOnLastApply.add(false);
                 // any unexpected problem applying the edit means 
                 // we just don't apply it
+                
+                e.printStackTrace();
             }
         }
 
@@ -152,6 +158,11 @@ public class Patch implements Serializable, Cloneable {
             return sourceFile.getSource();
         }
 
+    }
+    
+    /**apply with no metadata*/
+    public String apply() {
+    	return this.apply(null);
     }
 
     /**
@@ -206,6 +217,7 @@ public class Patch implements Serializable, Cloneable {
         Edit edit = null;
 
         // decide what edit we're doing to make
+        Logger.info("Choosing an edit type from: " + allowableEditTypes);
         Class<? extends Edit> editType = allowableEditTypes.get(rng.nextInt(allowableEditTypes.size()));
 
         // make one
@@ -229,11 +241,15 @@ public class Patch implements Serializable, Cloneable {
         return edit;
 
     }
-
+    
     public void writePatchedSourceToFile(String filename) {
+    	writePatchedSourceToFile(filename, null);
+    }
+
+    public void writePatchedSourceToFile(String filename, Object metadata) {
 
         // Apply this patch
-        String patchedSourceFile = this.apply();
+        String patchedSourceFile = this.apply(metadata);
 
         try {
             FileUtils.writeStringToFile(new File(filename), patchedSourceFile, Charset.defaultCharset());
